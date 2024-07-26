@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {getAdviserDetail, getAdviserPostDetail} from '../../api/adviser';
 
 const data = [
   {id: '1', views: '4742'},
@@ -17,15 +18,33 @@ const data = [
 ];
 
 const User = () => {
+  const [details, setDetails] = useState(null);
+  const [posts, setPosts] = useState(null);
+  console.log('----', posts);
+
+  useEffect(() => {
+    async function getDetails() {
+      const res = await getAdviserDetail(
+        '6825f3c0-45f0-11ef-9968-9dbd2bf34b00',
+      );
+      setDetails(res);
+    }
+    getDetails();
+
+    async function getPostDetails() {
+      const posts = await getAdviserPostDetail(
+        '6825f3c0-45f0-11ef-9968-9dbd2bf34b00',
+      );
+      setPosts(posts);
+    }
+    getPostDetails();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cecil Hipplinaton2</Text>
-        <TouchableOpacity style={styles.moreButton}>
-          <Icon name="more-vert" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
       <View style={styles.profileSection}>
@@ -33,18 +52,17 @@ const User = () => {
           style={styles.profileImage}
           source={{uri: 'https://via.placeholder.com/100'}}
         />
-        <Text style={styles.profileTitle}>Creator</Text>
+        <Text style={styles.profileTitle}>{details?.professional_title}</Text>
         <Text style={styles.profileDescription}>
-          I am currently working as Sr. UI UX Designer and product lead at
-          Unificars.
+          {details?.professional_bio.substring(0, 100) + '....'}
         </Text>
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>1.3K</Text>
-            <Text style={styles.statLabel}>Following</Text>
+            <Text style={styles.statValue}>{details?.followers.length}</Text>
+            <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>347</Text>
+            <Text style={styles.statValue}>{posts?.length}</Text>
             <Text style={styles.statLabel}>Post</Text>
           </View>
           <View style={styles.stat}>
@@ -75,17 +93,6 @@ const User = () => {
           </View>
         )}
       />
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton}>
-          <Icon name="home" size={28} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton}>
-          <Icon name="search" size={28} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton}>
-          <Icon name="person" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };

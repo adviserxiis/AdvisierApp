@@ -1,46 +1,12 @@
-// App.js
-import * as React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text, View} from 'react-native';
-import Home from '../screens/home/home';
-import User from '../screens/user/user';
-import Profile from '../screens/profile/profile';
+import {useSelector} from 'react-redux';
+import Auth from './Auth';
+import Main from './Main';
 
-// Bottom Tabs
-const Tab = createBottomTabNavigator();
-function MyTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}>
-      <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="User" component={User} />
-      <Tab.Screen name="Profile" component={Profile} />
-    </Tab.Navigator>
-  );
-}
+const Navigator = () => {
+  const user = useSelector(state => state.user);
+  console.log('🚀 ~ Navigator ~ user:', user.phoneNumber.length);
+  return <Main />;
+  // return user.phoneNumber.length === 0 ? <Auth /> : <Main />;
+};
 
-// Stack Navigator
-const Stack = createStackNavigator();
-function MyStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Tabs"
-        component={MyTabs}
-        options={{headerShown: false}}
-      />
-    </Stack.Navigator>
-  );
-}
-
-export default function Navigator() {
-  return (
-    <NavigationContainer>
-      <MyStack />
-    </NavigationContainer>
-  );
-}
+export default Navigator;

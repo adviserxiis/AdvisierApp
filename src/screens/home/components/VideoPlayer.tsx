@@ -1,17 +1,39 @@
 import React, {useState, useRef} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Dimensions,
-} from 'react-native';
+import {View, StatusBar, Dimensions, StyleSheet} from 'react-native';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import Orientation from 'react-native-orientation-locker';
+import Icon from 'react-native-vector-icons/AntDesign';
+import Icon1 from 'react-native-vector-icons/Entypo';
+const {width: screenWidth} = Dimensions.get('window');
+const aspectRatio = 9 / 16;
 
-const VideoPlayer = () => {
+const actions = [
+  {
+    text: 'Accessibility',
+    icon: '',
+    name: 'bt_accessibility',
+    position: 2,
+  },
+  {
+    text: 'Language',
+    icon: '',
+    name: 'bt_language',
+    position: 1,
+  },
+  {
+    text: 'Location',
+    icon: '',
+    name: 'bt_room',
+    position: 3,
+  },
+  {
+    text: 'Video',
+    icon: '',
+    name: 'bt_videocam',
+    position: 4,
+  },
+];
+const VideoPlayer = ({videoSrc}: String) => {
   const [paused, setPaused] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const videoRef = useRef(null);
@@ -40,29 +62,38 @@ const VideoPlayer = () => {
   return (
     <View style={isFullScreen ? styles.fullScreenContainer : styles.container}>
       <StatusBar hidden={isFullScreen} />
+
       <Video
-        source={{uri: 'https://www.w3schools.com/html/mov_bbb.mp4'}}
+        source={{
+          uri: videoSrc,
+        }}
         ref={videoRef}
         style={isFullScreen ? styles.fullScreenVideo : styles.video}
         controls={false}
-        paused={paused}
-        resizeMode="contain"
+        paused={true}
+        resizeMode="cover"
         onBuffer={onBuffer}
         onError={videoError}
         fullscreen={isFullScreen}
       />
-      <View style={styles.controls}>
-        <TouchableOpacity onPress={handlePlayPause}>
-          <Icon name={paused ? 'play-arrow' : 'pause'} size={30} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleFullScreen}>
-          <Icon
-            name={isFullScreen ? 'fullscreen-exit' : 'fullscreen'}
-            size={30}
-            color="#fff"
-          />
-        </TouchableOpacity>
+      <View
+        style={{
+          position: 'absolute',
+          right: 0,
+          justifyContent: 'space-between',
+          height: 100,
+        }}>
+        <Icon name="like2" size={30} color="#FFFFFF" />
+
+        <Icon1 name="share" size={30} color="#FFFFFF" />
       </View>
+
+      {/* <FloatingAction
+        actions={actions}
+        onPressItem={name => {
+          console.log(`selected button: ${name}`);
+        }}
+      /> */}
     </View>
   );
 };
@@ -73,26 +104,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
+    marginVertical: 10,
   },
   fullScreenContainer: {
     flex: 1,
     backgroundColor: '#000',
   },
   video: {
-    width: '100%',
-    height: 300,
+    width: screenWidth,
+    // height: Dimensions.get('window').height * aspectRatio,
+    height: Dimensions.get('window').height,
   },
   fullScreenVideo: {
     ...StyleSheet.absoluteFillObject,
-  },
-  controls: {
-    position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
   },
 });
 

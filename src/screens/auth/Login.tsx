@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -6,11 +7,33 @@ import {
   TextInput,
   Pressable,
 } from 'react-native';
-
+import firebase from '../../api/firebase';
+import {login, sendOTP} from '../../api/auth';
+import {useNavigation} from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
+import {storeData} from '../../utils/store';
+import {setUser} from '../../features/user/userSlice';
+import {useDispatch} from 'react-redux';
 const Login = () => {
+  const navigation = useNavigation();
+  const [number, setNumber] = useState('');
+  const dispatch = useDispatch();
+
+  const onSubmitHandler = async (number: String) => {
+    // const res = await login(number);
+    // console.log('res', res);
+    console.log('check');
+    // navigation.navigate('Otp');
+    const res = await sendOTP('+918287228020');
+    if (res._auth._config.statics.PhoneAuthState.CODE_SENT === 'sent') {
+      storeData('mobile_number', '+918287228020');
+      dispatch(setUser('+918287228020'));
+    }
+  };
+
   return (
     <SafeAreaView style={styles.outerContainer}>
-      <Image source={require('../assets/images/logo.png')} />
+      <Image source={require('../../assets/images/logo.png')} />
       <Text style={styles.heading}>Sign in or create Account</Text>
       <Text style={styles.subHeading}>
         Hello! Looks like you’re enjoying our page, but you haven’t signed up
@@ -18,11 +41,14 @@ const Login = () => {
       </Text>
       <TextInput
         style={styles.input}
-        value=""
+        value={number}
+        onChangeText={val => setNumber(number)}
         placeholderTextColor="#FFFFFF"
         placeholder="Phone Number"
       />
-      <Pressable style={styles.loginBtnContainer}>
+      <Pressable
+        style={styles.loginBtnContainer}
+        onPress={() => onSubmitHandler(number)}>
         <Text style={styles.loginTxt}>Login</Text>
       </Pressable>
       <Text style={styles.bottomTxt}>
@@ -44,10 +70,11 @@ const styles = StyleSheet.create({
   },
   heading: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    // fontWeight: '700',
     fontSize: 20,
     textAlign: 'center',
     marginTop: 20,
+    fontFamily: 'Poppins-Bold',
   },
   subHeading: {
     color: '#FFFFFF',
@@ -61,7 +88,6 @@ const styles = StyleSheet.create({
   input: {
     color: '#FFFFFF',
     borderWidth: 2,
-
     padding: 15,
     marginHorizontal: 10,
     width: '80%',

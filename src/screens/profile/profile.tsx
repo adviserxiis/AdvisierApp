@@ -1,8 +1,16 @@
 import React from 'react';
 import {View, Text, Image, StyleSheet, Pressable} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useDispatch} from 'react-redux';
+import {clearData} from '../../utils/store';
+import {clearUser} from '../../features/user/userSlice';
 
 const Profile = () => {
+  const dispatch = useDispatch();
+  const logout = () => {
+    clearData();
+    dispatch(clearUser());
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -42,7 +50,7 @@ const Profile = () => {
           <Icon name="chevron-right" size={24} color="#fff" />
         </Pressable>
       </View>
-      <Pressable style={styles.logoutButton}>
+      <Pressable style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutButtonText}>Log Out</Text>
       </Pressable>
     </View>
