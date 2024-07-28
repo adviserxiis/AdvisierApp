@@ -9,6 +9,7 @@ const Home = () => {
   useEffect(() => {
     async function getVideoList() {
       const res = await videoList();
+
       setList(res);
     }
     getVideoList();
@@ -16,7 +17,7 @@ const Home = () => {
   return (
     <ScrollView>
       {list.map((item, idx) => (
-        <VideoPlayer videoSrc={item} key={idx} />
+        <VideoPlayer video={item} key={idx} />
       ))}
     </ScrollView>
   );

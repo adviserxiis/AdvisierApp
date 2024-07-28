@@ -1,39 +1,26 @@
 import React, {useState, useRef} from 'react';
-import {View, StatusBar, Dimensions, StyleSheet} from 'react-native';
+import {
+  View,
+  StatusBar,
+  Dimensions,
+  StyleSheet,
+  Image,
+  Text,
+  Pressable,
+} from 'react-native';
 import Video from 'react-native-video';
 import Orientation from 'react-native-orientation-locker';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Icon1 from 'react-native-vector-icons/Entypo';
+import Icon2 from 'react-native-vector-icons/MaterialIcons';
+import {likeVideo} from '../../../api/home';
 const {width: screenWidth} = Dimensions.get('window');
 const aspectRatio = 9 / 16;
 
-const actions = [
-  {
-    text: 'Accessibility',
-    icon: '',
-    name: 'bt_accessibility',
-    position: 2,
-  },
-  {
-    text: 'Language',
-    icon: '',
-    name: 'bt_language',
-    position: 1,
-  },
-  {
-    text: 'Location',
-    icon: '',
-    name: 'bt_room',
-    position: 3,
-  },
-  {
-    text: 'Video',
-    icon: '',
-    name: 'bt_videocam',
-    position: 4,
-  },
-];
-const VideoPlayer = ({videoSrc}: String) => {
+const VideoPlayer = ({video}: String) => {
+  // console.log('===', videoSrc);
+  console.log('--', video.postId);
+  const videoSrc = video.post.post_file;
   const [paused, setPaused] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const videoRef = useRef(null);
@@ -59,6 +46,10 @@ const VideoPlayer = ({videoSrc}: String) => {
     console.log('Video Error', error);
   };
 
+  const likeHandler = (id: any) => {
+    likeVideo(id);
+  };
+
   return (
     <View style={isFullScreen ? styles.fullScreenContainer : styles.container}>
       <StatusBar hidden={isFullScreen} />
@@ -79,13 +70,41 @@ const VideoPlayer = ({videoSrc}: String) => {
       <View
         style={{
           position: 'absolute',
+
+          bottom: 30,
+          left: 20,
+        }}>
+        <Image
+          source={{
+            uri: 'https://images.unsplash.com/photo-1598601065215-751bf8798a2c?w=1400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bW91bnRhaW5zfGVufDB8fDB8fHww',
+          }}
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 50,
+          }}
+        />
+        <Text
+          style={{
+            color: '#FFF',
+            marginVertical: 10,
+          }}>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit.
+        </Text>
+      </View>
+      <View
+        style={{
+          position: 'absolute',
           right: 0,
           justifyContent: 'space-between',
-          height: 100,
+          height: 200,
+          alignItems: 'center',
         }}>
-        <Icon name="like2" size={30} color="#FFFFFF" />
-
+        <Pressable onPress={() => likeHandler(video.postId)}>
+          <Icon name="like2" size={30} color="#FFFFFF" />
+        </Pressable>
         <Icon1 name="share" size={30} color="#FFFFFF" />
+        <Icon2 name="reviews" size={30} color="#FFFFFF" />
       </View>
 
       {/* <FloatingAction

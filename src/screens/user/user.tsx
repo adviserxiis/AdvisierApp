@@ -20,7 +20,6 @@ const data = [
 const User = () => {
   const [details, setDetails] = useState(null);
   const [posts, setPosts] = useState(null);
-  console.log('----', posts);
 
   useEffect(() => {
     async function getDetails() {
