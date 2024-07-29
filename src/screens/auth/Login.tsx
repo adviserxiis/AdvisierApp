@@ -40,7 +40,7 @@ const Login = () => {
     console.log('check');
     try {
       const formattedNumber = `+91${number}`;
-      const confirmationResult = await sendOTP(formattedNumber); // Get the confirmation result
+      const confirmationResult = await sendOTP(formattedNumber); 
       setConfirmation(confirmationResult); // Store the confirmation result
       storeData('mobile_number', formattedNumber);
       dispatch(setUser(formattedNumber));
@@ -48,7 +48,9 @@ const Login = () => {
     } catch (error) {
       console.log(error);
       setError('Failed to send OTP. Please try again.');
-    } 
+    }
+
+    setNumber('');
   };
 
   return (

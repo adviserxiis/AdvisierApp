@@ -10,22 +10,23 @@ import {
   StatusBar,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
-import { useDispatch } from 'react-redux';
-import { storeData } from './../../utils/store';
+import {useDispatch} from 'react-redux';
+import {storeData} from './../../utils/store';
 import {setUser} from '../../features/user/userSlice';
+import { sendOTP } from './../../api/auth';
 const OTPVerification = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const navigation = useNavigation();
   const route = useRoute();
   const otpInput = useRef([]);
   const [loading, setLoading] = useState(false);
-  const { confirmation, phoneNumber } = route.params;
+  const phoneNumber = route.params?.phoneNumber;
+  const confirmation = route.params?.confirmation;
   const [timer, setTimer] = useState(0);
   const timerRef = useRef(null);
   const [resendLoading, setResendLoading] = useState(false);
   const dispatch = useDispatch();
   const [error, setError] = useState('');
-
 
   const handleOtpChange = (value, index) => {
     const newOtp = [...otp];
@@ -39,7 +40,7 @@ const OTPVerification = () => {
     }
   };
 
-  const handleVerify = async() => {
+  const handleVerify = async () => {
     const otpCode = otp.join('');
     if (otpCode.length !== otp.length) {
       setError('Please enter the complete OTP.');
@@ -59,7 +60,7 @@ const OTPVerification = () => {
       }, 2000);
     } catch (error) {
       console.error('Invalid OTP. Please try again.', error);
-      setError('Invalid OTP. Please try again.');
+      setError('Invalid OTP. Please try again!.');
       setTimeout(() => setError(''), 3000);
     } finally {
       setLoading(false);
@@ -67,9 +68,7 @@ const OTPVerification = () => {
   };
 
   useEffect(() => {
-    
     startTimer();
-
     return () => clearInterval(timerRef.current);
   }, [phoneNumber]);
 
@@ -92,15 +91,15 @@ const OTPVerification = () => {
 
     setResendLoading(true);
     try {
-      const newConfirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      const newConfirmation = await sendOTP(phoneNumber);
       route.params.confirmation = newConfirmation;
       startTimer();
     } catch (error) {
       console.error('Failed to resend OTP:', error);
       if (error.code === 'auth/too-many-requests') {
-        alert('Too many requests. Please try again later.');
+        setError('Too many requests. Please try again later.');
       } else {
-        alert('Failed to resend OTP. Please try again.');
+        setError('Failed to resend OTP. Please try again.');
       }
     } finally {
       setResendLoading(false);
@@ -139,14 +138,17 @@ const OTPVerification = () => {
         onPress={handleResendCode}
         disabled={timer > 0 || resendLoading}>
         {resendLoading ? (
-          <ActivityIndicator size="large" color="#007BFF" />
+          <ActivityIndicator size="small" color="#007BFF" />
         ) : (
           <Text style={styles.resendCode}>
             {timer > 0 ? `Resend Code in ${timer}s` : 'Resend Code'}
           </Text>
         )}
       </TouchableOpacity>
-      <TouchableOpacity style={styles.verifyButton} onPress={handleVerify} disabled={loading}>
+      <TouchableOpacity
+        style={styles.verifyButton}
+        onPress={handleVerify}
+        disabled={loading}>
         {loading ? (
           <ActivityIndicator size="small" color="black" />
         ) : (
@@ -190,9 +192,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     textAlign: 'center',
     borderRadius: 8,
-    padding: 14,
+    padding: 10,
     marginHorizontal: 8,
-    width: 50,
+    width: 43,
   },
   resendText: {
     color: '#007BFF',
@@ -225,8 +227,8 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 14,
     marginTop: 16,
-    position:'absolute',
-    bottom:40,
+    position: 'absolute',
+    bottom: 40,
     fontFamily: 'Poppins-Regular',
   },
 });
