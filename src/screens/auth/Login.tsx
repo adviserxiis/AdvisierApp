@@ -6,6 +6,8 @@ import {
   Text,
   TextInput,
   Pressable,
+  StatusBar,
+  View,
 } from 'react-native';
 import firebase from '../../api/firebase';
 import {login, sendOTP} from '../../api/auth';
@@ -17,43 +19,85 @@ import {useDispatch} from 'react-redux';
 const Login = () => {
   const navigation = useNavigation();
   const [number, setNumber] = useState('');
+  const [error, setError] = useState('');
   const dispatch = useDispatch();
+  const [confirmation, setConfirmation] = useState(null); 
+
+  const validatePhoneNumber = phone => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
 
   const onSubmitHandler = async (number: String) => {
     // const res = await login(number);
     // console.log('res', res);
-    console.log('check');
-    // navigation.navigate('Otp');
-    const res = await sendOTP('+918287228020');
-    if (res._auth._config.statics.PhoneAuthState.CODE_SENT === 'sent') {
-      storeData('mobile_number', '+918287228020');
-      dispatch(setUser('+918287228020'));
+    if (!validatePhoneNumber(number)) {
+      setError('Please enter a valid 10-digit phone number.');
+      return;
     }
+    setError('');
+
+    console.log('check');
+    try {
+      const formattedNumber = `+91${number}`;
+      const confirmationResult = await sendOTP(formattedNumber); // Get the confirmation result
+      setConfirmation(confirmationResult); // Store the confirmation result
+      storeData('mobile_number', formattedNumber);
+      dispatch(setUser(formattedNumber));
+      navigation.navigate('Otp', { phoneNumber: formattedNumber, confirmation: confirmationResult });
+    } catch (error) {
+      console.log(error);
+      setError('Failed to send OTP. Please try again.');
+    } 
   };
 
   return (
     <SafeAreaView style={styles.outerContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="black" />
       <Image source={require('../../assets/images/logo.png')} />
       <Text style={styles.heading}>Sign in or create Account</Text>
       <Text style={styles.subHeading}>
         Hello! Looks like you’re enjoying our page, but you haven’t signed up
         for an account yet.
       </Text>
-      <TextInput
-        style={styles.input}
-        value={number}
-        onChangeText={val => setNumber(number)}
-        placeholderTextColor="#FFFFFF"
-        placeholder="Phone Number"
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={number}
+          onChangeText={number => {
+            setNumber(number);
+            if (error) setError('');
+          }}
+          placeholderTextColor="#FFFFFF"
+          placeholder="Phone Number"
+          keyboardType="phone-pad"
+        />
+        <Image
+          source={require('../../assets/images/user.png')}
+          style={styles.userImage}
+        />
+      </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Pressable
         style={styles.loginBtnContainer}
         onPress={() => onSubmitHandler(number)}>
         <Text style={styles.loginTxt}>Login</Text>
       </Pressable>
       <Text style={styles.bottomTxt}>
-        by creating an account, you agree to our’s Privacy Policy and Terms of
-        Use.
+        by creating an account, you agree to our’s{' '}
+        <Text
+          style={{
+            textDecorationLine: 'underline',
+          }}>
+          Privacy Policy
+        </Text>{' '}
+        and{' '}
+        <Text
+          style={{
+            textDecorationLine: 'underline',
+          }}>
+          Terms of Use.
+        </Text>
       </Text>
     </SafeAreaView>
   );
@@ -79,8 +123,9 @@ const styles = StyleSheet.create({
   subHeading: {
     color: '#FFFFFF',
     fontWeight: '400',
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
+    fontFamily: 'Poppins-Medium',
     marginVertical: 10,
     padding: 10,
     marginHorizontal: 10,
@@ -90,9 +135,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 15,
     marginHorizontal: 10,
-    width: '80%',
+    width: '81%',
     backgroundColor: '#323232',
     borderRadius: 12,
+    fontSize: 15,
+    letterSpacing: 0,
   },
   loginBtnContainer: {
     backgroundColor: '#FFFFFF',
@@ -106,6 +153,7 @@ const styles = StyleSheet.create({
     color: '#161616',
     fontWeight: '700',
     fontSize: 18,
+    fontFamily: 'Poppins-Regular',
   },
   bottomTxt: {
     color: '#FFFFFF',
@@ -113,5 +161,24 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 12,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
+    width: '80%',
+  },
+  errorText: {
+    color: 'red',
+    alignSelf: 'flex-start',
+    fontSize: 12,
+    paddingLeft: 45,
+    fontFamily: 'Poppins-Regular',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userImage: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    right: 30,
   },
 });
