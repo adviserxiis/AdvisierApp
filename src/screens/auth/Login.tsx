@@ -69,6 +69,9 @@ const Login = () => {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       console.log(userInfo);
+      dispatch(setUser(userInfo))
+      navigation.navigate('Thanks');   
+
     }
     catch(error){
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -86,7 +89,18 @@ const Login = () => {
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="light-content" backgroundColor="black" />
-      <Image source={require('../../assets/images/logo.png')} />
+      <View style={{
+        alignItems:'center',
+        justifyContent:'center',
+        flex:1,
+        paddingHorizontal:20
+      }}>
+
+      <Image source={require('../../assets/images/logo.png')}  style={{
+        width: 150,
+        height: 60,
+        objectFit:'contain'
+      }}/>
       <Text style={styles.heading}>Sign in or create Account</Text>
       <Text style={styles.subHeading}>
         Hello! Looks like you’re enjoying our page, but you haven’t signed up
@@ -130,7 +144,7 @@ const Login = () => {
       </View>
       <TouchableOpacity
         style={{
-          width: 280,
+          width: '100%',
           padding: 18,
           backgroundColor: '#F7F7F7',
           borderRadius: 10,
@@ -163,6 +177,7 @@ const Login = () => {
           Terms of Use.
         </Text>
       </Text>
+      </View>
     </SafeAreaView>
   );
 };
@@ -173,8 +188,6 @@ const styles = StyleSheet.create({
   outerContainer: {
     backgroundColor: 'black',
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   heading: {
     color: '#FFFFFF',
@@ -192,6 +205,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     marginVertical: 10,
     padding: 10,
+    width:'110%',
     marginHorizontal: 10,
   },
   input: {
@@ -199,7 +213,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 15,
     marginHorizontal: 10,
-    width: '81%',
+    width: '100%',
     backgroundColor: '#323232',
     borderRadius: 12,
     fontSize: 15,
@@ -208,9 +222,9 @@ const styles = StyleSheet.create({
   loginBtnContainer: {
     backgroundColor: '#FFFFFF',
     padding: 15,
-    width: '80%',
     marginVertical: 20,
     borderRadius: 10,
+    width:'100%'
   },
   loginTxt: {
     textAlign: 'center',
@@ -226,14 +240,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontFamily: 'Poppins-Regular',
-    width: '80%',
     marginTop:10,
   },
   errorText: {
     color: 'red',
     alignSelf: 'flex-start',
     fontSize: 12,
-    paddingLeft: 45,
+    paddingLeft: 10,
     fontFamily: 'Poppins-Regular',
   },
   inputContainer: {

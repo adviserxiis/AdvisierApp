@@ -5,6 +5,7 @@ import Main from './Main';
 const Navigator = () => {
   const user = useSelector(state => state.user);
   console.log('🚀 ~ Navigator ~ user:', user.phoneNumber.length);
+  
   return <Auth />;
   // return user.phoneNumber.length === 0 ? <Auth /> : <Main />;
 };

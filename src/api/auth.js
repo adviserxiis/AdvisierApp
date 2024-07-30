@@ -50,3 +50,5 @@ export const sendOTP = async phoneNumber => {
     console.log('Error2', error);
   }
 };
+
+

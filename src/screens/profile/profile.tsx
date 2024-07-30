@@ -6,8 +6,10 @@ import {clearData} from '../../utils/store';
 import {clearUser} from '../../features/user/userSlice';
 
 const Profile = () => {
+  const navigation = 
   const dispatch = useDispatch();
   const logout = () => {
+    
     clearData();
     dispatch(clearUser());
   };

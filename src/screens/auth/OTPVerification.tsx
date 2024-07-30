@@ -125,7 +125,7 @@ const OTPVerification = () => {
             onChangeText={value => handleOtpChange(value, index)}
             autoFocus={index === 0}
             onKeyPress={({nativeEvent}) => {
-              if (nativeEvent.key === 'Backspace' && !opt[index]) {
+              if (nativeEvent.key === 'Backspace' && !otp[index]) {
                 if (index > 0) {
                   otpInput.current[index - 1].focus();
                 }
@@ -138,7 +138,11 @@ const OTPVerification = () => {
         onPress={handleResendCode}
         disabled={timer > 0 || resendLoading}>
         {resendLoading ? (
-          <ActivityIndicator size="small" color="#007BFF" />
+          <ActivityIndicator size="small" color="#007BFF" style={{
+            marginBottom: 20,
+            marginTop:20,
+            alignItems:'center'
+          }} />
         ) : (
           <Text style={styles.resendCode}>
             {timer > 0 ? `Resend Code in ${timer}s` : 'Resend Code'}

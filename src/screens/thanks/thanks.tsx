@@ -4,11 +4,11 @@ import { useNavigation } from '@react-navigation/native';
 
 const Thanks = () => {
     const navigation = useNavigation();
-    useEffect(()=>{
-        setTimeout(() => {
-            navigation.navigate('Login');
-        }, 2000);
-    },[navigation])
+    // useEffect(()=>{
+    //     setTimeout(() => {
+    //         navigation.navigate('Login');
+    //     }, 2000);
+    // },[navigation])
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
@@ -33,13 +33,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#161616',
-    paddingHorizontal: 20,
-    gap: 9,
+    paddingHorizontal:15,
+    gap: 5,
   },
   bgImage: {
     width: 125,
-    height: 100,
+    height: 60,
     objectFit: 'contain',
+    marginBottom:10,
   },
   heading: {
     fontSize: 24,
@@ -53,6 +54,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     fontFamily: 'Poppins-ThinItalic',
-    width: 350,
+    width:'100%',
   },
 });
