@@ -6,6 +6,7 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.22"
+        googlePlayServicesAuthVersion= "19.2.0"
     }
     repositories {
         google()
@@ -18,6 +19,16 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
         classpath 'com.google.gms:google-services:4.4.2'
     
+    }
+}
+
+allprojects{
+    repositories {
+        google()
+        jcenter()
+        maven{
+            url "$rootDir/../node_modules/react-native/android"
+        }
     }
 }
 

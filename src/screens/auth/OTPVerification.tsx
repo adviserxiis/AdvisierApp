@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
   otpInput: {
     backgroundColor: '#333',
     color: '#fff',
-    fontSize: 24,
+    fontSize: 16,
     textAlign: 'center',
     borderRadius: 8,
     padding: 10,
     marginHorizontal: 8,
-    width: 43,
+    width:35
   },
   resendText: {
     color: '#007BFF',

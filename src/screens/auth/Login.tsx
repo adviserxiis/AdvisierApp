@@ -8,6 +8,7 @@ import {
   Pressable,
   StatusBar,
   View,
+  TouchableOpacity,
 } from 'react-native';
 import firebase from '../../api/firebase';
 import {login, sendOTP} from '../../api/auth';
@@ -16,6 +17,10 @@ import auth from '@react-native-firebase/auth';
 import {storeData} from '../../utils/store';
 import {setUser} from '../../features/user/userSlice';
 import {useDispatch} from 'react-redux';
+import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin'
+
+
+
 const Login = () => {
   const navigation = useNavigation();
   const [number, setNumber] = useState('');
@@ -27,6 +32,12 @@ const Login = () => {
     const phoneRegex = /^[0-9]{10}$/;
     return phoneRegex.test(phone);
   };
+
+  useEffect(()=>{
+    GoogleSignin.configure({
+      webClientId:'553796556466-btiglu1cssg04entlq545n5bknsuqdef.apps.googleusercontent.com'
+    })
+  },[])
 
   const onSubmitHandler = async (number: String) => {
     // const res = await login(number);
@@ -52,6 +63,25 @@ const Login = () => {
 
     setNumber('');
   };
+
+  const signIn = async()=>{
+    try{
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      console.log(userInfo);
+    }
+    catch(error){
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('User Cancelled the Login Flow');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Signing In...');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log('Play Services Not Available');
+      } else {
+        console.log(error,'Some Other Error Happened');
+      }
+    }
+  }
 
   return (
     <SafeAreaView style={styles.outerContainer}>
@@ -85,6 +115,38 @@ const Login = () => {
         onPress={() => onSubmitHandler(number)}>
         <Text style={styles.loginTxt}>Login</Text>
       </Pressable>
+      <View style={styles.dividerContainer}>
+        <View style={styles.Fdivider} />
+        <Text
+          style={{
+            fontSize: 16,
+            color: '#FFFFFF',
+            marginHorizontal: 10,
+            fontFamily: 'Poppins-Regular',
+          }}>
+          or
+        </Text>
+        <View style={styles.Sdivider} />
+      </View>
+      <TouchableOpacity
+        style={{
+          width: 280,
+          padding: 18,
+          backgroundColor: '#F7F7F7',
+          borderRadius: 10,
+          alignItems: 'center',
+          marginVertical: 10,
+        }} onPress={signIn}>
+        <Text
+          style={{
+            fontSize: 16,
+            color: 'black',
+            fontFamily: 'Poppins-Regular',
+            fontWeight: '700',
+          }}>
+          Sign In with Google
+        </Text>
+      </TouchableOpacity>
       <Text style={styles.bottomTxt}>
         by creating an account, you agree to our’s{' '}
         <Text
@@ -165,6 +227,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Poppins-Regular',
     width: '80%',
+    marginTop:10,
   },
   errorText: {
     color: 'red',
@@ -182,5 +245,21 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     right: 30,
+  },
+  Fdivider: {
+    width: 100,
+    height: 1,
+    backgroundColor: 'gray',
+  },
+  Sdivider: {
+    width: 100,
+    height: 1,
+    backgroundColor: 'gray',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
   },
 });
