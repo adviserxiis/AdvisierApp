@@ -17,6 +17,7 @@ import { useDispatch } from 'react-redux';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { sendOTP } from '../../api/auth';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import auth from '@react-native-firebase/auth';
 const Login = () => {
   const navigation = useNavigation();
   const [number, setNumber] = useState('');
@@ -42,7 +43,7 @@ const Login = () => {
       return;
     }
     setError('');
-
+  
     try {
       const formattedNumber = `+91${number}`;
       const confirmationResult = await sendOTP(formattedNumber);
@@ -51,34 +52,42 @@ const Login = () => {
       dispatch(setUser(formattedNumber));
       navigation.navigate('Otp', { phoneNumber: formattedNumber, confirmation: confirmationResult });
     } catch (error) {
+      if (error.code === 'auth/too-many-requests') {
+        setError('We have blocked all requests from this device due to unusual activity. Try again later.');
+      } else {
+        setError('Failed to send OTP. Please try again.');
+      }
       console.log(error);
-      setError('Failed to send OTP. Please try again.');
     }
-
+  
     setNumber('');
   };
 
   const signIn = async () => {
     setLoading(true); // Start loading indicator
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      console.log(userInfo);
-      dispatch(setUser(userInfo));
-      navigation.navigate('Thanks');
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('User Cancelled the Login Flow');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Signing In...');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log('Play Services Not Available');
-      } else {
-        console.log(error, 'Some Other Error Happened');
-      }
-    } finally {
-      setLoading(false); // Stop loading indicator
+  try {
+    await GoogleSignin.hasPlayServices();
+    const userInfo = await GoogleSignin.signIn();
+    const googleCredential = auth.GoogleAuthProvider.credential(userInfo.idToken);
+    await auth().signInWithCredential(googleCredential);
+    storeData('user', userInfo.user.email);
+    dispatch(setUser({email: userInfo.user.email, token: userInfo.idToken}));
+    navigation.navigate('Thanks');
+  } catch (error) {
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      console.log('User Cancelled the Login Flow');
+    } else if (error.code === statusCodes.IN_PROGRESS) {
+      console.log('Signing In...');
+    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      console.log('Play Services Not Available');
+    } else if (error.code === 'auth/too-many-requests') {
+      setError('We have blocked all requests from this device due to unusual activity. Try again later.');
+    } else {
+      console.log(error, 'Some Other Error Happened');
     }
+  } finally {
+    setLoading(false); // Stop loading indicator
+  }
   };
 
   return (
