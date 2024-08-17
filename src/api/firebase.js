@@ -1,6 +1,7 @@
 // firebaseConfig.js
 import firebase from '@react-native-firebase/app';
 import '@react-native-firebase/database';
+import '@react-native-firebase/storage';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBkV2RaH7IMbXr2k6zSmfWd4IVPayRq1X8',

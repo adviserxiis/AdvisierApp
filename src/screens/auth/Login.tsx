@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -8,136 +8,205 @@ import {
   Pressable,
   StatusBar,
   View,
-  ActivityIndicator,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { storeData } from '../../utils/store';
-import { setUser } from '../../features/user/userSlice';
-import { useDispatch } from 'react-redux';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import { sendOTP } from '../../api/auth';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {useNavigation} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import {getData, storeData} from '../../utils/store';
+import {setUser} from '../../features/user/userSlice';
+import {useDispatch} from 'react-redux';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 const Login = () => {
   const navigation = useNavigation();
-  const [number, setNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [confirmation, setConfirmation] = useState(null);
-  const [loading, setLoading] = useState(false); // State for loading
+  const [rememberMe, setRememberMe] = useState(false);
   const dispatch = useDispatch();
-
-  const validatePhoneNumber = phone => {
-    const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phone);
-  };
 
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: '553796556466-btiglu1cssg04entlq545n5bknsuqdef.apps.googleusercontent.com',
+      webClientId:
+        '553796556466-btiglu1cssg04entlq545n5bknsuqdef.apps.googleusercontent.com',
     });
   }, []);
 
-  const onSubmitHandler = async (number: String) => {
-    if (!validatePhoneNumber(number)) {
-      setError('Please enter a valid 10-digit phone number.');
-      return;
-    }
-    setError('');
-  
+  const handleGoogleSign = async () => {
     try {
-      const formattedNumber = `+91${number}`;
-      const confirmationResult = await sendOTP(formattedNumber);
-      setConfirmation(confirmationResult);
-      storeData('mobile_number', formattedNumber);
-      dispatch(setUser(formattedNumber));
-      navigation.navigate('Otp', { phoneNumber: formattedNumber, confirmation: confirmationResult });
-    } catch (error) {
-      if (error.code === 'auth/too-many-requests') {
-        setError('We have blocked all requests from this device due to unusual activity. Try again later.');
-      } else {
-        setError('Failed to send OTP. Please try again.');
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(
+        userInfo.idToken,
+      );
+      await auth().signInWithCredential(googleCredential);
+      storeData('user', userInfo.user.email);
+      dispatch(
+        setUser({
+          email: userInfo.user.email,
+          password: '',
+          userid: userInfo.idToken,
+        }),
+      );
+      navigation.navigate('setProfile');
+    } catch (error: any) {
+      switch (error.code) {
+        case statusCodes.SIGN_IN_CANCELLED:
+          console.log('User Cancelled the Login Flow');
+          break;
+        case statusCodes.IN_PROGRESS:
+          console.log('Signing In...');
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          console.log('Play Services Not Available');
+          break;
+        default:
+          console.log('Some Other Error Happened', error);
       }
-      console.log(error);
     }
-  
-    setNumber('');
   };
 
-  const signIn = async () => {
-    setLoading(true); // Start loading indicator
-  try {
-    await GoogleSignin.hasPlayServices();
-    const userInfo = await GoogleSignin.signIn();
-    const googleCredential = auth.GoogleAuthProvider.credential(userInfo.idToken);
-    await auth().signInWithCredential(googleCredential);
-    storeData('user', userInfo.user.email);
-    dispatch(setUser({email: userInfo.user.email, token: userInfo.idToken}));
-    navigation.navigate('Thanks');
-  } catch (error) {
-    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-      console.log('User Cancelled the Login Flow');
-    } else if (error.code === statusCodes.IN_PROGRESS) {
-      console.log('Signing In...');
-    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      console.log('Play Services Not Available');
-    } else if (error.code === 'auth/too-many-requests') {
-      setError('We have blocked all requests from this device due to unusual activity. Try again later.');
-    } else {
-      console.log(error, 'Some Other Error Happened');
+  const handleLogin = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const newError: any = {};
+
+    if (!email) {
+      newError.email = 'Email is required.';
+    } else if (!emailRegex.test(email)) {
+      newError.email = 'Invalid email format.';
     }
-  } finally {
-    setLoading(false); // Stop loading indicator
-  }
+
+    if (!password) {
+      newError.password = 'Password is required.';
+    }
+
+    if (Object.keys(newError).length > 0) {
+      setError(newError);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+          }),
+        },
+      );
+      const jsonresponse = await response.json();
+
+      if (response.status === 200) {
+        storeData('user', jsonresponse.userid);
+        dispatch(setUser({email, password, userid: jsonresponse.userid}));
+        navigation.navigate('setProfile');
+        // const profileComplete = await getData('profileComplete');
+        // if (profileComplete) {
+        //   navigation.navigate('Main');
+        // } else {
+        //   navigation.navigate('SetProfile');
+        // }
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      setError('Failed to login. Please try again.');
+    }
+  };
+
+  const handleChangeEmail = (text: string) => {
+    setEmail(text);
+    if (error.email) {
+      setError(prevError => ({...prevError, email: ''}));
+    }
+  };
+
+  const handleChangePassword = (text: string) => {
+    setPassword(text);
+    if (error.password) {
+      setError(prevError => ({...prevError, password: ''}));
+    }
   };
 
   return (
     <SafeAreaView style={styles.outerContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="black" />
-      <View style={styles.innerContainer}>
-        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
-        <Text style={styles.heading}>Sign in or create Account</Text>
-        <Text style={styles.subHeading}>
-          Hello! Looks like you’re enjoying our page, but you haven’t signed up
-          for an account yet.
+      <StatusBar barStyle="light-content" backgroundColor="#17191A" />
+      <View style={styles.centeredView}>
+        <Text style={styles.welcomeText}>Welcome Back</Text>
+        <Text style={styles.infoText}>
+          Welcome back! Please enter your details.
         </Text>
-        <View style={styles.inputContainer}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}>
           <TextInput
+            placeholder="Email"
+            placeholderTextColor="#838383"
+            value={email}
+            onChangeText={handleChangeEmail}
             style={styles.input}
-            value={number}
-            onChangeText={number => {
-              setNumber(number);
-              if (error) setError('');
-            }}
-            placeholderTextColor="#FFFFFF"
-            placeholder="Phone Number"
-            keyboardType="phone-pad"
           />
-          <Image source={require('../../assets/images/user.png')} style={styles.userImage} />
-        </View>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        <Pressable style={styles.loginBtnContainer} onPress={() => onSubmitHandler(number)}>
-          <Text style={styles.loginTxt}>Login</Text>
-        </Pressable>
-        <View style={styles.dividerContainer}>
-          <View style={styles.Fdivider} />
-          <Text style={styles.orText}>or</Text>
-          <View style={styles.Sdivider} />
-        </View>
-        <Pressable style={styles.googleBtnContainer} onPress={signIn}>
-          {loading ? (
-            <ActivityIndicator size="small" color="#000000" />
-          ) : (
-            <View style={styles.googleBtnContent}>
-              <AntDesign name="google" size={20} color="#000000" style={styles.googleLogo} /> 
-              <Text style={styles.googleBtnText}>Sign In with Google</Text>
-            </View>
+          {error.email && <Text style={styles.errorText}>{error.email}</Text>}
+          <TextInput
+            placeholder="Password"
+            secureTextEntry
+            placeholderTextColor="#838383"
+            value={password}
+            onChangeText={handleChangePassword}
+            style={styles.input}
+          />
+          {error.password && (
+            <Text style={styles.errorText}>{error.password}</Text>
           )}
-        </Pressable>
-        <Text style={styles.bottomTxt}>
-          by creating an account, you agree to our’s{' '}
-          <Text style={styles.underlineText}>Privacy Policy</Text> and{' '}
-          <Text style={styles.underlineText}>Terms of Use.</Text>
-        </Text>
+          <View style={styles.checkboxContainer}>
+            <TouchableOpacity
+              style={styles.checkboxWrapper}
+              onPress={() => setRememberMe(!rememberMe)}>
+              <View
+                style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                {rememberMe && <Icon name="check" size={14} color="black" />}
+              </View>
+              <Text style={styles.checkboxText}>Remember me</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('confirm')}>
+              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
+            <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+          <View style={styles.dividerContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.orText}>Or</Text>
+            <View style={styles.divider} />
+          </View>
+          <Pressable onPress={handleGoogleSign} style={styles.googleButton}>
+            <Image
+              source={require('../../assets/images/google.png')}
+              style={styles.googleIcon}
+            />
+            <Text style={styles.googleButtonText}>Continue with Google</Text>
+          </Pressable>
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.registerLink}>Register</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </SafeAreaView>
   );
@@ -145,138 +214,152 @@ const Login = () => {
 
 const styles = StyleSheet.create({
   outerContainer: {
-    backgroundColor: 'black',
-    flex: 1,
-  },
-  innerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#17191A',
     flex: 1,
     paddingHorizontal: 20,
   },
-  logo: {
-    width: 150,
-    height: 60,
-    objectFit: 'contain',
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  heading: {
-    color: '#FFFFFF',
+  welcomeText: {
     fontSize: 20,
-    textAlign: 'center',
-    marginTop: 20,
-    fontFamily: 'Poppins-Bold',
-  },
-  subHeading: {
-    color: '#FFFFFF',
-    fontWeight: '400',
-    fontSize: 14,
-    textAlign: 'center',
     fontFamily: 'Poppins-Medium',
-    marginVertical: 10,
-    padding: 10,
-    width: '110%',
-    marginHorizontal: 10,
+    color: '#fff',
+  },
+  infoText: {
+    color: '#838383',
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    textAlign: 'center',
+  },
+  keyboardAvoidingView: {
+    width: '100%',
+    paddingTop: 40,
+    gap: 10,
   },
   input: {
-    color: '#FFFFFF',
-    borderWidth: 2,
-    padding: 15,
-    marginHorizontal: 10,
     width: '100%',
-    backgroundColor: '#323232',
-    borderRadius: 12,
+    height: 52,
     fontSize: 15,
-    letterSpacing: 0,
-  },
-  loginBtnContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: 15,
-    marginVertical: 20,
-    borderRadius: 10,
-    width: '100%',
-  },
-  loginTxt: {
-    textAlign: 'center',
-    color: '#161616',
-    fontWeight: '700',
-    fontSize: 18,
+    color: '#fff',
     fontFamily: 'Poppins-Regular',
-  },
-  bottomTxt: {
-    color: '#FFFFFF',
-    marginHorizontal: 25,
-    fontWeight: '400',
-    fontSize: 12,
-    textAlign: 'center',
-    fontFamily: 'Poppins-Regular',
-    marginTop: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDEDED',
+    opacity: 0.8,
   },
   errorText: {
     color: 'red',
-    alignSelf: 'flex-start',
     fontSize: 12,
-    paddingLeft: 10,
     fontFamily: 'Poppins-Regular',
+    marginTop: -10,
   },
-  inputContainer: {
+  checkboxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  checkboxWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  userImage: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    right: 30,
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderColor: '#EDEDED',
+    borderWidth: 1,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
   },
-  Fdivider: {
-    width: 100,
-    height: 1,
-    backgroundColor: 'gray',
+  checkboxChecked: {
+    backgroundColor: '#388DEB',
+    borderColor: 'black',
   },
-  Sdivider: {
-    width: 100,
-    height: 1,
-    backgroundColor: 'gray',
+  checkboxText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+  },
+  forgotPasswordText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+  },
+  loginButton: {
+    backgroundColor: '#388DEB',
+    padding: 15,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  loginButtonText: {
+    fontFamily: 'Poppins-Medium',
+    color: 'white',
+    textAlign: 'center',
   },
   dividerContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    marginVertical: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#D9D9D9',
+    width: '43%',
   },
   orText: {
+    color: '#838383',
     fontSize: 16,
-    color: '#FFFFFF',
-    marginHorizontal: 10,
     fontFamily: 'Poppins-Regular',
+    marginHorizontal: 7,
+    opacity: 0.5,
   },
-  googleBtnContainer: {
+  googleButton: {
+    padding: 14,
     width: '100%',
-    padding: 18,
-    backgroundColor: '#F7F7F7',
-    borderRadius: 10,
-    alignItems: 'center',
-    marginVertical: 10,
-    flexDirection: 'row',
+    alignSelf: 'center',
+    borderWidth: 1,
     justifyContent: 'center',
-  },
-  googleBtnContent: {
+    borderRadius: 12,
     flexDirection: 'row',
-    alignItems: 'center',
+    borderColor: '#EDEDED',
+    gap: 6,
   },
-  googleLogo: {
+  googleIcon: {
     width: 20,
     height: 20,
-    marginRight: 7,
+    marginRight: 1,
   },
-  googleBtnText: {
-    fontSize: 16,
-    color: 'black',
+  googleButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    textAlign: 'center',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    gap: 4,
+    marginTop: 5,
+  },
+  registerText: {
+    color: '#838383',
+    fontSize: 12,
+    opacity: 0.4,
     fontFamily: 'Poppins-Regular',
-    fontWeight: '700',
   },
-  underlineText: {
-    textDecorationLine: 'underline',
+  registerLink: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: 'Poppins-Medium',
   },
 });
 

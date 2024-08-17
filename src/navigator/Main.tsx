@@ -7,7 +7,9 @@ import {Text, View} from 'react-native';
 import Home from '../screens/home/home';
 import User from '../screens/user/user';
 import Profile from '../screens/profile/profile';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/Feather';
+import Search from '../screens/search/Search';
+import AddPost from '../screens/add/AddPost';
 
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
@@ -16,6 +18,15 @@ function MyTabs() {
     <Tab.Navigator
       screenOptions={({route}) => ({
         headerShown: false,
+        tabBarLabel:'',
+        tabBarStyle:{
+          height: 70,
+          borderColor:'#17191A',
+          paddingTop:10,
+          backgroundColor:'#17191A',
+        },
+        tabBarInactiveTintColor:'white',
+        tabBarHideOnKeyboard:true,
         tabBarIcon: ({color, size}) => {
           let iconName;
 
@@ -23,11 +34,14 @@ function MyTabs() {
             case 'Home':
               iconName = 'home';
               break;
-            case 'User':
-              iconName = 'person';
+            case 'AddPost':
+              iconName = 'plus';
+              break;
+            case 'Search':
+              iconName = 'search';
               break;
             case 'Profile':
-              iconName = 'account-circle';
+              iconName = 'user';
               break;
             default:
               iconName = 'circle';
@@ -38,7 +52,8 @@ function MyTabs() {
         },
       })}>
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="User" component={User} />
+      <Tab.Screen name='AddPost' component={AddPost}/>
+      <Tab.Screen name="Search" component={Search} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );

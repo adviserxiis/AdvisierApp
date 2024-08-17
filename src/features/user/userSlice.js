@@ -2,9 +2,10 @@
 import {createSlice} from '@reduxjs/toolkit';
 
 const initialState = {
-  phoneNumber: '',
+  password:'',
   email:'',
   token:'',
+  userid:'',
 };
 
 const userSlice = createSlice({
@@ -13,15 +14,17 @@ const userSlice = createSlice({
   reducers: {
     setUser(state, action) {
       console.log('payload', action);
-      const  {email, phoneNumber , token } = action.payload;
+      const  {email ,password, token, userid } = action.payload;
       state.email = email || state.email;
-      state.phoneNumber = phoneNumber || state.phoneNumber;
+      state.password = password || state.password;
       state.token = token || state.token;
+      state.userid = userid || state.userid;
     },
-    clearUser(state, action) {
-      state.phoneNumber = '';
+    clearUser(state) {
       state.email = '';
+      state.password = '';
       state.token = '';
+      state.userid= '';
     },
   },
 });
