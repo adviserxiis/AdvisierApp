@@ -19,13 +19,9 @@ const Auth = () => {
 
   // useEffect(() => {
   //   if (user) {
-  //     if (user.userid) {
-  //       if (user.profileComplete) {
-  //         navigation.navigate('Main');
-  //       } else {
-  //         navigation.navigate('setProfile');
-  //       }
-  //     }
+  //     navigation.navigate('Main');
+  //   }else{
+  //     navigation.navigate('setProfile');
   //   }
   // }, [user, navigation]);
 

@@ -117,6 +117,8 @@ const Login = () => {
         // } else {
         //   navigation.navigate('SetProfile');
         // }
+      } else if (response.status === 401) { // Assuming 401 is returned for wrong credentials
+        setError('Incorrect email or password. Please try again.');
       } else {
         setError('Login failed. Please check your credentials.');
       }

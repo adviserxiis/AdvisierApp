@@ -13,7 +13,7 @@ import {useSelector} from 'react-redux';
 
 const Verify = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(50);
+  const [timer, setTimer] = useState(30);
   const [resendDisabled, setResendDisabled] = useState(true);
   const navigation = useNavigation();
   const route = useRoute();
@@ -54,15 +54,13 @@ const Verify = () => {
 
     try {
       const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/creator/verifychangepasswordotp',
+        'https://adviserxiis-backend-three.vercel.app/creator/sendchangepasswordotp',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userid: user.userid,
-            otp: otp.join(''),
             email: user.email,
           }),
         },

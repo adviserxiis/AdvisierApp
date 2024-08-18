@@ -55,11 +55,11 @@ const interestsList = [
 ];
 
 const linkLogos = {
-  Instagram: require('../../assets/images/instagram.png'),
-  Spotify: require('../../assets/images/spotify.png'),
+  Instagram: require('../../../assets/images/instagram.png'),
+  Spotify: require('../../../assets/images/spotify.png'),
 };
 
-const SetProfile = () => {
+const UpdateProfile = () => {
   const [bannerImage, setBannerImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [interests, setInterests] = useState([]);
@@ -189,7 +189,7 @@ const SetProfile = () => {
             userid : userid,
           }),
         );
-        navigation.navigate('Main');
+        navigation.goBack();
         // navigation.reset({index: 0, routes: [{name: 'Main'}]});
       } else {
         Alert.alert('Error', jsonResponse.error || 'Something went wrong');
@@ -316,7 +316,7 @@ const SetProfile = () => {
               onPress={pickImage}
               style={styles.bannerEditIconContainer}>
               <Image
-                source={require('../../assets/images/pen.png')}
+                source={require('../../../assets/images/pen.png')}
                 style={styles.editIcon}
               />
             </Pressable>
@@ -363,7 +363,7 @@ const SetProfile = () => {
               borderWidth: 1,
             }}>
             <Image
-              source={require('../../assets/images/pen.png')}
+              source={require('../../../assets/images/pen.png')}
               alt="upload"
               style={{
                 height: 10,
@@ -467,7 +467,7 @@ const SetProfile = () => {
               }}
             />
             <Image
-              source={require('../../assets/images/arrow.png')}
+              source={require('../../../assets/images/arrow.png')}
               style={{
                 width: 12,
                 height: 12,
@@ -500,7 +500,7 @@ const SetProfile = () => {
               }}
             />
             <Image
-              source={require('../../assets/images/arrow.png')}
+              source={require('../../../assets/images/arrow.png')}
               style={{
                 width: 12,
                 height: 12,
@@ -667,7 +667,7 @@ const SetProfile = () => {
                             borderColor: 'white',
                           }}>
                           <Image
-                            source={require('../../assets/images/pen.png')}
+                            source={require('../../../assets/images/pen.png')}
                             style={{
                               width: 10,
                               height: 10,
@@ -710,7 +710,7 @@ const SetProfile = () => {
   );
 };
 
-export default SetProfile;
+export default UpdateProfile;
 
 const styles = StyleSheet.create({
   container: {

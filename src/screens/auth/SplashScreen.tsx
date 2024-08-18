@@ -1,21 +1,24 @@
-import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
-import React, { useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-
+import {Image, StatusBar, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
 
 const SplashScreen = () => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
 
-    useEffect(()=>{
-      setTimeout(()=>{
-        navigation.navigate('Login');
-      },3000)
-    },[navigation]);
+  // useEffect(()=>{
+  //   setTimeout(()=>{
+  //     navigation.navigate('Login');
+  //   },3000)
+  // },[navigation]);
 
   return (
     <View style={styles.container}>
-        <StatusBar backgroundColor='white' barStyle='dark-content'/>
-      <Image source={require('../../assets/images/Luink.png')} resizeMode='contain' style={styles.image} />
+      <StatusBar backgroundColor="white" barStyle="dark-content" />
+      <Image
+        source={require('../../assets/images/Luink.png')}
+        resizeMode="contain"
+        style={styles.image}
+      />
       <View style={styles.textContainer}>
         <Text style={styles.textL}>L</Text>
         <Text style={styles.textU}>u</Text>
@@ -24,7 +27,7 @@ const SplashScreen = () => {
       </View>
     </View>
   );
-}
+};
 
 export default SplashScreen;
 
@@ -33,7 +36,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   image: {
     width: 127,
@@ -60,5 +63,5 @@ const styles = StyleSheet.create({
   textAi: {
     fontSize: 38,
     color: 'blue',
-  }
+  },
 });

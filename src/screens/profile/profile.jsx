@@ -21,7 +21,7 @@ import Share from 'react-native-share';
 import Video from 'react-native-video';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScrollView } from 'react-native-virtualized-view';
+import {ScrollView} from 'react-native-virtualized-view';
 const Profile = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
@@ -38,7 +38,7 @@ const Profile = () => {
   const [links, setLinks] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [bannerImage, setBannerImage] = useState(null);
-  
+
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
   };
@@ -47,13 +47,9 @@ const Profile = () => {
     clearData();
     dispatch(clearUser());
     navigation.navigate('Login');
-
   };
 
-  
-
   const getuser = async () => {
-
     try {
       const storedProfileData = await AsyncStorage.getItem('profileData');
       if (storedProfileData) {
@@ -80,13 +76,12 @@ const Profile = () => {
       },
     );
     const jsonresponse = await response.json();
-    
+
     setDetails(jsonresponse);
     // setReels(jsonresponse.reels || []);
     // console.log("hah",response);
     // console.log('jsj',user.userid);
   };
-
 
   useEffect(() => {
     getuser();
@@ -97,7 +92,7 @@ const Profile = () => {
       message: `Check out ${details?.username} profile on this amazing Luink.ai!`,
       url: 'https://play.google.com/store/apps/details?id=com.advisiorapp', // Replace with your actual URL
     };
-  
+
     try {
       const result = await Share.open(shareOptions);
       if (result) {
@@ -112,7 +107,7 @@ const Profile = () => {
     }
   };
 
-  const getReels= async()=>{
+  const getReels = async () => {
     const response = await fetch(
       `https://adviserxiis-backend-three.vercel.app/post/getpostsofadviser/${user.userid}`,
       {
@@ -125,15 +120,15 @@ const Profile = () => {
     const jsonresponse = await response.json();
     console.log('Hwos', jsonresponse);
     setReels(jsonresponse || []);
-  }
-  useEffect(()=>{
-      getReels();
-  },[])
+  };
+  useEffect(() => {
+    getReels();
+  }, []);
 
   const renderReelItem = ({item}) => (
-    <TouchableOpacity style={styles.reelItem}> 
+    <TouchableOpacity style={styles.reelItem}>
       <Video
-        source={{uri: item.data.post_file }} // Use video source
+        source={{uri: item.data.post_file}} // Use video source
         style={styles.reelThumbnail}
         controls={false} // Display video controls
         resizeMode="cover"
@@ -203,7 +198,11 @@ const Profile = () => {
       {/* Header Image */}
       <View style={styles.headerContainer}>
         <Image
-          source={{ uri: `${details?.profile_background}` }}
+          source={
+            details?.profile_background
+              ? {uri: details.profile_background}
+              : require('../../assets/images/bane.png')
+          }
           style={styles.headerImage}
         />
         <TouchableOpacity onPress={shareProfile}>
@@ -219,7 +218,11 @@ const Profile = () => {
       {/* Profile Information */}
       <View style={styles.profileContainer}>
         <Image
-          source={{uri: `${details?.profile_photo}`}}
+          source={
+            details?.profile_photo
+              ? {uri: details.profile_photo}
+              : require('../../assets/images/bane.png')
+          }
           style={styles.profileImage}
         />
         <View style={styles.profileDetails}>
@@ -229,7 +232,7 @@ const Profile = () => {
               {details?.professional_title}
             </Text>
           </View>
-          <TouchableOpacity onPress={()=>navigation.navigate('setProfile')}>
+          <TouchableOpacity onPress={() => navigation.navigate('updateProfile')}>
             <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
@@ -265,17 +268,23 @@ const Profile = () => {
         <View
           style={{
             marginVertical: 20,
-            flexDirection:'row',
-            gap:10
+            flexDirection: 'row',
+            gap: 10,
           }}>
-          <Image source={require('../../assets/images/instagram.png')} style={{
-            width:32,
-            height:32,
-          }}/>
-          <Image source={require('../../assets/images/spotify.png')} style={{
-            width:32,
-            height:32,
-          }}/>
+          <Image
+            source={require('../../assets/images/instagram.png')}
+            style={{
+              width: 32,
+              height: 32,
+            }}
+          />
+          <Image
+            source={require('../../assets/images/spotify.png')}
+            style={{
+              width: 32,
+              height: 32,
+            }}
+          />
         </View>
 
         <View
@@ -451,7 +460,7 @@ const styles = StyleSheet.create({
   },
   noReelsContainer: {
     alignItems: 'center',
-    
+
     marginVertical: 20,
   },
   noReelsText: {
@@ -484,7 +493,7 @@ const styles = StyleSheet.create({
   },
   reelColumnWrapper: {
     // justifyContent: 'space-between',
-    gap:2,
+    gap: 2,
     // gap: 1, // Add gap between columns
   },
   sectionTitle: {
@@ -504,7 +513,7 @@ const styles = StyleSheet.create({
     width: '33%',
     position: 'relative',
     gap: 1,
-    marginBottom:2
+    marginBottom: 2,
   },
   reelThumbnail: {
     width: '100%',

@@ -17,7 +17,7 @@ import Icon3 from 'react-native-vector-icons/Entypo';
 import Icon2 from 'react-native-vector-icons/MaterialIcons';
 import Ionic from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
-import {likeVideo} from '../../../api/home';
+// import {likeVideo} from '../../../api/home';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import Share from 'react-native-share';

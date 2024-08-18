@@ -10,6 +10,8 @@ import Profile from '../screens/profile/profile';
 import Icon from 'react-native-vector-icons/Feather';
 import Search from '../screens/search/Search';
 import AddPost from '../screens/add/AddPost';
+import SetProfile from '../screens/auth/SetProfile';
+import UpdateProfile from '../screens/profile/screen/UpdateProfile';
 
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
@@ -67,6 +69,11 @@ function MyStack() {
       <Stack.Screen
         name="Tabs"
         component={MyTabs}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="updateProfile"
+        component={UpdateProfile}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
