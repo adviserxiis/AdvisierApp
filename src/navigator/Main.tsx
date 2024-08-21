@@ -12,6 +12,31 @@ import Search from '../screens/search/Search';
 import AddPost from '../screens/add/AddPost';
 import SetProfile from '../screens/auth/SetProfile';
 import UpdateProfile from '../screens/profile/screen/UpdateProfile';
+import ViewProfile from '../screens/home/screen/ViewProfile';
+// import Login from '../screens/auth/Login';
+
+//Home Stack
+const HomeStack = createStackNavigator();
+function HomeStackScreen() {
+  return (
+    <HomeStack.Navigator>
+      <HomeStack.Screen
+        name="MainHome"
+        component={Home}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <HomeStack.Screen
+        name="ViewProfile"
+        component={ViewProfile}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </HomeStack.Navigator>
+  );
+}
 
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
@@ -20,15 +45,15 @@ function MyTabs() {
     <Tab.Navigator
       screenOptions={({route}) => ({
         headerShown: false,
-        tabBarLabel:'',
-        tabBarStyle:{
+        tabBarLabel: '',
+        tabBarStyle: {
           height: 70,
-          borderColor:'#17191A',
-          paddingTop:10,
-          backgroundColor:'#17191A',
+          borderColor: '#17191A',
+          paddingTop: 10,
+          backgroundColor: '#17191A',
         },
-        tabBarInactiveTintColor:'white',
-        tabBarHideOnKeyboard:true,
+        tabBarInactiveTintColor: 'white',
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({color, size}) => {
           let iconName;
 
@@ -53,8 +78,8 @@ function MyTabs() {
           return <Icon name={iconName} size={size} color={color} />;
         },
       })}>
-      <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name='AddPost' component={AddPost}/>
+      <Tab.Screen name="Home" component={HomeStackScreen} />
+      <Tab.Screen name="AddPost" component={AddPost} />
       <Tab.Screen name="Search" component={Search} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
@@ -71,6 +96,13 @@ function MyStack() {
         component={MyTabs}
         options={{headerShown: false}}
       />
+      {/* <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{
+          headerShown: false,
+        }}
+      /> */}
       <Stack.Screen
         name="updateProfile"
         component={UpdateProfile}

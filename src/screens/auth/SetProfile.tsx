@@ -123,7 +123,7 @@ const SetProfile = () => {
     const formData = new FormData();
     const social = convertToSocialLinks(links);
 
-    if (!name || !title || !description || !interests || !links.length) {
+    if (!name || !title || !description || !interests) {
       Alert.alert('Validation Error', 'Please fill all the fields');
       setIsLoading(false)
       return; // Stop execution if validation fails
@@ -173,6 +173,7 @@ const SetProfile = () => {
 
       const jsonResponse = await response.json();
       console.log('Hi', jsonResponse);
+      console.log('useird',jsonResponse.userid);
 
       if (response.ok) {
         // Alert.alert('Success', jsonResponse.message);
@@ -199,7 +200,6 @@ const SetProfile = () => {
       Alert.alert('Error', 'Failed to save details. Please try again.');
     }
     setIsLoading(false);
-
   };
 
   const pickImage = () => {

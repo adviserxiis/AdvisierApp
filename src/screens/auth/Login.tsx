@@ -46,12 +46,28 @@ const Login = () => {
         userInfo.idToken,
       );
       await auth().signInWithCredential(googleCredential);
-      storeData('user', userInfo.user.email);
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/signinwithgoogle',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userInfo.user.email,
+            
+          }),
+        },
+      );
+      const jsonresponse = await response.json();
+      console.log("jahs",jsonresponse);
+      console.log('useird',jsonresponse.userid);
+      storeData('user', userInfo.user);
       dispatch(
         setUser({
           email: userInfo.user.email,
-          password: '',
-          userid: userInfo.idToken,
+          // password: '',
+          userid: jsonresponse.userid,
         }),
       );
       navigation.navigate('setProfile');

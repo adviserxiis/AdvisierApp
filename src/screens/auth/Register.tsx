@@ -12,13 +12,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import {storeData} from '../../utils/store';
 import {setUser} from '../../features/user/userSlice';
 import {useDispatch} from 'react-redux';
+import auth from '@react-native-firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 const Register = () => {
   const navigation = useNavigation();
   const [rememberMe, setRememberMe] = useState(false);
@@ -27,6 +29,47 @@ const Register = () => {
   const dispatch = useDispatch();
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '553796556466-btiglu1cssg04entlq545n5bknsuqdef.apps.googleusercontent.com',
+    });
+  }, []);
+
+  const handleGoogleSign = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(
+        userInfo.idToken,
+      );
+      await auth().signInWithCredential(googleCredential);
+      storeData('user', userInfo.user);
+      dispatch(
+        setUser({
+          email: userInfo.user.email,
+          // password: '',
+          userid: userInfo.idToken,
+        }),
+      );
+      navigation.navigate('setProfile');
+    } catch (error: any) {
+      switch (error.code) {
+        case statusCodes.SIGN_IN_CANCELLED:
+          console.log('User Cancelled the Login Flow');
+          break;
+        case statusCodes.IN_PROGRESS:
+          console.log('Signing In...');
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          console.log('Play Services Not Available');
+          break;
+        default:
+          console.log('Some Other Error Happened', error);
+      }
+    }
+  };
 
   const handleRegister = async () => {
     const newErrors = {};
@@ -274,7 +317,7 @@ const Register = () => {
                 flexDirection: 'row',
                 justifyContent: 'center',
                 gap: 6,
-              }}>
+              }} onPress={handleGoogleSign}>
               <Image
                 source={require('../../assets/images/google.png')}
                 resizeMode="contain"

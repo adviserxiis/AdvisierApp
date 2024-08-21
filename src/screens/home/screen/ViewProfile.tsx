@@ -10,26 +10,26 @@ import {
   FlatList,
   Alert,
   StatusBar,
-  Modal,
-  Animated,
-  Easing,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
-import {clearData} from '../../utils/store';
+// import {clearData} from '../../utils/store';
 import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
-const Profile = () => {
+const ViewProfile = () => {
+    const route = useRoute();
+    const advsid = route.params;
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
   const [details, setDetails] = useState(null);
   const [reels, setReels] = useState([]);
   const user = useSelector(state => state.user);
+  const [isFollowing, setIsFollowing] = useState(false);
   // const [currentPlaying, setCurrentPlaying] = useState(null);
   // const [viewableItems, setViewableItems] = useState([]);
   const [totalViews, setTotalViews] = useState(0);
@@ -45,11 +45,11 @@ const Profile = () => {
     setIsExpanded(!isExpanded);
   };
   const dispatch = useDispatch();
-  // const logout = () => {
-  //   clearData();
-  //   dispatch(clearUser());
-  //   navigation.navigate('Login');
-  // };
+  //   const logout = () => {
+  //     clearData();
+  //     dispatch(clearUser());
+  //     navigation.navigate('Login');
+  //   };
 
   const getuser = async () => {
     try {
@@ -69,7 +69,7 @@ const Profile = () => {
     }
 
     const response = await fetch(
-      `https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`,
+      `https://adviserxiis-backend-three.vercel.app/creator/getuser/${advsid}`,
       {
         method: 'GET',
         headers: {
@@ -80,6 +80,7 @@ const Profile = () => {
     const jsonresponse = await response.json();
 
     setDetails(jsonresponse);
+    setIsFollowing(jsonresponse.isFollowing);
     // setReels(jsonresponse.reels || []);
     // console.log("hah",response);
     // console.log('jsj',user.userid);
@@ -100,7 +101,7 @@ const Profile = () => {
       if (result) {
         console.log('Shared successfully:', result);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.message) {
         Alert.alert('Error', error.message);
       } else if (error.dismissedAction) {
@@ -111,7 +112,7 @@ const Profile = () => {
 
   const getReels = async () => {
     const response = await fetch(
-      `https://adviserxiis-backend-three.vercel.app/post/getpostsofadviser/${user.userid}`,
+      `https://adviserxiis-backend-three.vercel.app/post/getpostsofadviser/${advsid}`,
       {
         method: 'GET',
         headers: {
@@ -123,12 +124,80 @@ const Profile = () => {
     console.log('Hwos', jsonresponse);
     setReels(jsonresponse || []);
 
-    const total = jsonresponse.reduce((acc, reel) => acc + (reel?.data?.views.length || 0), 0);
+    const total = jsonresponse.reduce(
+      (acc, reel) => acc + (reel.data?.views?.length|| 0),
+      0,
+    );
     setTotalViews(total);
   };
   useEffect(() => {
     getReels();
   }, []);
+
+  const followUser = async () => {
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/followcreator',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            adviserid: advsid,
+            followerid: user.userid,
+          }),
+        }
+      );
+      const jsonresponse = await response.json();
+      console.log('Follow response', jsonresponse);
+
+      if (response.ok) {
+        setIsFollowing(true);
+      } else {
+        console.error('Failed to follow:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error in follow request:', error);
+    }
+  };
+
+  const unfollowUser = async () => {
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/unfollowcreator',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            adviserid: advsid,
+            followerid: user.userid,
+          }),
+        }
+      );
+      const jsonresponse = await response.json();
+      console.log('UnFollow response', jsonresponse);
+
+
+      if (response.ok) {
+        setIsFollowing(false);
+      } else {
+        console.error('Failed to unfollow:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error in unfollow request:', error);
+    }
+  };
+
+  const handleFollowToggle = () => {
+    if (isFollowing) {
+      unfollowUser();
+    } else {
+      followUser();
+    }
+  };
 
   const renderReelItem = ({item}) => (
     <TouchableOpacity style={styles.reelItem}>
@@ -137,16 +206,9 @@ const Profile = () => {
         style={styles.reelThumbnail}
         controls={false} // Display video controls
         resizeMode="cover"
-        // repeat={true} onPress={()=>setCurrentPlaying(item.id)}
         muted
         paused={true}
-        // paused={currentPlaying !== item.id}// Adjust video aspect ratio
       />
-      {/* <Image
-        source={item.thumbnail} // Use image source
-        style={styles.reelThumbnail}
-        resizeMode="cover" // Adjust image aspect ratio
-      /> */}
       <View style={styles.reelInfo}>
         <View
           style={{
@@ -180,7 +242,7 @@ const Profile = () => {
               marginTop: -3,
             }}
           />
-          <Text style={styles.reelText}>{item?.data?.views.length || 0} </Text>
+          <Text style={styles.reelText}>{item?.data?.views?.length || 0} </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -206,7 +268,7 @@ const Profile = () => {
           source={
             details?.profile_background
               ? {uri: details.profile_background}
-              : require('../../assets/images/bane.png')
+              : require('../../../assets/images/bane.png')
           }
           style={styles.headerImage}
         />
@@ -226,7 +288,7 @@ const Profile = () => {
           source={
             details?.profile_photo
               ? {uri: details.profile_photo}
-              : require('../../assets/images/bane.png')
+              : require('../../../assets/images/bane.png')
           }
           style={styles.profileImage}
         />
@@ -237,8 +299,25 @@ const Profile = () => {
               {details?.professional_title}
             </Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('updateProfile')}>
-            <Text style={styles.editProfileText}>Edit Profile</Text>
+          <TouchableOpacity
+            style={[
+              styles.followButton,
+              {
+                backgroundColor: isFollowing ? '#17191A' : '#388DEB',
+                borderColor: isFollowing ? '#388DEB' : 'transparent',
+                borderWidth: isFollowing ? 1 : 0,
+              },
+            ]}
+            onPress={handleFollowToggle}>
+            <Text
+              style={[
+                styles.editProfileText,
+                {
+                  color: isFollowing ? '#388DEB' : 'white',
+                },
+              ]}>
+              {isFollowing ? 'Following' : 'Follow'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -277,14 +356,14 @@ const Profile = () => {
             gap: 10,
           }}>
           <Image
-            source={require('../../assets/images/instagram.png')}
+            source={require('../../../assets/images/instagram.png')}
             style={{
               width: 32,
               height: 32,
             }}
           />
           <Image
-            source={require('../../assets/images/spotify.png')}
+            source={require('../../../assets/images/spotify.png')}
             style={{
               width: 32,
               height: 32,
@@ -320,7 +399,7 @@ const Profile = () => {
                 letterSpacing: 1,
                 marginTop: 2,
               }}>
-              {details?.followers?.length || 0}
+              {details?.followers.length || 0}
             </Text>
           </View>
           <View
@@ -421,6 +500,13 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
+  followButton: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerImage: {
     width: '100%',
     height: 130,
@@ -465,7 +551,7 @@ const styles = StyleSheet.create({
   },
   noReelsContainer: {
     alignItems: 'center',
-    justifyContent:'center',
+    justifyContent: 'center',
     marginVertical: 20,
   },
   noReelsText: {
@@ -482,10 +568,9 @@ const styles = StyleSheet.create({
   },
   editProfileText: {
     fontSize: 12,
-    color: '#0069B4',
+    color: 'white',
     textAlign: 'right',
     fontFamily: 'Poppins-Medium',
-    textDecorationLine: 'underline',
   },
   readMoreText: {
     fontSize: 12,
@@ -522,7 +607,7 @@ const styles = StyleSheet.create({
   },
   reelThumbnail: {
     width: '100%',
-    height: 210
+    height: 210,
   },
   reelInfo: {
     position: 'absolute',
@@ -540,4 +625,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Profile;
+export default ViewProfile;

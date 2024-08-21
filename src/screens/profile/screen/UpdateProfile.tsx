@@ -123,7 +123,7 @@ const UpdateProfile = () => {
     const formData = new FormData();
     const social = convertToSocialLinks(links);
 
-    if (!name || !title || !description || !interests || !links.length) {
+    if (!name || !title || !description || !interests ) {
       Alert.alert('Validation Error', 'Please fill all the fields');
       setIsLoading(false)
       return; // Stop execution if validation fails

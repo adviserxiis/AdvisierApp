@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Alert,
 } from 'react-native';
 import Video from 'react-native-video';
 import Orientation from 'react-native-orientation-locker';
@@ -18,13 +19,20 @@ import Icon2 from 'react-native-vector-icons/MaterialIcons';
 import Ionic from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 // import {likeVideo} from '../../../api/home';
-import { useSelector } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
-const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => {
+const VideoPlayer = ({
+  video,
+  isVisible,
+  index,
+  currentIndex,
+  mute,
+  setMute,
+}) => {
   const videoSrc = video.data.post_file;
   const [paused, setPaused] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -33,7 +41,8 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
   const [buffering, setBuffering] = useState(true);
   const [error, setError] = useState(null);
   const videoRef = useRef(null);
-  const user = useSelector((state)=>state.user);
+  const user = useSelector(state => state.user);
+  const navigation = useNavigation();
 
   // Handle play/pause based on visibility and scrolling
   useEffect(() => {
@@ -43,8 +52,6 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
       setPaused(true);
     }
   }, [isVisible, currentIndex, index]);
-
-
 
   // Handle orientation changes
   // useEffect(() => {
@@ -74,7 +81,7 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
       return () => {
         setPaused(true); // Pause the video when the screen loses focus
       };
-    }, [currentIndex, index])
+    }, [currentIndex, index]),
   );
 
   const handlePlayPause = useCallback(() => {
@@ -101,16 +108,15 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
   const likeHandler = useCallback(async () => {
     if (like) {
       await removeLike(video?.id);
-      setLikeCount((prevCount) => prevCount - 1);
+      setLikeCount(prevCount => prevCount - 1);
     } else {
       await AddLiked(video?.id);
-      setLikeCount((prevCount) => prevCount + 1);
+      setLikeCount(prevCount => prevCount + 1);
     }
     console.log('Video like toggled:', video?.id);
   }, [like, video?.id]);
-  
 
-  const AddLiked = async(videoid)=>{
+  const AddLiked = async videoid => {
     console.log(videoid);
     const response = await fetch(
       'https://adviserxiis-backend-three.vercel.app/post/addlike',
@@ -126,39 +132,38 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
       },
     );
     const jsonresponse = await response.json();
-    console.log("Hiws",jsonresponse);
+    console.log('Hiws', jsonresponse);
     setLike(true);
-  }
+  };
 
-  const removeLike = async (videoid) => {
-      const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/post/removelike',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            postid: videoid,
-            userid: user.userid,
-          }),
+  const removeLike = async videoid => {
+    const response = await fetch(
+      'https://adviserxiis-backend-three.vercel.app/post/removelike',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
-      const jsonresponse = await response.json();
-      console.log("Unlike response:", jsonresponse);
-      // if (jsonresponse.success) {
-      //   setLike(false);
-      // } 
-      setLike(false);
-      
+        body: JSON.stringify({
+          postid: videoid,
+          userid: user.userid,
+        }),
+      },
+    );
+    const jsonresponse = await response.json();
+    console.log('Unlike response:', jsonresponse);
+    // if (jsonresponse.success) {
+    //   setLike(false);
+    // }
+    setLike(false);
   };
 
   const shareProfile = async () => {
     const shareOptions = {
-      message: `Check out ${video?.adviser?.data?.username} profile on this amazing Luink.ai!`,
+      message: `Check out ${video?.adviser?.data?.username} new reels on this amazing Luink.ai!`,
       url: 'https://play.google.com/store/apps/details?id=com.advisiorapp', // Replace with your actual URL
     };
-  
+
     try {
       const result = await Share.open(shareOptions);
       if (result) {
@@ -166,13 +171,12 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
       }
     } catch (error) {
       if (error.message) {
-        Alert.alert('Error', error.message);
+        // Alert.alert('Error', error.message);
       } else if (error.dismissedAction) {
         console.log('Share dismissed');
       }
     }
   };
-    
 
   // Only render the video component if it is visible and there is no error
   const renderVideo = useMemo(() => {
@@ -194,8 +198,13 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
             onBuffer={onBuffer}
             onError={videoError}
             fullscreen={isFullScreen}
+            minBufferMs={15000}
+            maxBufferMs={50000}
+            bufferForPlaybackMs={5000}
+            bufferForPlaybackAfterRebufferMs={5000}
             muted={mute} // Use the passed mute prop
             repeat={true}
+            bitrate={1500000}
             onLoadStart={() => setBuffering(true)}
             onLoad={() => setBuffering(false)}
           />
@@ -211,7 +220,7 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
               <Text style={styles.errorText}>Failed to load video</Text>
             </View>
           )}
-          
+
           {paused && !buffering && !error && (
             <Icon3
               name="controller-play"
@@ -231,13 +240,9 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
     videoSrc,
     paused,
     buffering,
-    mute, 
-    handlePlayPause,
-    onBuffer,
+    mute,
     videoError,
-    isFullScreen,
-    setMute, 
-    error 
+    error,
   ]);
 
   return (
@@ -261,19 +266,31 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
             </View>
             <View style={styles.viewCount}>
               <Feather name="eye" size={18} color="white" />
-              <Text style={styles.viewCountText}>{video?.adviser?.data?.adviserid?.views || 0}</Text>
+              <Text style={styles.viewCountText}>
+                {video?.adviser?.views?.length || 0}
+              </Text>
             </View>
           </View>
           <View style={styles.overlay}>
             <View style={styles.userInfo}>
-              <Image
-                source={{uri: `${video?.adviser?.data?.profile_photo}`}}
-                style={styles.profilePic}
-              />
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('ViewProfile', video?.adviser?.id)
+                }>
+                <Image
+                  source={{uri: `${video?.adviser?.data?.profile_photo}`}}
+                  style={styles.profilePic}
+                />
+              </TouchableOpacity>
               <View style={{flexDirection: 'column'}}>
-                <Text style={styles.userName}>
-                  {video?.adviser?.data?.username}
-                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('ViewProfile', video?.adviser?.id)
+                  }>
+                  <Text style={styles.userName}>
+                    {video?.adviser?.data?.username}
+                  </Text>
+                </TouchableOpacity>
                 <Text style={styles.description}>
                   {video?.data?.description}
                 </Text>
@@ -281,16 +298,19 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
             </View>
           </View>
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton}> 
+            <TouchableOpacity style={styles.actionButton}>
               <Ionic
-                name={mute ? 'volume-mute' : 'volume-high'} size={24} color="#FFFFFF" style={{
-                  marginBottom:5
+                name={mute ? 'volume-mute' : 'volume-high'}
+                size={24}
+                color="#FFFFFF"
+                style={{
+                  marginBottom: 5,
                 }}
                 onPress={() => setMute(prev => !prev)} // Use the passed setMute function
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={()=>{
+              onPress={() => {
                 likeHandler();
                 // AddLiked(video?.id);
               }}
@@ -306,7 +326,9 @@ const VideoPlayer = ({video, isVisible, index, currentIndex, mute, setMute}) => 
               <Feather name="message-circle" size={24} color="#FFFFFF" />
               <Text style={styles.actionText}>190</Text>
             </TouchableOpacity> */}
-            <TouchableOpacity style={styles.actionButton} onPress={shareProfile}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={shareProfile}>
               <Icon3 name="share" size={24} color="#FFFFFF" />
               <Text style={styles.actionText}>0</Text>
             </TouchableOpacity>
@@ -332,6 +354,11 @@ const styles = StyleSheet.create({
   },
   fullScreenContainer: {
     flex: 1,
+    position: 'absolute',
+    width: screenWidth,
+    height: screenHeight,
+    top: 0,
+    left: 0,
     backgroundColor: '#000',
   },
   video: {
@@ -435,17 +462,17 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 14,
-    fontFamily:'Poppins-Bold',
+    fontFamily: 'Poppins-Bold',
     color: 'white',
-    lineHeight:21
+    lineHeight: 21,
   },
   description: {
     fontSize: 12,
     color: 'white',
-    fontFamily:'Poppins-Regular',
+    fontFamily: 'Poppins-Regular',
     width: '70%',
-    opacity:0.7,
-    lineHeight:18
+    opacity: 0.7,
+    lineHeight: 18,
   },
   actions: {
     position: 'absolute',
