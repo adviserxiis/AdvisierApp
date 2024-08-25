@@ -5,11 +5,17 @@ import {useNavigation} from '@react-navigation/native';
 const SplashScreen = () => {
   const navigation = useNavigation();
 
-  useEffect(()=>{
-    setTimeout(()=>{
-      navigation.navigate('Login');
-    },3000)
-  },[navigation]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // console.log('Navigating to Login');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }, 3000);
+  
+    return () => clearTimeout(timer); // Clean up the timer if the component unmounts
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

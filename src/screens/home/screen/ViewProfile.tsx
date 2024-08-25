@@ -21,6 +21,11 @@ import Video from 'react-native-video';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
+// import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+
+// const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/9624456266';
+
+
 const ViewProfile = () => {
     const route = useRoute();
     const advsid = route.params;
@@ -80,7 +85,7 @@ const ViewProfile = () => {
     const jsonresponse = await response.json();
 
     setDetails(jsonresponse);
-    setIsFollowing(jsonresponse.isFollowing);
+    setIsFollowing(jsonresponse?.followers?.includes(user.userid));
     // setReels(jsonresponse.reels || []);
     // console.log("hah",response);
     // console.log('jsj',user.userid);
@@ -88,7 +93,7 @@ const ViewProfile = () => {
 
   useEffect(() => {
     getuser();
-  }, []);
+  }, [isFollowing]);
 
   const shareProfile = async () => {
     const shareOptions = {
@@ -153,6 +158,7 @@ const ViewProfile = () => {
       console.log('Follow response', jsonresponse);
 
       if (response.ok) {
+        console.log("higg")
         setIsFollowing(true);
       } else {
         console.error('Failed to follow:', response.statusText);
@@ -182,6 +188,7 @@ const ViewProfile = () => {
 
 
       if (response.ok) {
+        console.log("higga")
         setIsFollowing(false);
       } else {
         console.error('Failed to unfollow:', response.statusText);
@@ -263,6 +270,15 @@ const ViewProfile = () => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* Header Image */}
+      {/* <BannerAd
+      unitId={adUnitId}
+      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+      requestOptions={{
+        networkExtras: {
+          collapsible: 'top',
+        },
+      }}
+    /> */}
       <View style={styles.headerContainer}>
         <Image
           source={
@@ -399,7 +415,7 @@ const ViewProfile = () => {
                 letterSpacing: 1,
                 marginTop: 2,
               }}>
-              {details?.followers.length || 0}
+              {details?.followers?.length || 0}
             </Text>
           </View>
           <View
@@ -527,10 +543,11 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 90,
     height: 90,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     borderRadius: 50,
     borderColor: '#17191A',
     borderWidth: 2,
+    backgroundColor:'white'
   },
   profileDetails: {
     flex: 1,

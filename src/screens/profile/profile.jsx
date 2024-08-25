@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   Modal,
   Animated,
   Easing,
+  Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -24,6 +26,16 @@ import Video from 'react-native-video';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
+const {width} = Dimensions.get('screen');
+import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
+
+const adUnitId = __DEV__
+  ? TestIds.BANNER
+  : 'ca-app-pub-1658613370450501/9624456266';
+
+const reelItemWidth = width / 3 - 6; // Subtracting a small value for padding/gaps
+const reelItemHeight = reelItemWidth * 1.5;
+
 const Profile = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
@@ -40,16 +52,68 @@ const Profile = () => {
   const [links, setLinks] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [bannerImage, setBannerImage] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalYPosition] = useState(new Animated.Value(-200)); // Initial position off-screen
+  const [modalOpacity] = useState(new Animated.Value(0));
+
+  const showModal = () => {
+    setModalVisible(true);
+    Animated.timing(modalYPosition, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
+    Animated.timing(modalOpacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideModal = () => {
+    Animated.timing(modalYPosition, {
+      toValue: -200,
+      duration: 300,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start(() => setModalVisible(false));
+    Animated.timing(modalOpacity, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
   };
   const dispatch = useDispatch();
-  // const logout = () => {
-  //   clearData();
-  //   dispatch(clearUser());
-  //   navigation.navigate('Login');
-  // };
+  const logout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'No',
+          onPress: () => console.log('Logout canceled'),
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: () => {
+            clearData();
+            dispatch(clearUser());
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'Login'}],
+            });
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
 
   const getuser = async () => {
     try {
@@ -78,7 +142,7 @@ const Profile = () => {
       },
     );
     const jsonresponse = await response.json();
-
+    console.log('shsjj', jsonresponse);
     setDetails(jsonresponse);
     // setReels(jsonresponse.reels || []);
     // console.log("hah",response);
@@ -102,7 +166,7 @@ const Profile = () => {
       }
     } catch (error) {
       if (error.message) {
-        Alert.alert('Error', error.message);
+        // Alert.alert('Error', error.message);
       } else if (error.dismissedAction) {
         console.log('Share dismissed');
       }
@@ -123,12 +187,17 @@ const Profile = () => {
     console.log('Hwos', jsonresponse);
     setReels(jsonresponse || []);
 
-    const total = jsonresponse.reduce((acc, reel) => acc + (reel?.data?.views.length || 0), 0);
+    const total = jsonresponse.reduce(
+      (acc, reel) => acc + (reel?.data?.views.length || 0),
+      0,
+    );
     setTotalViews(total);
   };
   useEffect(() => {
     getReels();
   }, []);
+
+  
 
   const renderReelItem = ({item}) => (
     <TouchableOpacity style={styles.reelItem}>
@@ -180,7 +249,7 @@ const Profile = () => {
               marginTop: -3,
             }}
           />
-          <Text style={styles.reelText}>{item?.data?.views.length || 0} </Text>
+          <Text style={styles.reelText}>{item?.data?.views?.length || 0} </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -201,6 +270,15 @@ const Profile = () => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* Header Image */}
+      {/* <BannerAd
+      unitId={adUnitId}
+      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+      requestOptions={{
+        networkExtras: {
+          collapsible: 'top',
+        },
+      }}
+      /> */}
       <View style={styles.headerContainer}>
         <Image
           source={
@@ -210,15 +288,63 @@ const Profile = () => {
           }
           style={styles.headerImage}
         />
-        <TouchableOpacity onPress={shareProfile}>
+        <TouchableOpacity onPress={showModal}>
           <Icon1
-            name="share"
+            name="more-vert"
             size={24}
             color="white"
             style={styles.shareIcon}
           />
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={hideModal}>
+        <TouchableWithoutFeedback onPress={hideModal}>
+          <View style={styles.modalOverlay}>
+            <Animated.View
+              style={[
+                styles.modalContainer,
+                {
+                  transform: [{translateY: modalYPosition}],
+                  opacity: modalOpacity,
+                },
+              ]}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  hideModal();
+                  shareProfile();
+                }}>
+                <Icon1
+                  name="share"
+                  size={16}
+                  color="white"
+                  style={styles.modalIcon}
+                />
+                <Text style={styles.modalText}>Share</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  hideModal();
+                  logout();
+                }}>
+                <Icon1
+                  name="logout"
+                  size={16}
+                  color="white"
+                  style={styles.modalIcon}
+                />
+                <Text style={styles.modalText}>Logout</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       {/* Profile Information */}
       <View style={styles.profileContainer}>
@@ -237,7 +363,8 @@ const Profile = () => {
               {details?.professional_title}
             </Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('updateProfile')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('updateProfile')}>
             <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
@@ -417,8 +544,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#17191A',
   },
+  modalContainer: {
+    position: 'absolute',
+    backgroundColor: '#17191A',
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    borderRadius: 10,
+    elevation: 5,
+    width: '35%',
+    top: 40, // Fixed for testing
+    right: 15, // Fixed for testing
+    gap: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    // backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   headerContainer: {
     position: 'relative',
+    width: '100%',
+  },
+  modalIcon: {
+    marginRight: 10, // Space between icon and text
+  },
+  modalText: {
+    color: 'white',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
     width: '100%',
   },
   headerImage: {
@@ -426,6 +581,11 @@ const styles = StyleSheet.create({
     height: 130,
     resizeMode: 'cover',
     position: 'absolute',
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
   },
   shareIcon: {
     position: 'absolute',
@@ -441,10 +601,11 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 90,
     height: 90,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     borderRadius: 50,
     borderColor: '#17191A',
     borderWidth: 2,
+    backgroundColor: 'white',
   },
   profileDetails: {
     flex: 1,
@@ -465,7 +626,7 @@ const styles = StyleSheet.create({
   },
   noReelsContainer: {
     alignItems: 'center',
-    justifyContent:'center',
+    justifyContent: 'center',
     marginVertical: 20,
   },
   noReelsText: {
@@ -522,7 +683,7 @@ const styles = StyleSheet.create({
   },
   reelThumbnail: {
     width: '100%',
-    height: 210
+    height: 210,
   },
   reelInfo: {
     position: 'absolute',

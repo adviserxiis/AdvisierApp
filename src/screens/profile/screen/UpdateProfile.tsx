@@ -77,7 +77,15 @@ const UpdateProfile = () => {
 
   const userid = useSelector(state => state.user.userid);
 
-  const convertToSocialLinks = linksArray => {
+  const convertToSocialLinks = (linksArray:any) => {
+    console.log('linksArray:', linksArray);
+  
+    // Check if linksArray is actually an array
+    if (!Array.isArray(linksArray)) {
+      console.error('Expected an array but received:', typeof linksArray);
+      return {};
+    }
+  
     return linksArray.reduce((acc, link) => {
       if (
         link &&
@@ -92,26 +100,39 @@ const UpdateProfile = () => {
     }, {});
   };
 
-  useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        const storedProfileData = await AsyncStorage.getItem('user');
-        if (storedProfileData) {
-          // console.log("hie",storedProfileData);
-          const profileData = JSON.parse(storedProfileData);
-          // console.log("hfd",profileData.name)
-          setName(profileData.name || '');
-          setTitle(profileData.professional_title || '');
-          setDescription(profileData.discription || '');
-          setInterests(profileData.interests || []);
-          setLinks(profileData.social_links || []);
-          setProfileImage(profileData.profile_photo || null);
-          setBannerImage(profileData.profile_background || null);
-        }
-      } catch (error) {
-        console.error('Failed to load profile data:', error);
+
+  
+
+  // const linksArray = [
+  //   { type: 'Facebook', url: 'https://facebook.com/user' },
+  //   { type: 'Twitter', url: 'https://twitter.com/user' }
+  // ];
+  
+  // console.log('Input data:', linksArray);
+  
+
+  const loadProfileData = async () => {
+    try {
+      console.log("shsjd")
+      console.log(userid)
+      const storedProfileData = await AsyncStorage.getItem('user');
+      if (storedProfileData) {
+        console.log("hie",storedProfileData);
+        const profileData = JSON.parse(storedProfileData);
+        console.log("hfd",profileData.name)
+        setName(profileData.name || '');
+        setTitle(profileData.professional_title || '');
+        setDescription(profileData.discription || '');
+        setInterests(profileData.interests || []);
+        setLinks(profileData.social_links || []);
+        setProfileImage(profileData.profile_photo || null);
+        setBannerImage(profileData.profile_background || null);
       }
-    };
+    } catch (error) {
+      console.error('Failed to load profile data:', error);
+    }
+  };
+  useEffect(() => {
 
     loadProfileData();
   }, []);
@@ -121,14 +142,30 @@ const UpdateProfile = () => {
   const handleSaveDetails = async () => {
     setIsLoading(true);
     const formData = new FormData();
-    const social = convertToSocialLinks(links);
-
-    if (!name || !title || !description || !interests ) {
+    console.log('Links:', links);
+  
+    let social;
+  
+    // Check if links is an array or an object
+    if (Array.isArray(links)) {
+      social = convertToSocialLinks(links);
+    } else if (typeof links === 'object' && links !== null) {
+      social = links;
+    } else {
+      console.error('Unexpected type for links:', typeof links);
+      social = {};
+    }
+  
+    console.log('Social:', social);
+  
+    // Validation check
+    if (!name || !title || !description || !interests) {
       Alert.alert('Validation Error', 'Please fill all the fields');
-      setIsLoading(false)
+      setIsLoading(false);
       return; // Stop execution if validation fails
     }
-
+  
+    // Append images to formData if they exist
     if (profileImage) {
       formData.append('profile_photo', {
         uri: Platform.OS === 'android' ? `file://${profileImage}` : profileImage,
@@ -136,7 +173,7 @@ const UpdateProfile = () => {
         type: 'image/jpeg',
       });
     }
-
+  
     if (bannerImage) {
       formData.append('profile_background', {
         uri: Platform.OS === 'android' ? `file://${bannerImage}` : bannerImage,
@@ -144,38 +181,33 @@ const UpdateProfile = () => {
         type: 'image/jpeg',
       });
     }
-
+  
     // Append other form fields
     formData.append('userid', userid);
-    formData.append(
-      'data',
-      JSON.stringify({
-        name,
-        professional_title: title,
-        discription: description,
-        interests,
-        social_links: social,
-      }),
-    );
-
+    formData.append('data', JSON.stringify({
+      name,
+      professional_title: title,
+      discription: description,
+      interests,
+      social_links: social,
+    }));
+  
     try {
-      
+      console.log('FormData:', formData);
+  
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/savedetails',
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
           body: formData,
-        },
+        }
       );
-
+  
       const jsonResponse = await response.json();
-      console.log('Hi', jsonResponse);
-
+      console.log('Response:', jsonResponse);
+  
       if (response.ok) {
-        // Alert.alert('Success', jsonResponse.message);
+        // Save user details to AsyncStorage
         await AsyncStorage.setItem(
           'user',
           JSON.stringify({
@@ -186,20 +218,21 @@ const UpdateProfile = () => {
             social_links: social,
             profile_photo: profileImage,
             profile_background: bannerImage,
-            userid : userid,
-          }),
+            userid: userid,
+          })
         );
+        loadProfileData();
         navigation.goBack();
-        // navigation.reset({index: 0, routes: [{name: 'Main'}]});
+        // navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
       } else {
         Alert.alert('Error', jsonResponse.error || 'Something went wrong');
       }
     } catch (error) {
       console.error('Error during API call:', error);
       Alert.alert('Error', 'Failed to save details. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-
   };
 
   const pickImage = () => {

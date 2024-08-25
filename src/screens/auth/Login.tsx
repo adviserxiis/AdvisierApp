@@ -22,6 +22,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = () => {
   const navigation = useNavigation();
@@ -55,13 +56,12 @@ const Login = () => {
           },
           body: JSON.stringify({
             email: userInfo.user.email,
-            
           }),
         },
       );
       const jsonresponse = await response.json();
-      console.log("jahs",jsonresponse);
-      console.log('useird',jsonresponse.userid);
+      console.log('jahs', jsonresponse);
+      console.log('useird', jsonresponse.userid);
       storeData('user', userInfo.user);
       dispatch(
         setUser({
@@ -70,7 +70,12 @@ const Login = () => {
           userid: jsonresponse.userid,
         }),
       );
-      navigation.navigate('setProfile');
+      const isExists = await checkProfileExist(jsonresponse.userid);
+      if (isExists) {
+        navigation.reset({index: 0, routes: [{name: 'Main'}]});
+      } else {
+        navigation.navigate('setProfile');
+      }
     } catch (error: any) {
       switch (error.code) {
         case statusCodes.SIGN_IN_CANCELLED:
@@ -87,6 +92,44 @@ const Login = () => {
       }
     }
   };
+
+  const checkProfileExist = async (userid) => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/creator/getuser/${userid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const jsonresponse = await response.json();
+      console.log('checkProfileExist', jsonresponse);
+      if (jsonresponse.professional_title) {
+        // Store the data in AsyncStorage before returning true
+        await AsyncStorage.setItem(
+          'user',
+          JSON.stringify({
+            name: jsonresponse.username,
+            professional_title: jsonresponse.professional_title,
+            discription: jsonresponse.professional_bio,
+            interests: jsonresponse.interests,
+            social_links: jsonresponse.social_links,
+            profile_photo: jsonresponse.profile_photo,
+            profile_background: jsonresponse.profile_background,
+            userid: userid,
+          })
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking profile existence:', error);
+      return false; // In case of error, assume profile does not exist
+    }
+  };
+  
 
   const handleLogin = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -126,15 +169,15 @@ const Login = () => {
       if (response.status === 200) {
         storeData('user', jsonresponse.userid);
         dispatch(setUser({email, password, userid: jsonresponse.userid}));
-        navigation.navigate('setProfile');
-        // const profileComplete = await getData('profileComplete');
-        // if (profileComplete) {
-        //   navigation.navigate('Main');
-        // } else {
-        //   navigation.navigate('SetProfile');
-        // }
-      } else if (response.status === 401) { // Assuming 401 is returned for wrong credentials
-        setError('Incorrect email or password. Please try again.');
+        const isExists = await checkProfileExist(jsonresponse.userid);
+        if (isExists) {
+          navigation.reset({index: 0, routes: [{name: 'Main'}]});
+        } else {
+          navigation.navigate('setProfile');
+        }
+      } else if (response.status === 401) {
+        // Assuming 401 is returned for wrong credentials
+        setError({password: 'Incorrect email or password. Please try again.'});
       } else {
         setError('Login failed. Please check your credentials.');
       }
@@ -198,8 +241,7 @@ const Login = () => {
               </View>
               <Text style={styles.checkboxText}>Remember me</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('confirm')}>
+            <TouchableOpacity onPress={() => navigation.navigate('confirm')}>
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>

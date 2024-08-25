@@ -22,9 +22,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import {useSelector} from 'react-redux';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const { height: screenHeight } = Dimensions.get('window');
+const bottomNavHeight = 65; // Adjust this value according to your bottom navigation bar height
 
+const videoHeight = screenHeight - bottomNavHeight;
 const VideoPlayer = ({
   video,
   isVisible,
@@ -36,18 +39,20 @@ const VideoPlayer = ({
   const videoSrc = video.data.post_file;
   const [paused, setPaused] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [like, setLike] = useState(false);
   const [likeCount, setLikeCount] = useState((video.data.likes || []).length);
   const [buffering, setBuffering] = useState(true);
   const [error, setError] = useState(null);
   const videoRef = useRef(null);
   const user = useSelector(state => state.user);
+  const [like, setLike] = useState(video?.data?.likes?.includes(user.userid));
   const navigation = useNavigation();
+  
 
   // Handle play/pause based on visibility and scrolling
   useEffect(() => {
     if (isVisible && currentIndex === index) {
       setPaused(false);
+      ViewsCount();
     } else {
       setPaused(true);
     }
@@ -158,7 +163,23 @@ const VideoPlayer = ({
     setLike(false);
   };
 
-  const shareProfile = async () => {
+  const sharePost = async () => {
+
+    const response = await fetch(
+      'https://adviserxiis-backend-three.vercel.app/post/sharepost',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postid: video?.id,
+        }),
+      },
+    );
+    const jsonresponse = await response.json();
+    console.log("share post id ",jsonresponse)
+
     const shareOptions = {
       message: `Check out ${video?.adviser?.data?.username} new reels on this amazing Luink.ai!`,
       url: 'https://play.google.com/store/apps/details?id=com.advisiorapp', // Replace with your actual URL
@@ -166,6 +187,7 @@ const VideoPlayer = ({
 
     try {
       const result = await Share.open(shareOptions);
+
       if (result) {
         console.log('Shared successfully:', result);
       }
@@ -178,9 +200,29 @@ const VideoPlayer = ({
     }
   };
 
+  const ViewsCount = useCallback(async () => {
+    const response = await fetch(
+      'https://adviserxiis-backend-three.vercel.app/post/addviews',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postid: video?.id,
+          userid: user.userid,
+        }),
+      }
+    );
+    const jsonresponse = await response.json();
+    // console.log('View Update Response', jsonresponse);
+  }, [video?.id, user.userid]);
+  
+
+
   // Only render the video component if it is visible and there is no error
   const renderVideo = useMemo(() => {
-    // if (!isVisible || currentIndex !== index || !videoSrc) return null;
+    if (!isVisible || currentIndex !== index) return null;
 
     return (
       <>
@@ -198,15 +240,25 @@ const VideoPlayer = ({
             onBuffer={onBuffer}
             onError={videoError}
             fullscreen={isFullScreen}
+            // playInBackground={false}
+            // playWhenInactive={false}
+            // onReadyForDisplay={() => setBuffering(false)}
             minBufferMs={15000}
             maxBufferMs={50000}
             bufferForPlaybackMs={5000}
             bufferForPlaybackAfterRebufferMs={5000}
             muted={mute} // Use the passed mute prop
             repeat={true}
+            preload={true}
             bitrate={1500000}
             onLoadStart={() => setBuffering(true)}
-            onLoad={() => setBuffering(false)}
+            onLoad={() => {
+              setBuffering(false);
+            }}
+            // onLoadEnd={()=>{
+            //   console.log("Hei")
+            //   ViewsCount();
+            // }}
           />
           {buffering && !error && (
             <ActivityIndicator
@@ -246,7 +298,9 @@ const VideoPlayer = ({
   ]);
 
   return (
-    <View style={isFullScreen ? styles.fullScreenContainer : styles.container}>
+    <SafeAreaView style={
+      isFullScreen ? styles.fullScreenContainer : styles.container
+    }>
       <StatusBar hidden={isFullScreen} />
 
       {renderVideo}
@@ -267,7 +321,7 @@ const VideoPlayer = ({
             <View style={styles.viewCount}>
               <Feather name="eye" size={18} color="white" />
               <Text style={styles.viewCountText}>
-                {video?.adviser?.views?.length || 0}
+                {video?.data?.views?.length || 0}
               </Text>
             </View>
           </View>
@@ -278,11 +332,16 @@ const VideoPlayer = ({
                   navigation.navigate('ViewProfile', video?.adviser?.id)
                 }>
                 <Image
-                  source={{uri: `${video?.adviser?.data?.profile_photo}`}}
+                  // source={{uri: `${video?.adviser?.data?.profile_photo}`}}
+                  source={
+                    video?.adviser?.data?.profile_photo
+                      ? {uri: video?.adviser?.data?.profile_photo}
+                      : require('../../../assets/images/bane.png')
+                  }
                   style={styles.profilePic}
                 />
               </TouchableOpacity>
-              <View style={{flexDirection: 'column'}}>
+              <View style={{flexDirection: 'column' , width:'73%'}}>
                 <TouchableOpacity
                   onPress={() =>
                     navigation.navigate('ViewProfile', video?.adviser?.id)
@@ -328,9 +387,9 @@ const VideoPlayer = ({
             </TouchableOpacity> */}
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={shareProfile}>
+              onPress={sharePost}>
               <Icon3 name="share" size={24} color="#FFFFFF" />
-              <Text style={styles.actionText}>0</Text>
+              {/* <Text style={styles.actionText}>0</Text> */}
             </TouchableOpacity>
             {/* <TouchableOpacity style={styles.actionButton}>
               <Feather name="bookmark" size={24} color="#FFFFFF" />
@@ -339,31 +398,39 @@ const VideoPlayer = ({
           </View>
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: screenWidth,
-    height: screenHeight - 71,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height - bottomNavHeight,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
     position: 'relative',
+    // flex: 1,
+    // backgroundColor: 'black',
   },
   fullScreenContainer: {
     flex: 1,
     position: 'absolute',
-    width: screenWidth,
-    height: screenHeight,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
     top: 0,
     left: 0,
+    bottom:0,
     backgroundColor: '#000',
   },
   video: {
-    width: '100%',
-    height: '100%',
+    width: Dimensions.get('window').width,
+    height:  videoHeight,
+    position: 'absolute',
+    bottom:0,
+    top:0,
+    left:0,
+    right:0
   },
   fullScreenVideo: {
     ...StyleSheet.absoluteFillObject,
@@ -371,7 +438,7 @@ const styles = StyleSheet.create({
   touchableArea: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
+    flex:1,
   },
   muteIcon: {
     fontSize: 20,
@@ -459,6 +526,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 50,
+    backgroundColor:'white'
   },
   userName: {
     fontSize: 14,
@@ -470,7 +538,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontFamily: 'Poppins-Regular',
-    width: '70%',
+    width: '100%',
     opacity: 0.7,
     lineHeight: 18,
   },

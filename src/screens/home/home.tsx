@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, StatusBar, Dimensions, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StatusBar, StyleSheet, FlatList, Dimensions } from 'react-native';
 import VideoPlayer from './components/VideoPlayer';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('screen');
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+const bottomNavHeight = 64; 
 
 const Home = () => {
   const [list, setList] = useState([]);
@@ -37,14 +38,17 @@ const Home = () => {
     }
   }, []);
 
-  const viewabilityConfig = useMemo(() => ({
-    viewAreaCoveragePercentThreshold: 50,
-    minimumViewTime: 300, // Adds a slight delay to avoid fast scrolls causing rapid changes
-  }), []);
+  const viewabilityConfig = useMemo(
+    () => ({
+      viewAreaCoveragePercentThreshold: 50,
+      minimumViewTime: 300, // Adds a slight delay to avoid fast scrolls causing rapid changes
+    }),
+    []
+  );
 
   const renderItem = useCallback(
     ({ item, index }) => (
-      <VideoPlayer
+      <MemoizedVideoPlayer
         video={item}
         isVisible={currentIndex === index}
         index={index}
@@ -72,19 +76,26 @@ const Home = () => {
         initialNumToRender={1}
         maxToRenderPerBatch={2}
         windowSize={5}
-        removeClippedSubviews={true}
+        removeClippedSubviews
         pagingEnabled
       />
     </View>
   );
 };
 
+const MemoizedVideoPlayer = React.memo(VideoPlayer);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'black',
     width: screenWidth,
-    height: screenHeight,
+    height: screenHeight - bottomNavHeight,
+    position:'absolute',
+    top:0,
+    bottom:0,
+    left:0,
+    right:0,
   },
 });
 

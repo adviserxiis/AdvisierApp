@@ -13,6 +13,8 @@ import AddPost from '../screens/add/AddPost';
 import SetProfile from '../screens/auth/SetProfile';
 import UpdateProfile from '../screens/profile/screen/UpdateProfile';
 import ViewProfile from '../screens/home/screen/ViewProfile';
+import CameraGallery from '../screens/add/CameraGallery';
+import Login from '../screens/auth/Login';
 // import Login from '../screens/auth/Login';
 
 //Home Stack
@@ -38,6 +40,29 @@ function HomeStackScreen() {
   );
 }
 
+//Post Stack 
+const PostStack = createStackNavigator();
+function PostStackScreen (){
+  return (
+    <PostStack.Navigator>
+      {/* <PostStack.Screen 
+        name='MainPost'
+        component={CameraGallery}
+        options={{
+          headerShown: false,
+        }}
+      /> */}
+      <PostStack.Screen 
+        name='CreatePost'
+        component={AddPost}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </PostStack.Navigator>
+  )
+}
+
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
 function MyTabs() {
@@ -47,7 +72,7 @@ function MyTabs() {
         headerShown: false,
         tabBarLabel: '',
         tabBarStyle: {
-          height: 70,
+          height: 64,
           borderColor: '#17191A',
           paddingTop: 10,
           backgroundColor: '#17191A',
@@ -79,7 +104,7 @@ function MyTabs() {
         },
       })}>
       <Tab.Screen name="Home" component={HomeStackScreen} />
-      <Tab.Screen name="AddPost" component={AddPost} />
+      <Tab.Screen name="AddPost" component={PostStackScreen} />
       <Tab.Screen name="Search" component={Search} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
@@ -96,13 +121,13 @@ function MyStack() {
         component={MyTabs}
         options={{headerShown: false}}
       />
-      {/* <Stack.Screen
+      <Stack.Screen
         name="Login"
         component={Login}
         options={{
           headerShown: false,
         }}
-      /> */}
+      />
       <Stack.Screen
         name="updateProfile"
         component={UpdateProfile}

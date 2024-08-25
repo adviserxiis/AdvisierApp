@@ -15,6 +15,7 @@ import {
   Platform,
   StatusBar,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
@@ -159,7 +160,7 @@ const SetProfile = () => {
     );
 
     try {
-      
+      console.log("setProfile formdata",formData);
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/savedetails',
         {
@@ -190,8 +191,8 @@ const SetProfile = () => {
             userid : userid,
           }),
         );
-        navigation.navigate('Main');
-        // navigation.reset({index: 0, routes: [{name: 'Main'}]});
+        // navigation.navigate('Main');
+        navigation.reset({index: 0, routes: [{name: 'Main'}]});
       } else {
         Alert.alert('Error', jsonResponse.error || 'Something went wrong');
       }
@@ -302,6 +303,7 @@ const SetProfile = () => {
         </View>
       </Modal>
       <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <StatusBar barStyle={'light-content'} backgroundColor="#17191A" />
         <View style={styles.bannerContainer}>
           {bannerImage && (
@@ -531,6 +533,7 @@ const SetProfile = () => {
             </Pressable>
           </View>
         </View>
+        </ScrollView>
 
         <Modal
           animationType="slide"

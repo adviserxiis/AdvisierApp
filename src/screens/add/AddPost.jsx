@@ -1,34 +1,44 @@
-import React, { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, {useState} from 'react';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Fontisto';
-import { useNavigation } from '@react-navigation/native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {useNavigation} from '@react-navigation/native';
+import {launchImageLibrary} from 'react-native-image-picker';
 import Video from 'react-native-video';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 import storage from '@react-native-firebase/storage';
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 const AddPost = () => {
   const navigation = useNavigation();
   const user = useSelector(state => state.user);
-  const [description,setDescription]=useState('');
+  const [description, setDescription] = useState('');
   const [video, setVideo] = useState(null);
-  const[location,setLocation]=useState('');
+  const [location, setLocation] = useState('');
   const [resizeMode, setResizeMode] = useState('cover');
   // console.log(user.userid);
   const handleSelectVideo = () => {
-    launchImageLibrary({ mediaType: 'video', quality: 1 }, response => {
+    launchImageLibrary({mediaType: 'video', quality: 1}, response => {
       if (response.didCancel) {
         console.log('User canceled video picker');
       } else if (response.errorCode) {
         Alert.alert('Error', response.errorMessage);
       } else {
         setVideo(response.assets[0]);
-        console.log(response.assets[0])
+        console.log(response.assets[0]);
       }
     });
   };
 
-  const handleLoad = ({ naturalSize }) => {
+  const handleLoad = ({naturalSize}) => {
     const aspectRatio = naturalSize.width / naturalSize.height;
     setResizeMode(aspectRatio > 1 ? 'contain' : 'cover');
   };
@@ -37,60 +47,133 @@ const AddPost = () => {
     setVideo(null);
   };
 
+  // const savePost = async () => {
+  //   if (!video) {
+  //     Alert.alert('No video selected', 'Please select a video before saving.');
+  //     return;
+  //   }
+
+  //   const fileUri = video.uri;
+  //   console.log("Video URI:", fileUri);
+  //   const fileName = fileUri.substring(fileUri.lastIndexOf('/') + 1);
+  //   const reference = storage().ref(`/posts/${fileName}`);
+
+  //   try {
+  //     // Upload the video to Firebase storage
+  //     await reference.putFile(Platform.OS === 'ios' ? fileUri.replace('file://', '') : fileUri);
+
+  //     // Get the download URL of the uploaded video
+  //     const downloadURL = await reference.getDownloadURL();
+  //     console.log('Video URL:', downloadURL);
+  //     // console.log("Haj",user.userid);
+  //     const response = await fetch(
+  //       'https://adviserxiis-backend-three.vercel.app/post/createpost',
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({
+  //           adviserid: user.userid,
+  //           videoURL: downloadURL,
+  //           fileType:'video',
+  //           location: location,
+  //           description: description,
+  //         }),
+  //       },
+  //     );
+  //     const jsonresponse = await response.json();
+  //     // console.log(response);
+  //     console.log("a",jsonresponse);
+  //     if (response.ok) {
+  //       Alert.alert('Success', 'Your post has been saved.');
+  //       // Optionally, reset the form after saving
+  //       setVideo(null);
+  //       setDescription('');
+  //       setLocation('');
+  //     } else {
+  //       throw new Error('Failed to save post. Please try again.');
+  //     }
+  //   } catch (error) {
+  //     console.log('Error:', error.message || error);
+  //     Alert.alert('Error', 'There was an error saving your post. Please try again.');
+  //   }
+  // };
+
   const savePost = async () => {
     if (!video) {
       Alert.alert('No video selected', 'Please select a video before saving.');
       return;
     }
-  
+
     const fileUri = video.uri;
-    console.log("Video URI:", fileUri);
     const fileName = fileUri.substring(fileUri.lastIndexOf('/') + 1);
-    const reference = storage().ref(`/posts/${fileName}`);
-  
-    try {
-      // Upload the video to Firebase storage
-      await reference.putFile(Platform.OS === 'ios' ? fileUri.replace('file://', '') : fileUri);
-  
-      // Get the download URL of the uploaded video
-      const downloadURL = await reference.getDownloadURL();
-      console.log('Video URL:', downloadURL);
-      // console.log("Haj",user.userid);
-      const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/post/createpost',
-        {
-          method: 'POST',
+
+    const uploadToBunny = async () => {
+      const apiKey = 'de112415-60af-446e-b3f795dec87a-222e-4dfb'; // Replace with your Bunny.net API key
+      const storageZoneName = 'luink-ai'; // Replace with your storage zone name
+      const storageUrl = `https://storage.bunnycdn.com/${storageZoneName}/${fileName}`;
+
+      const accessUrl = `https://myluinkai.b-cdn.net/${fileName}`;
+
+      try {
+        const response = await fetch(storageUrl, {
+          method: 'PUT', // Bunny.net requires PUT for uploads
           headers: {
-            'Content-Type': 'application/json',
+            AccessKey: apiKey,
+            'Content-Type': 'application/octet-stream',
           },
-          body: JSON.stringify({
-            adviserid: user.userid,
-            videoURL: downloadURL,
-            fileType:'video',
-            location: location,
-            description: description,
-          }),
-        },
-      );
-      const jsonresponse = await response.json();
-      // console.log(response);
-      console.log("a",jsonresponse);
-      if (response.ok) {
-        Alert.alert('Success', 'Your post has been saved.');
-        // Optionally, reset the form after saving
-        setVideo(null);
-        setDescription('');
-        setLocation('');
-      } else {
-        throw new Error('Failed to save post. Please try again.');
-      }  
-    } catch (error) {
-      console.log('Error:', error.message || error);
-      Alert.alert('Error', 'There was an error saving your post. Please try again.');
-    }
+          body: await fetch(fileUri).then(res => res.blob()),
+        });
+
+        if (response.ok) {
+          const videoURL = accessUrl;
+          console.log('Video URL', videoURL);
+          // Continue to save the post metadata
+          const postResponse = await fetch(
+            'https://adviserxiis-backend-three.vercel.app/post/createpost',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                adviserid: user.userid,
+                videoURL: videoURL,
+                fileType: 'video',
+                location: location,
+                description: description,
+              }),
+            },
+          );
+          const jsonResponse = await postResponse.json();
+          console.log('sndns', jsonResponse);
+          if (postResponse.ok) {
+            // Alert.alert('Success', 'Your post has been saved.');
+            // Optionally, reset the form after saving
+            setVideo(null);
+            setDescription('');
+            setLocation('');
+          } else {
+            throw new Error(
+              jsonResponse.error || 'Failed to save post. Please try again.',
+            );
+          }
+        } else {
+          throw new Error('Failed to upload video to Bunny.net.');
+        }
+      } catch (error) {
+        console.log('Error:', error.message || error);
+        Alert.alert(
+          'Error',
+          'There was an error saving your post. Please try again.',
+        );
+      }
+    };
+
+    uploadToBunny();
   };
-  
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -100,41 +183,52 @@ const AddPost = () => {
         <Text style={styles.title}>Create Reels</Text>
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
-      {!video && (
-        <TouchableOpacity onPress={handleSelectVideo} style={styles.selectButton}>
-          <Text style={styles.selectButtonText}>Upload Video</Text>
-        </TouchableOpacity>
-      )}
+        {!video && (
+          <TouchableOpacity
+            onPress={handleSelectVideo}
+            style={styles.selectButton}>
+            <Text style={styles.selectButtonText}>Upload Video</Text>
+          </TouchableOpacity>
+        )}
 
-      {video && (
-        <View style={styles.videoContainer}>
-          <Video
-            source={{ uri: video.uri }}
-            style={styles.video}
-            controls={true}
-            resizeMode={resizeMode}
-            paused={false}
-            repeat={true}
-            onLoad={handleLoad}
-          />
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteVideo}>
-              <Icon name='trash' size={20} color='white' />
+        {video && (
+          <View style={styles.videoContainer}>
+            <Video
+              source={{uri: video.uri}}
+              style={styles.video}
+              controls={true}
+              resizeMode={resizeMode}
+              paused={false}
+              repeat={true}
+              onLoad={handleLoad}
+            />
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDeleteVideo}>
+              <Icon name="trash" size={20} color="white" />
             </TouchableOpacity>
-        </View>
-      )}
-      <View style={{
-        flexDirection:'column',
-        gap:20,
-      }}>
-        <TextInput numberOfLines={4} value={description} onChangeText={setDescription} multiline={true} placeholder='Write Caption...' style={{
-          height: 150,
-          width:'100%',
-          borderBottomColor:'gray',
-          borderBottomWidth:1,
-          fontFamily:'Poppins-Regular' 
-
-        }}/>
-        {/* <GooglePlacesAutocomplete
+          </View>
+        )}
+        <View
+          style={{
+            flexDirection: 'column',
+            gap: 20,
+          }}>
+          <TextInput
+            numberOfLines={4}
+            value={description}
+            onChangeText={setDescription}
+            multiline={true}
+            placeholder="Write Caption..."
+            style={{
+              height: 150,
+              width: '100%',
+              borderBottomColor: 'gray',
+              borderBottomWidth: 1,
+              fontFamily: 'Poppins-Regular',
+            }}
+          />
+          {/* <GooglePlacesAutocomplete
           placeholder='Add Location'
           onPress={(data, details = null) => {
             // 'data' is a Google Places API response
@@ -152,32 +246,36 @@ const AddPost = () => {
             listView: styles.autocompleteListView,
           }}
         /> */}
-        <TextInput  value={location} onChangeText={setLocation}  placeholder='Add location' style={{
-          height: 49,
-          width:'100%',
-          borderBottomColor:'gray',
-          borderBottomWidth:1,
-          fontFamily:'Poppins-Regular'
-        }}/>
-      </View>
+          <TextInput
+            value={location}
+            onChangeText={setLocation}
+            placeholder="Add location"
+            style={{
+              height: 49,
+              width: '100%',
+              borderBottomColor: 'gray',
+              borderBottomWidth: 1,
+              fontFamily: 'Poppins-Regular',
+            }}
+          />
+        </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 10,
-          paddingHorizontal:5,
-          marginTop:30
-        }}>
-        <Pressable
-          style={styles.closeButton}>
-          <Text style={styles.closeButtonText}>Save Draft</Text>
-        </Pressable>
-        <Pressable style={styles.saveButton} onPress={savePost}>
-          <Text style={styles.saveButtonText}>Done</Text>
-        </Pressable>
-      </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 10,
+            paddingHorizontal: 5,
+            marginTop: 30,
+          }}>
+          <Pressable style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Save Draft</Text>
+          </Pressable>
+          <Pressable style={styles.saveButton} onPress={savePost}>
+            <Text style={styles.saveButtonText}>Done</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -187,7 +285,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#17191A',
-    paddingHorizontal:16,
+    paddingHorizontal: 16,
   },
   closeButton: {
     padding: 10,
@@ -213,7 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   header: {
-    marginTop:20,
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -247,7 +345,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop:10
+    marginTop: 10,
   },
   selectButtonText: {
     color: 'white',
@@ -255,9 +353,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   videoContainer: {
-    
     justifyContent: 'flex-start',
-    marginTop:10,
+    marginTop: 10,
     alignItems: 'center',
   },
   video: {
