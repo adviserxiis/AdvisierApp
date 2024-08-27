@@ -15,6 +15,9 @@ import UpdateProfile from '../screens/profile/screen/UpdateProfile';
 import ViewProfile from '../screens/home/screen/ViewProfile';
 import CameraGallery from '../screens/add/CameraGallery';
 import Login from '../screens/auth/Login';
+import SingleReel from '../screens/home/screen/SingleReel';
+import deletePost from '../screens/profile/screen/DeletePost';
+import DeletePost from '../screens/profile/screen/DeletePost';
 // import Login from '../screens/auth/Login';
 
 //Home Stack
@@ -32,6 +35,13 @@ function HomeStackScreen() {
       <HomeStack.Screen
         name="ViewProfile"
         component={ViewProfile}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <HomeStack.Screen
+        name='singleReel'
+        component={SingleReel}
         options={{
           headerShown: false,
         }}
@@ -63,6 +73,43 @@ function PostStackScreen (){
   )
 }
 
+//Profile Stack
+const ProfileStack = createStackNavigator();
+function ProfileStackScreen (){
+  return (
+    <ProfileStack.Navigator>
+      
+      <ProfileStack.Screen
+      name='profile'
+      component={Profile} options={{
+        headerShown: false,
+      }}/>
+      <ProfileStack.Screen 
+        name='singleReel'
+        component={SingleReel}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <ProfileStack.Screen
+        name='deletePost'
+        component={DeletePost}
+        options={{
+          // headerShown:true,
+          headerTintColor:'white',
+          // headerShadowVisible:false,
+          headerStyle:{
+            backgroundColor:'#17191A',
+          },
+          headerTitleStyle:{},
+          title:'Delete Post',
+          headerTitleAlign:'center',
+          
+        }}
+      />
+    </ProfileStack.Navigator>
+  )
+}
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
 function MyTabs() {
@@ -106,7 +153,7 @@ function MyTabs() {
       <Tab.Screen name="Home" component={HomeStackScreen} />
       <Tab.Screen name="AddPost" component={PostStackScreen} />
       <Tab.Screen name="Search" component={Search} />
-      <Tab.Screen name="Profile" component={Profile} />
+      <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
   );
 }
@@ -121,18 +168,18 @@ function MyStack() {
         component={MyTabs}
         options={{headerShown: false}}
       />
-      <Stack.Screen
-        name="Login"
-        component={Login}
-        options={{
-          headerShown: false,
-        }}
-      />
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{
+            headerShown: false,
+          }}
+        />
       <Stack.Screen
         name="updateProfile"
         component={UpdateProfile}
         options={{headerShown: false}}
-      />
+        />
     </Stack.Navigator>
   );
 }

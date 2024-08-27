@@ -15,12 +15,14 @@ import {
   Platform,
   StatusBar,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
 import {storeData} from '../../utils/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import storage from '@react-native-firebase/storage';
 const interestsList = [
   'Actor',
   'Artist',
@@ -100,6 +102,29 @@ const UpdateProfile = () => {
     }, {});
   };
 
+  // const uploadSingleImage = async (file) => {
+  //   // const storage = getStorage();
+    
+  //   // Generate a unique filename using timestamp and a random number
+  //   const uniqueFilename = `images/${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  //   const imageRef = sRef(storage, uniqueFilename);
+  
+  //   try {
+  //     // Upload the image to Firebase Storage
+  //     const snapshot = await uploadBytes(imageRef, file);
+      
+  //     // Get the download URL for the uploaded image
+  //     const downloadURL = await getDownloadURL(snapshot.ref);
+  //     console.log('Image URL:', downloadURL);
+  
+  //     // Return the download URL
+  //     return downloadURL;
+  //   } catch (error) {
+  //     console.error('Error uploading image:', error.message || error);
+  //     throw error;
+  //   }
+  // };
+
 
   
 
@@ -167,6 +192,8 @@ const UpdateProfile = () => {
   
     // Append images to formData if they exist
     if (profileImage) {
+      // const profileImageUrl = uploadSingleImage(profileImage)
+      // console.log("Profile IMage Url",profileImageUrl)
       formData.append('profile_photo', {
         uri: Platform.OS === 'android' ? `file://${profileImage}` : profileImage,
         name: 'profile_photo.jpg',
@@ -175,6 +202,8 @@ const UpdateProfile = () => {
     }
   
     if (bannerImage) {
+      // const bannerImageUrl = uploadSingleImage(bannerImage);
+      // console.log("Profile IMage Url",bannerImageUrl);
       formData.append('profile_background', {
         uri: Platform.OS === 'android' ? `file://${bannerImage}` : bannerImage,
         name: 'profile_background.jpg',
@@ -196,7 +225,7 @@ const UpdateProfile = () => {
       console.log('FormData:', formData);
   
       const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/creator/savedetails',
+        'https://adviserxiis-backend.onrender.com/creator/savedetails',
         {
           method: 'POST',
           body: formData,
@@ -222,7 +251,7 @@ const UpdateProfile = () => {
           })
         );
         loadProfileData();
-        navigation.goBack();
+        navigation.navigate('profile');
         // navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
       } else {
         Alert.alert('Error', jsonResponse.error || 'Something went wrong');

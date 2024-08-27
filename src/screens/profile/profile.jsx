@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -18,22 +18,26 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import Icon2 from 'react-native-vector-icons/Foundation'
 import {useDispatch, useSelector} from 'react-redux';
 import {clearData} from '../../utils/store';
 import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
-const {width} = Dimensions.get('screen');
+const {width} = Dimensions.get('window');
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
+import  auth  from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import DeletePost from './screen/DeletePost';
 
 const adUnitId = __DEV__
   ? TestIds.BANNER
   : 'ca-app-pub-1658613370450501/9624456266';
 
-const reelItemWidth = width / 3 - 6; // Subtracting a small value for padding/gaps
+const reelItemWidth = width / 3; // Subtracting a small value for padding/gaps
 const reelItemHeight = reelItemWidth * 1.5;
 
 const Profile = () => {
@@ -55,6 +59,13 @@ const Profile = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalYPosition] = useState(new Animated.Value(-200)); // Initial position off-screen
   const [modalOpacity] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '553796556466-btiglu1cssg04entlq545n5bknsuqdef.apps.googleusercontent.com',
+    });
+  }, []);
 
   const showModal = () => {
     setModalVisible(true);
@@ -88,7 +99,9 @@ const Profile = () => {
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
   };
+
   const dispatch = useDispatch();
+
   const logout = () => {
     Alert.alert(
       'Logout',
@@ -101,25 +114,71 @@ const Profile = () => {
         },
         {
           text: 'Yes',
-          onPress: () => {
-            clearData();
-            dispatch(clearUser());
-            navigation.reset({
-              index: 0,
-              routes: [{name: 'Login'}],
-            });
+          onPress: async () => {
+            try {
+              // Ensure Google Sign-In is properly configured
+              await GoogleSignin.hasPlayServices(); // Check if Google Play services are available
+              const currentUser = auth().currentUser;
+              if (currentUser) {
+                const providerId = currentUser.providerData[0].providerId;
+  
+                // If the user logged in with Google
+                if (providerId === 'google.com') {
+                  await GoogleSignin.revokeAccess(); // Optional, revokes all Google permissions
+                  await GoogleSignin.signOut();
+                }
+  
+                // Sign out from Firebase (common for both email/password and Google)
+                await auth().signOut();
+              }
+  
+              // Clear local data (if any)
+              clearData();
+  
+              // Clear user data in Redux
+              dispatch(clearUser());
+  
+              // Reset navigation and navigate to the Login screen
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Error', 'Failed to log out. Please try again.');
+            }
           },
         },
       ],
-      {cancelable: false},
+      { cancelable: false }
     );
   };
+
+  const deletePost = async(postid)=>{
+    console.log("Hiks", postid);
+    const response = await fetch(
+      'https://adviserxiis-backend-three.vercel.app/post/deletepost',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adviserid: user.userid,
+          postid: postid,
+        }),
+      },
+    );
+    const jsonresponse = await response.json();
+    console.log("jakdk",jsonresponse);
+  }
 
   const getuser = async () => {
     try {
       const storedProfileData = await AsyncStorage.getItem('user');
       if (storedProfileData) {
         const profileData = JSON.parse(storedProfileData);
+        console.log('sgywyw',profileData.profile_photo);
         setName(profileData.name || '');
         setTitle(profileData.professional_title || '');
         setDescription(profileData.discription || '');
@@ -149,9 +208,11 @@ const Profile = () => {
     // console.log('jsj',user.userid);
   };
 
-  useEffect(() => {
-    getuser();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getuser();
+    }, [])
+  );
 
   const shareProfile = async () => {
     const shareOptions = {
@@ -198,9 +259,9 @@ const Profile = () => {
   }, []);
 
   
-
   const renderReelItem = ({item}) => (
-    <TouchableOpacity style={styles.reelItem}>
+    
+    <TouchableOpacity style={styles.reelItem} onPress={()=>navigation.navigate('singleReel',{ video : item, creator : details})}>
       <Video
         source={{uri: item.data.post_file}} // Use video source
         style={styles.reelThumbnail}
@@ -211,8 +272,15 @@ const Profile = () => {
         paused={true}
         // paused={currentPlaying !== item.id}// Adjust video aspect ratio
       />
+      {/* <TouchableOpacity onPress={deletePost(item?.id)} style={{
+        position: 'absolute',
+        top:10,
+        right:10,
+      }}>
+        <Icon2 name="trash" size={18} color="white" />
+      </TouchableOpacity> */}
       {/* <Image
-        source={item.thumbnail} // Use image source
+        source={{uri: item.data.post_file}} // Use image source
         style={styles.reelThumbnail}
         resizeMode="cover" // Adjust image aspect ratio
       /> */}
@@ -283,7 +351,7 @@ const Profile = () => {
         <Image
           source={
             details?.profile_background
-              ? {uri: details.profile_background}
+              ? {uri: details?.profile_background}
               : require('../../assets/images/bane.png')
           }
           style={styles.headerImage}
@@ -331,6 +399,20 @@ const Profile = () => {
                 style={styles.modalButton}
                 onPress={() => {
                   hideModal();
+                  navigation.navigate('deletePost')
+                }}>
+                <Icon2
+                  name="trash"
+                  size={16}
+                  color="white"
+                  style={styles.modalIcon}
+                />
+                <Text style={styles.modalText}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  hideModal();
                   logout();
                 }}>
                 <Icon1
@@ -351,7 +433,7 @@ const Profile = () => {
         <Image
           source={
             details?.profile_photo
-              ? {uri: details.profile_photo}
+              ? {uri: details?.profile_photo}
               : require('../../assets/images/bane.png')
           }
           style={styles.profileImage}
@@ -670,29 +752,37 @@ const styles = StyleSheet.create({
   },
   reelsList: {
     // paddingVertical: 10,
+    
     gap: 1,
   },
   reelItem: {
     // marginRight: 10,
     // borderRadius: 10,
-    overflow: 'hidden',
-    width: '33%',
-    position: 'relative',
-    gap: 1,
+    // overflow: 'hidden',
+    // width: '33%',
+    // position: 'relative',
+    // gap: 1,
+    
     marginBottom: 2,
+    width: reelItemWidth,
+    height: reelItemHeight,
+    overflow: 'hidden',
+    backgroundColor: 'black',
   },
   reelThumbnail: {
-    width: '100%',
-    height: 210,
+    aspectRatio:9/16,
+    // width: '100%',
+    // height: '100%',
+    // flex:1
   },
   reelInfo: {
     position: 'absolute',
-    bottom: 3,
+    bottom: 0,
     left: 0,
     right: 0, // Add a semi-transparent background for better visibility
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
   },
   reelText: {
     fontSize: 12,

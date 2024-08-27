@@ -3,7 +3,7 @@ package='com.advisiorapp'
 >
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />  
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -24,6 +24,12 @@ package='com.advisiorapp'
       android:allowBackup="false"
       android:usesCleartextTraffic="true"
       android:theme="@style/AppTheme">
+
+      <meta-data
+        android:name="com.google.android.gms.ads.APPLICATION_ID"
+        android:value="ca-app-pub-1658613370450501~4375897384"/>
+
+
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
@@ -38,8 +44,6 @@ package='com.advisiorapp'
         </intent-filter>
       </activity>
 
-      <meta-data
-        android:name="com.google.android.gms.ads.APPLICATION_ID"
-        android:value="ca-app-pub-1658613370450501~4375897384"/>
+
     </application>
 </manifest>

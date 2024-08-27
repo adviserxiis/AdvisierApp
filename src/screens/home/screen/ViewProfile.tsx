@@ -10,6 +10,7 @@ import {
   FlatList,
   Alert,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -21,10 +22,13 @@ import Video from 'react-native-video';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
-// import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
-// const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/9624456266';
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/9624456266';
 
+const {width} = Dimensions.get('screen');
+const reelItemWidth = width / 3 ; // Subtracting a small value for padding/gaps
+const reelItemHeight = reelItemWidth * 1.5;
 
 const ViewProfile = () => {
     const route = useRoute();
@@ -207,7 +211,7 @@ const ViewProfile = () => {
   };
 
   const renderReelItem = ({item}) => (
-    <TouchableOpacity style={styles.reelItem}>
+    <TouchableOpacity style={styles.reelItem} onPress={()=>navigation.navigate('singleReel', { video : item, creator : details})}>
       <Video
         source={{uri: item.data.post_file}} // Use video source
         style={styles.reelThumbnail}
@@ -270,15 +274,13 @@ const ViewProfile = () => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* Header Image */}
-      {/* <BannerAd
+      <BannerAd
       unitId={adUnitId}
       size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
       requestOptions={{
-        networkExtras: {
-          collapsible: 'top',
-        },
+        requestNonPersonalizedAdsOnly:true,
       }}
-    /> */}
+    />
       <View style={styles.headerContainer}>
         <Image
           source={
@@ -288,6 +290,15 @@ const ViewProfile = () => {
           }
           style={styles.headerImage}
         />
+
+        {/* <TouchableOpacity onPress={()}>
+          <Icon1
+            name="share"
+            size={24}
+            color="white"
+            style={styles.shareIcon}
+          />
+        </TouchableOpacity> */}
         <TouchableOpacity onPress={shareProfile}>
           <Icon1
             name="share"
@@ -597,10 +608,13 @@ const styles = StyleSheet.create({
   },
   reelsSection: {
     marginTop: 20,
+    flex:1,
+    justifyContent:'center',
+    width:'100%'
   },
   reelColumnWrapper: {
     justifyContent: 'flex-start',
-    gap: 2,
+    // gap: 2,
     // gap: 1, // Add gap between columns
   },
   sectionTitle: {
@@ -611,29 +625,35 @@ const styles = StyleSheet.create({
   },
   reelsList: {
     // paddingVertical: 10,
-    gap: 1,
+    // gap: 1,
   },
   reelItem: {
     // marginRight: 10,
     // borderRadius: 10,
+    // overflow: 'hidden',
+    // width: '33%',
+    // position: 'relative',
+    // gap: 1,
+    margin: 1,
+    width: reelItemWidth,
+    height: reelItemHeight,
     overflow: 'hidden',
-    width: '33%',
-    position: 'relative',
-    gap: 1,
-    marginBottom: 2,
+    backgroundColor: 'black',
   },
   reelThumbnail: {
-    width: '100%',
-    height: 210,
+    // width: '100%',
+    // height: '100%',
+    aspectRatio:9/16,
+    // flex:1
   },
   reelInfo: {
     position: 'absolute',
-    bottom: 3,
+    bottom: 0,
     left: 0,
     right: 0, // Add a semi-transparent background for better visibility
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
   },
   reelText: {
     fontSize: 12,

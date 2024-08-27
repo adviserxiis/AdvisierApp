@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, StatusBar, StyleSheet, FlatList, Dimensions } from 'react-native';
 import VideoPlayer from './components/VideoPlayer';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
-const bottomNavHeight = 64; 
+// const bottomNavHeight = 65; 
 
 const Home = () => {
   const [list, setList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mute, setMute] = useState(false);
   const flatListRef = useRef(null);
+  const BottomTabHeight = useBottomTabBarHeight();
+  const screenHeight = Dimensions.get('window').height-BottomTabHeight;
+  
 
   useEffect(() => {
     const getVideoList = async () => {
@@ -87,15 +91,11 @@ const MemoizedVideoPlayer = React.memo(VideoPlayer);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1,
     backgroundColor: 'black',
     width: screenWidth,
-    height: screenHeight - bottomNavHeight,
-    position:'absolute',
-    top:0,
-    bottom:0,
-    left:0,
-    right:0,
+    height: screenHeight,
+    // position:'relative',
   },
 });
 

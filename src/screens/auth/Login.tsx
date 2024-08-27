@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
@@ -31,6 +32,9 @@ const Login = () => {
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [googleLoading,setGoogleLoading] = useState(false);
+  
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -40,6 +44,7 @@ const Login = () => {
   }, []);
 
   const handleGoogleSign = async () => {
+    setGoogleLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
@@ -72,7 +77,10 @@ const Login = () => {
       );
       const isExists = await checkProfileExist(jsonresponse.userid);
       if (isExists) {
-        navigation.reset({index: 0, routes: [{name: 'Main'}]});
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       } else {
         navigation.navigate('setProfile');
       }
@@ -90,6 +98,8 @@ const Login = () => {
         default:
           console.log('Some Other Error Happened', error);
       }
+    } finally {
+      setGoogleLoading(false); // Hide loading overlay
     }
   };
 
@@ -132,6 +142,7 @@ const Login = () => {
   
 
   const handleLogin = async () => {
+    setLoading(true);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const newError: any = {};
 
@@ -147,6 +158,7 @@ const Login = () => {
 
     if (Object.keys(newError).length > 0) {
       setError(newError);
+      setLoading(false);
       return;
     }
 
@@ -171,7 +183,10 @@ const Login = () => {
         dispatch(setUser({email, password, userid: jsonresponse.userid}));
         const isExists = await checkProfileExist(jsonresponse.userid);
         if (isExists) {
-          navigation.reset({index: 0, routes: [{name: 'Main'}]});
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
         } else {
           navigation.navigate('setProfile');
         }
@@ -184,6 +199,8 @@ const Login = () => {
     } catch (error) {
       console.error('Login Error:', error);
       setError('Failed to login. Please try again.');
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -201,9 +218,17 @@ const Login = () => {
     }
   };
 
+  const LoadingOverlay = () => (
+    <View style={styles.loadingOverlay}>
+      <ActivityIndicator size="large" color="#fff" />
+    </View>
+  );
+  
+
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
+      {googleLoading && <LoadingOverlay/>}
       <View style={styles.centeredView}>
         <Text style={styles.welcomeText}>Welcome Back</Text>
         <Text style={styles.infoText}>
@@ -245,8 +270,15 @@ const Login = () => {
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity
+            onPress={handleLogin}
+            style={styles.loginButton}
+            disabled={loading}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
@@ -298,6 +330,17 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: 40,
     gap: 10,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000, // Ensure it's on top of all other content
   },
   input: {
     width: '100%',

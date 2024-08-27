@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -11,19 +12,26 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Fontisto';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {launchImageLibrary} from 'react-native-image-picker';
 import Video from 'react-native-video';
+import Ionic from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import storage from '@react-native-firebase/storage';
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 const AddPost = () => {
   const navigation = useNavigation();
+  // const route = useRoute();
+  // const { videoUri } = route.params;
+  const [isMuted, setIsMuted] = useState(false); // State for mute functionality
+  const [isPaused, setIsPaused] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   const user = useSelector(state => state.user);
   const [description, setDescription] = useState('');
   const [video, setVideo] = useState(null);
   const [location, setLocation] = useState('');
   const [resizeMode, setResizeMode] = useState('cover');
+  const [loading, setLoading] = useState(false);
   // console.log(user.userid);
   const handleSelectVideo = () => {
     launchImageLibrary({mediaType: 'video', quality: 1}, response => {
@@ -40,7 +48,15 @@ const AddPost = () => {
 
   const handleLoad = ({naturalSize}) => {
     const aspectRatio = naturalSize.width / naturalSize.height;
-    setResizeMode(aspectRatio > 1 ? 'contain' : 'cover');
+    if (aspectRatio === 16 / 9) {
+      Alert.alert(
+        'Invalid Video',
+        'The video aspect ratio of 16:9 is not supported. Please select a video with a different aspect ratio.',
+      );
+      setVideo(null); // Clear the video state
+    } else {
+      setResizeMode(aspectRatio > 1 ? 'contain' : 'cover');
+    }
   };
 
   const handleDeleteVideo = () => {
@@ -106,6 +122,13 @@ const AddPost = () => {
       return;
     }
 
+    if (!description) {
+      // Check if description is empty or contains only whitespace
+      Alert.alert('No caption', 'Please add a caption before saving.');
+      return;
+    }
+    setLoading(true);
+
     const fileUri = video.uri;
     const fileName = fileUri.substring(fileUri.lastIndexOf('/') + 1);
 
@@ -150,6 +173,8 @@ const AddPost = () => {
           console.log('sndns', jsonResponse);
           if (postResponse.ok) {
             // Alert.alert('Success', 'Your post has been saved.');
+            Alert.alert('Success', 'Post saved successfully!');
+            // navigation.goBack();
             // Optionally, reset the form after saving
             setVideo(null);
             setDescription('');
@@ -168,6 +193,8 @@ const AddPost = () => {
           'Error',
           'There was an error saving your post. Please try again.',
         );
+      } finally {
+        setLoading(false); // End loading
       }
     };
 
@@ -176,6 +203,11 @@ const AddPost = () => {
 
   return (
     <View style={styles.container}>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="white" />
+        </View>
+      )}
       <View style={styles.header}>
         {/* <TouchableOpacity onPress={() => navigation.canGoBack() && navigation.goBack()}>
           <Icon name='close-a' size={14} color='white' />
@@ -193,20 +225,48 @@ const AddPost = () => {
 
         {video && (
           <View style={styles.videoContainer}>
-            <Video
-              source={{uri: video.uri}}
-              style={styles.video}
-              controls={true}
-              resizeMode={resizeMode}
-              paused={false}
-              repeat={true}
-              onLoad={handleLoad}
-            />
             <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={handleDeleteVideo}>
-              <Icon name="trash" size={20} color="white" />
+              style={styles.videoTouchable}
+              onPress={() => setShowControls(prev => !prev)}>
+              <Video
+                source={{uri: video.uri}}
+                style={styles.video}
+                controls={false}
+                resizeMode={resizeMode}
+                paused={isPaused} // Pause the video based on the state
+                muted={isMuted}
+                repeat={true}
+                onLoad={handleLoad}
+              />
+              
+              {showControls && (
+                <View style={styles.overlayContainer}>
+                  <TouchableOpacity
+                    style={styles.muteButton}
+                    onPress={() => setIsMuted(prev => !prev)}>
+                    <Ionic
+                      name={isMuted ? 'volume-mute' : 'volume-high'}
+                      size={18}
+                      color="white"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.pauseButton}
+                    onPress={() => setIsPaused(prev => !prev)}>
+                    <Icon
+                      name={isPaused ? 'play' : 'pause'}
+                      size={18}
+                      color="white"
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
             </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDeleteVideo}>
+                <Icon name="trash" size={18} color="white" />
+              </TouchableOpacity>
           </View>
         )}
         <View
@@ -215,13 +275,13 @@ const AddPost = () => {
             gap: 20,
           }}>
           <TextInput
-            numberOfLines={4}
+            numberOfLines={3}
             value={description}
             onChangeText={setDescription}
             multiline={true}
             placeholder="Write Caption..."
             style={{
-              height: 150,
+              height: 100,
               width: '100%',
               borderBottomColor: 'gray',
               borderBottomWidth: 1,
@@ -269,9 +329,9 @@ const AddPost = () => {
             paddingHorizontal: 5,
             marginTop: 30,
           }}>
-          <Pressable style={styles.closeButton}>
+          {/* <Pressable style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Save Draft</Text>
-          </Pressable>
+          </Pressable> */}
           <Pressable style={styles.saveButton} onPress={savePost}>
             <Text style={styles.saveButtonText}>Done</Text>
           </Pressable>
@@ -286,6 +346,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#17191A',
     paddingHorizontal: 16,
+  },
+  overlayContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
   },
   closeButton: {
     padding: 10,
@@ -306,15 +378,33 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: '#0069B4',
     padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
-    width: '50%',
-    borderRadius: 10,
+    marginTop: 10,
+    width: '100%',
   },
   header: {
     marginTop: 20,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  videoTouchable: {
+    position: 'relative',
+  },
+  muteButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    padding: 5,
+  },
+  pauseButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{translateX: -10}, {translateY: -10}],
+    padding: 5,
   },
   autocompleteContainer: {
     flex: 1,
@@ -353,14 +443,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   videoContainer: {
-    justifyContent: 'flex-start',
-    marginTop: 10,
+    position: 'relative',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   video: {
-    width: '80%',
+    width: '100%',
+    aspectRatio: 9 / 16,
+    backgroundColor: 'black',
     height: 350,
-    borderRadius: 50,
+    // borderRadius: 50,
   },
 });
 

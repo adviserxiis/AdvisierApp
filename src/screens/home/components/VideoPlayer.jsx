@@ -23,11 +23,7 @@ import {useSelector} from 'react-redux';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { height: screenHeight } = Dimensions.get('window');
-const bottomNavHeight = 65; // Adjust this value according to your bottom navigation bar height
-
-const videoHeight = screenHeight - bottomNavHeight;
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 const VideoPlayer = ({
   video,
   isVisible,
@@ -46,6 +42,8 @@ const VideoPlayer = ({
   const user = useSelector(state => state.user);
   const [like, setLike] = useState(video?.data?.likes?.includes(user.userid));
   const navigation = useNavigation();
+  const BottomTabHeight = useBottomTabBarHeight();
+  const screenHeight = Dimensions.get('window').height-BottomTabHeight;
   
 
   // Handle play/pause based on visibility and scrolling
@@ -233,7 +231,7 @@ const VideoPlayer = ({
           <Video
             source={{uri: videoSrc}}
             ref={videoRef}
-            style={isFullScreen ? styles.fullScreenVideo : styles.video}
+            style={[styles.video , {height:screenHeight}]}
             controls={false}
             paused={paused}
             resizeMode="cover"
@@ -355,46 +353,46 @@ const VideoPlayer = ({
                 </Text>
               </View>
             </View>
-          </View>
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionic
-                name={mute ? 'volume-mute' : 'volume-high'}
-                size={24}
-                color="#FFFFFF"
-                style={{
-                  marginBottom: 5,
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionic
+                  name={mute ? 'volume-mute' : 'volume-high'}
+                  size={24}
+                  color="#FFFFFF"
+                  style={{
+                    marginBottom: 5,
+                  }}
+                  onPress={() => setMute(prev => !prev)} // Use the passed setMute function
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  likeHandler();
+                  // AddLiked(video?.id);
                 }}
-                onPress={() => setMute(prev => !prev)} // Use the passed setMute function
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                likeHandler();
-                // AddLiked(video?.id);
-              }}
-              style={styles.actionButton}>
-              <Icon
-                name={like ? 'heart' : 'hearto'}
-                size={24}
-                color={like ? '#FA4445' : '#FFFFFF'}
-              />
-              <Text style={styles.actionText}>{likeCount}</Text>
-            </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.actionButton}>
-              <Feather name="message-circle" size={24} color="#FFFFFF" />
-              <Text style={styles.actionText}>190</Text>
-            </TouchableOpacity> */}
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={sharePost}>
-              <Icon3 name="share" size={24} color="#FFFFFF" />
-              {/* <Text style={styles.actionText}>0</Text> */}
-            </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.actionButton}>
-              <Feather name="bookmark" size={24} color="#FFFFFF" />
-              <Text style={styles.actionText}>743</Text>
-            </TouchableOpacity> */}
+                style={styles.actionButton}>
+                <Icon
+                  name={like ? 'heart' : 'hearto'}
+                  size={24}
+                  color={like ? '#FA4445' : '#FFFFFF'}
+                />
+                <Text style={styles.actionText}>{likeCount}</Text>
+              </TouchableOpacity>
+              {/* <TouchableOpacity style={styles.actionButton}>
+                <Feather name="message-circle" size={24} color="#FFFFFF" />
+                <Text style={styles.actionText}>190</Text>
+              </TouchableOpacity> */}
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={sharePost}>
+                <Icon3 name="share" size={24} color="#FFFFFF" />
+                {/* <Text style={styles.actionText}>0</Text> */}
+              </TouchableOpacity>
+              {/* <TouchableOpacity style={styles.actionButton}>
+                <Feather name="bookmark" size={24} color="#FFFFFF" />
+                <Text style={styles.actionText}>743</Text>
+              </TouchableOpacity> */}
+            </View>
           </View>
         </>
       )}
@@ -405,12 +403,12 @@ const VideoPlayer = ({
 const styles = StyleSheet.create({
   container: {
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height - bottomNavHeight,
+    height: Dimensions.get('window').height,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
     position: 'relative',
-    // flex: 1,
+    flex: 1,
     // backgroundColor: 'black',
   },
   fullScreenContainer: {
@@ -425,12 +423,13 @@ const styles = StyleSheet.create({
   },
   video: {
     width: Dimensions.get('window').width,
-    height:  videoHeight,
-    position: 'absolute',
-    bottom:0,
-    top:0,
-    left:0,
-    right:0
+    height:  Dimensions.get('window').height,
+    // position: 'absolute',
+    // aspectRatio:9/16,
+    // top:0,
+    // left:0,
+    // right:0
+    alignSelf:'center',
   },
   fullScreenVideo: {
     ...StyleSheet.absoluteFillObject,
@@ -514,8 +513,9 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: 'absolute',
-    bottom: 16,
+    bottom: 95,
     left: 16,
+    right:10,
   },
   userInfo: {
     flexDirection: 'row',
@@ -544,8 +544,8 @@ const styles = StyleSheet.create({
   },
   actions: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
+    bottom: 0,
+    right: 0,
     gap: 15,
   },
   actionButton: {

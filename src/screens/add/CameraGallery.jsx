@@ -1,16 +1,35 @@
 // import React, { useEffect, useState, useCallback } from 'react';
-// import { View, Text, FlatList, StyleSheet, PermissionsAndroid, Platform, Image, ActivityIndicator } from 'react-native';
+// import { View, Text, FlatList, StyleSheet, PermissionsAndroid, Platform, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
+// import Icon from 'react-native-vector-icons/AntDesign'; 
 // import CameraRoll from '@react-native-community/cameraroll';
 // import Video from 'react-native-video';
+// import { useNavigation } from '@react-navigation/native';
 
 // // Memoized VideoItem Component
-// const VideoItem = React.memo(({ uri }) => {
+// const VideoItem = React.memo(({ uri,isSelected , onSelect }) => {
 //   const [isLoaded, setIsLoaded] = useState(false);
+//   const [resizeMode, setResizeMode] = useState('cover');
+//   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
+//   const handleLoad = (data) => {
+//     setIsLoaded(true);
+//     const { width, height } = data.naturalSize;
 
-//   const handleLoad = () => setIsLoaded(true);
+//     // Set the video dimensions
+//     setVideoDimensions({ width, height });
+
+//     // Determine the aspect ratio
+//     const aspectRatio = width / height;
+
+//     // If the video is closer to 16:9, use 'contain'; if closer to 9:16, use 'cover'
+//     if (Math.abs(aspectRatio - 16 / 9) < 0.1) {
+//       setResizeMode('contain');
+//     } else {
+//       setResizeMode('cover');
+//     }
+//   };
 
 //   return (
-//     <View style={styles.videoContainer}>
+//     <TouchableOpacity onPress={onSelect} activeOpacity={0.5} style={[styles.videoContainer, isSelected && styles.selectedVideoContainer]}>
 //       {!isLoaded && (
 //         <Image
 //           source={{ uri }}
@@ -21,13 +40,18 @@
 //       <Video
 //         source={{ uri }}
 //         style={styles.video}
-//         resizeMode="cover"
+//         resizeMode={resizeMode}
 //         controls={false}
-//         paused={!isLoaded}
+//         paused={true}
 //         onLoad={handleLoad}
 //         onError={(error) => console.error('Video loading error:', error)} // Handle video load errors
 //       />
-//     </View>
+//       {isSelected && (
+//         <View style={styles.tickMarkContainer}>
+//           <Icon name="checkcircle" size={16} color="white" />
+//         </View>
+//       )}
+//     </TouchableOpacity>
 //   );
 // });
 
@@ -35,6 +59,8 @@
 // const CameraGallery = React.memo(() => {
 //   const [videos, setVideos] = useState([]);
 //   const [loading, setLoading] = useState(false);
+//   const [selectedVideoUri, setSelectedVideoUri] = useState(null);
+//   const navigation = useNavigation(); 
 
 //   useEffect(() => {
 //     requestPermission();
@@ -63,7 +89,7 @@
 //   };
 
 //   const fetchVideos = async () => {
-//     setLoading(true);
+//     // setLoading(true);
 //     try {
 //       const result = await CameraRoll.getPhotos({
 //         first: 20, // Number of videos to load
@@ -73,13 +99,28 @@
 //     } catch (error) {
 //       console.error('Error fetching videos:', error);
 //     } finally {
-//       setLoading(false);
+//     //   setLoading(false);
 //     }
 //   };
 
 //   const renderItem = useCallback(({ item }) => (
-//     <VideoItem uri={item.node.image.uri} />
-//   ), []);
+//     <VideoItem
+//       uri={item.node.image.uri}
+//       isSelected={selectedVideoUri === item.node.image.uri}
+//       onSelect={() => handleSelectVideo(item.node.image.uri)}
+//     />
+//   ), [selectedVideoUri]);
+
+//   const handleSelectVideo = (uri) => {
+//     setSelectedVideoUri((prevUri) => (prevUri === uri ? null : uri)); // Toggle selection
+//   };
+
+//   const handleContinue = () => {
+//     console.log('shjs',selectedVideoUri);
+//     if (selectedVideoUri) {
+//       navigation.navigate('CreatePost', { videoUri: selectedVideoUri });
+//     }
+//   };
 
 //   return (
 //     <View style={styles.container}>
@@ -94,13 +135,19 @@
 //           data={videos}
 //           renderItem={renderItem}
 //           keyExtractor={(item) => item.node.image.uri}
-//           numColumns={2}
+//           numColumns={3}
 //           removeClippedSubviews={true} // Improve performance by removing off-screen items
 //           initialNumToRender={10} // Number of items to render initially
 //           maxToRenderPerBatch={5} 
 //           onEndReached={fetchVideos} // Load more videos when reaching the end
 //           onEndReachedThreshold={0.5} // Trigger loading more items when half of the content is visible
 //         />
+//       )}
+
+//     {selectedVideoUri && (
+//         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+//           <Text style={styles.continueButtonText}>Continue</Text>
+//         </TouchableOpacity>
 //       )}
 //     </View>
 //   );
@@ -116,6 +163,7 @@
 //     flexDirection: 'row',
 //     alignItems: 'center',
 //     gap: 10,
+//     marginBottom:10,
 //     paddingHorizontal: 16,
 //   },
 //   title: {
@@ -126,19 +174,58 @@
 //   },
 //   videoContainer: {
 //     flex: 1,
-//     justifyContent: 'flex-start',
-//     margin: 3,
+//     justifyContent: 'center',
+//     alignItems:'center',
+//     margin: 2,
 //     width: '100%',
-//     aspectRatio: 1, // Maintain aspect ratio
+//      // Maintain aspect ratio
+//   },
+//   selectedVideoContainer: {
+//     borderColor: 'white',
+//     borderWidth: 0.5,
+//   },
+//   tickMarkContainer: {
+//     position: 'absolute',
+//     top: 5,
+//     right: 5,
+//     borderRadius: 12,
+//     padding: 3,
+//   },
+//   tickIcon: {
+//     color: '#000',
 //   },
 //   video: {
 //     width: '100%',
 //     height: '100%',
+//     flex:1,
+//     backgroundColor:'black',
+//     aspectRatio: 9/16,
 //   },
 //   loader: {
 //     flex: 1,
 //     justifyContent: 'center',
 //     alignItems: 'center',
+//   },
+// //   wideVideo: {
+// //     aspectRatio: 16 / 9, // Adjust aspect ratio for wide (landscape) videos
+// //     justifyContent: 'center', // Center the video
+// //     alignItems: 'center',
+// //   },
+
+// continueButton: {
+//     position: 'absolute',
+//     bottom: 20,
+//     left: 16,
+//     right: 16,
+//     backgroundColor: '#388DEB',
+//     borderRadius: 8,
+//     paddingVertical: 12,
+//     alignItems: 'center',
+//   },
+//   continueButtonText: {
+//     color: 'white',
+//     fontSize: 16,
+//     fontFamily: 'Poppins-Medium',
 //   },
 // });
 
