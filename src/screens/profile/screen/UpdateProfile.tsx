@@ -225,7 +225,7 @@ const UpdateProfile = () => {
       console.log('FormData:', formData);
   
       const response = await fetch(
-        'https://adviserxiis-backend.onrender.com/creator/savedetails',
+        'https://adviserxiis-backend-three.vercel.app/creator/savedetails',
         {
           method: 'POST',
           body: formData,

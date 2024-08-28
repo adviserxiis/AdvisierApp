@@ -11,6 +11,7 @@ import {
   Alert,
   StatusBar,
   Dimensions,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -87,6 +88,7 @@ const ViewProfile = () => {
       },
     );
     const jsonresponse = await response.json();
+    console.log("hsjs",jsonresponse);
 
     setDetails(jsonresponse);
     setIsFollowing(jsonresponse?.followers?.includes(user.userid));
@@ -210,15 +212,28 @@ const ViewProfile = () => {
     }
   };
 
+  const [videoAspectRatio, setVideoAspectRatio] = useState(16 / 9); // Default aspect ratio
+  
+  const handleLoad = (data) => {
+    // Calculate the aspect ratio
+    const { width, height } = data.naturalSize;
+    setVideoAspectRatio(width / height);
+  };
+
+  // Determine the resize mode based on the aspect ratio
+  const resizeMode = videoAspectRatio >= 1 ? 'contain' : 'cover';
+
   const renderReelItem = ({item}) => (
+    
     <TouchableOpacity style={styles.reelItem} onPress={()=>navigation.navigate('singleReel', { video : item, creator : details})}>
       <Video
         source={{uri: item.data.post_file}} // Use video source
         style={styles.reelThumbnail}
         controls={false} // Display video controls
-        resizeMode="cover"
+        resizeMode={resizeMode}
         muted
         paused={true}
+        // onLoad={handleLoad}
       />
       <View style={styles.reelInfo}>
         <View
@@ -269,6 +284,18 @@ const ViewProfile = () => {
   // const viewabilityConfig = {
   //   itemVisiblePercentThreshold: 60,
   // };
+
+  const handleLinkPress = (url) => {
+    if (url) {
+      // Ensure the URL has the correct scheme
+      const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+  
+      Linking.openURL(validUrl).catch((err) => {
+        console.error("Failed to open URL:", err);
+        Alert.alert('Error', 'Failed to open the link.');
+      });
+    }
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -382,20 +409,24 @@ const ViewProfile = () => {
             flexDirection: 'row',
             gap: 10,
           }}>
-          <Image
-            source={require('../../../assets/images/instagram.png')}
-            style={{
-              width: 32,
-              height: 32,
-            }}
-          />
-          <Image
-            source={require('../../../assets/images/spotify.png')}
-            style={{
-              width: 32,
-              height: 32,
-            }}
-          />
+          {details?.social_links?.instagram && (
+            <TouchableOpacity
+              onPress={() => handleLinkPress(details?.social_links?.instagram)}>
+              <Image
+                source={require('../../../assets/images/instagram.png')}
+                style={{width: 32, height: 32}}
+              />
+            </TouchableOpacity>
+          )}
+          {details?.social_links?.spotify && (
+            <TouchableOpacity
+              onPress={() => handleLinkPress(details?.social_links?.spotify)}>
+              <Image
+                source={require('../../../assets/images/spotify.png')}
+                style={{width: 32, height: 32}}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View

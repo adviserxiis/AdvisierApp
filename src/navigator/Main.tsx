@@ -91,7 +91,7 @@ function ProfileStackScreen (){
           headerShown: false,
         }}
       />
-      <ProfileStack.Screen
+      {/* <ProfileStack.Screen
         name='deletePost'
         component={DeletePost}
         options={{
@@ -106,7 +106,7 @@ function ProfileStackScreen (){
           headerTitleAlign:'center',
           
         }}
-      />
+      /> */}
     </ProfileStack.Navigator>
   )
 }
@@ -168,13 +168,13 @@ function MyStack() {
         component={MyTabs}
         options={{headerShown: false}}
       />
-        <Stack.Screen
+        {/* <Stack.Screen
           name="Login"
           component={Login}
           options={{
             headerShown: false,
           }}
-        />
+        /> */}
       <Stack.Screen
         name="updateProfile"
         component={UpdateProfile}

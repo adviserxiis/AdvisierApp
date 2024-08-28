@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
-import Icon2 from 'react-native-vector-icons/Foundation'
+import Icon2 from 'react-native-vector-icons/Foundation';
 import {useDispatch, useSelector} from 'react-redux';
 import {clearData} from '../../utils/store';
 import {clearUser} from '../../features/user/userSlice';
@@ -29,8 +29,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 const {width} = Dimensions.get('window');
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
-import  auth  from '@react-native-firebase/auth';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import DeletePost from './screen/DeletePost';
 
 const adUnitId = __DEV__
@@ -121,28 +121,28 @@ const Profile = () => {
               const currentUser = auth().currentUser;
               if (currentUser) {
                 const providerId = currentUser.providerData[0].providerId;
-  
+
                 // If the user logged in with Google
                 if (providerId === 'google.com') {
                   await GoogleSignin.revokeAccess(); // Optional, revokes all Google permissions
                   await GoogleSignin.signOut();
                 }
-  
+
                 // Sign out from Firebase (common for both email/password and Google)
                 await auth().signOut();
               }
-  
+
               // Clear local data (if any)
               clearData();
-  
+
               // Clear user data in Redux
               dispatch(clearUser());
-  
+
               // Reset navigation and navigate to the Login screen
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
+              // navigation.reset({
+              //   index: 0,
+              //   routes: [{ name: 'Login' }],
+              // });
             } catch (error) {
               console.error('Error during logout:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -150,35 +150,16 @@ const Profile = () => {
           },
         },
       ],
-      { cancelable: false }
+      {cancelable: false},
     );
   };
-
-  const deletePost = async(postid)=>{
-    console.log("Hiks", postid);
-    const response = await fetch(
-      'https://adviserxiis-backend-three.vercel.app/post/deletepost',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          adviserid: user.userid,
-          postid: postid,
-        }),
-      },
-    );
-    const jsonresponse = await response.json();
-    console.log("jakdk",jsonresponse);
-  }
 
   const getuser = async () => {
     try {
       const storedProfileData = await AsyncStorage.getItem('user');
       if (storedProfileData) {
         const profileData = JSON.parse(storedProfileData);
-        console.log('sgywyw',profileData.profile_photo);
+        console.log('sgywyw', profileData.profile_photo);
         setName(profileData.name || '');
         setTitle(profileData.professional_title || '');
         setDescription(profileData.discription || '');
@@ -211,7 +192,8 @@ const Profile = () => {
   useFocusEffect(
     useCallback(() => {
       getuser();
-    }, [])
+      getReels();
+    }, []),
   );
 
   const shareProfile = async () => {
@@ -235,6 +217,7 @@ const Profile = () => {
   };
 
   const getReels = async () => {
+    console.log('Sshh');
     const response = await fetch(
       `https://adviserxiis-backend-three.vercel.app/post/getpostsofadviser/${user.userid}`,
       {
@@ -249,19 +232,70 @@ const Profile = () => {
     setReels(jsonresponse || []);
 
     const total = jsonresponse.reduce(
-      (acc, reel) => acc + (reel?.data?.views.length || 0),
+      (acc, reel) => acc + (reel?.data?.views?.length || 0),
       0,
     );
     setTotalViews(total);
   };
-  useEffect(() => {
-    getReels();
-  }, []);
 
+  const deletePost = postid => {
+    Alert.alert(
+      'Delete Reel',
+      'Are you sure you want to delete this reel?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete canceled'),
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              console.log('Deleting reel with ID:', postid);
+              const response = await fetch(
+                'https://adviserxiis-backend-three.vercel.app/post/deletepost',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    adviserid: user.userid,
+                    postid: postid,
+                  }),
+                },
+              );
   
+              // Fetch updated reels list after deletion
+              getReels();
+  
+              const jsonResponse = await response.json();
+              console.log('Reel deleted:', jsonResponse);
+  
+              // Optional: You can show another alert for success
+              // Alert.alert('Success', 'The reel has been deleted.');
+            } catch (error) {
+              console.error('Error deleting reel:', error);
+              Alert.alert('Error', 'Failed to delete the reel. Please try again.');
+            }
+          },
+          style: 'destructive', // Optional: Makes the delete button red on iOS
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+  // useEffect(() => {
+  //   getReels();
+  // }, []);
+
   const renderReelItem = ({item}) => (
-    
-    <TouchableOpacity style={styles.reelItem} onPress={()=>navigation.navigate('singleReel',{ video : item, creator : details})}>
+    <TouchableOpacity
+      style={styles.reelItem}
+      onPress={() =>
+        navigation.navigate('singleReel', {video: item, creator: details})
+      }>
       <Video
         source={{uri: item.data.post_file}} // Use video source
         style={styles.reelThumbnail}
@@ -272,13 +306,15 @@ const Profile = () => {
         paused={true}
         // paused={currentPlaying !== item.id}// Adjust video aspect ratio
       />
-      {/* <TouchableOpacity onPress={deletePost(item?.id)} style={{
-        position: 'absolute',
-        top:10,
-        right:10,
-      }}>
+      <TouchableOpacity
+        onPress={() => deletePost(item?.id)}
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+        }}>
         <Icon2 name="trash" size={18} color="white" />
-      </TouchableOpacity> */}
+      </TouchableOpacity>
       {/* <Image
         source={{uri: item.data.post_file}} // Use image source
         style={styles.reelThumbnail}
@@ -333,6 +369,18 @@ const Profile = () => {
   // const viewabilityConfig = {
   //   itemVisiblePercentThreshold: 60,
   // };
+
+  const handleLinkPress = (url) => {
+    if (url) {
+      // Ensure the URL has the correct scheme
+      const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+  
+      Linking.openURL(validUrl).catch((err) => {
+        console.error("Failed to open URL:", err);
+        Alert.alert('Error', 'Failed to open the link.');
+      });
+    }
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -395,7 +443,7 @@ const Profile = () => {
                 />
                 <Text style={styles.modalText}>Share</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
                   hideModal();
@@ -408,7 +456,7 @@ const Profile = () => {
                   style={styles.modalIcon}
                 />
                 <Text style={styles.modalText}>Delete</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
@@ -485,20 +533,24 @@ const Profile = () => {
             flexDirection: 'row',
             gap: 10,
           }}>
-          <Image
-            source={require('../../assets/images/instagram.png')}
-            style={{
-              width: 32,
-              height: 32,
-            }}
-          />
-          <Image
-            source={require('../../assets/images/spotify.png')}
-            style={{
-              width: 32,
-              height: 32,
-            }}
-          />
+          {details?.social_links?.instagram && (
+            <TouchableOpacity
+              onPress={() => handleLinkPress(details?.social_links?.instagram)}>
+              <Image
+                source={require('../../assets/images/instagram.png')}
+                style={{width: 32, height: 32}}
+              />
+            </TouchableOpacity>
+          )}
+          {details?.social_links?.spotify && (
+            <TouchableOpacity
+              onPress={() => handleLinkPress(details?.social_links?.spotify)}>
+              <Image
+                source={require('../../assets/images/spotify.png')}
+                style={{width: 32, height: 32}}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View
@@ -752,7 +804,7 @@ const styles = StyleSheet.create({
   },
   reelsList: {
     // paddingVertical: 10,
-    
+
     gap: 1,
   },
   reelItem: {
@@ -762,7 +814,7 @@ const styles = StyleSheet.create({
     // width: '33%',
     // position: 'relative',
     // gap: 1,
-    
+
     marginBottom: 2,
     width: reelItemWidth,
     height: reelItemHeight,
@@ -770,7 +822,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   reelThumbnail: {
-    aspectRatio:9/16,
+    aspectRatio: 9 / 16,
     // width: '100%',
     // height: '100%',
     // flex:1
