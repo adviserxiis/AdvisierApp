@@ -33,8 +33,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [googleLoading,setGoogleLoading] = useState(false);
-  
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -61,6 +60,8 @@ const Login = () => {
           },
           body: JSON.stringify({
             email: userInfo.user.email,
+            username:userInfo.user.name,
+            profile_photo: userInfo.user.photo,
           }),
         },
       );
@@ -75,15 +76,19 @@ const Login = () => {
           userid: jsonresponse.userid,
         }),
       );
-      const isExists = await checkProfileExist(jsonresponse.userid);
-      if (isExists) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      } else {
-        navigation.navigate('setProfile');
-      }
+      // const isExists = await checkProfileExist(jsonresponse.userid);
+      // if (isExists) {
+      //   navigation.reset({
+      //     index: 0,
+      //     routes: [{ name: 'Main' }],
+      //   });
+      // } else {
+      //   navigation.navigate('setProfile');
+      // }
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Main'}],
+      });
     } catch (error: any) {
       switch (error.code) {
         case statusCodes.SIGN_IN_CANCELLED:
@@ -103,7 +108,7 @@ const Login = () => {
     }
   };
 
-  const checkProfileExist = async (userid) => {
+  const checkProfileExist = async userid => {
     try {
       const response = await fetch(
         `https://adviserxiis-backend-three.vercel.app/creator/getuser/${userid}`,
@@ -112,7 +117,7 @@ const Login = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
       const jsonresponse = await response.json();
       console.log('checkProfileExist', jsonresponse);
@@ -129,7 +134,7 @@ const Login = () => {
             profile_photo: jsonresponse.profile_photo,
             profile_background: jsonresponse.profile_background,
             userid: userid,
-          })
+          }),
         );
         return true;
       }
@@ -139,7 +144,6 @@ const Login = () => {
       return false; // In case of error, assume profile does not exist
     }
   };
-  
 
   const handleLogin = async () => {
     setLoading(true);
@@ -185,13 +189,12 @@ const Login = () => {
         if (isExists) {
           navigation.reset({
             index: 0,
-            routes: [{ name: 'Main' }],
+            routes: [{name: 'Main'}],
           });
         } else {
           navigation.navigate('setProfile');
         }
       } else if (response.status === 401) {
-        // Assuming 401 is returned for wrong credentials
         setError({password: 'Incorrect email or password. Please try again.'});
       } else {
         setError('Login failed. Please check your credentials.');
@@ -199,7 +202,7 @@ const Login = () => {
     } catch (error) {
       console.error('Login Error:', error);
       setError('Failed to login. Please try again.');
-    } finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -223,12 +226,11 @@ const Login = () => {
       <ActivityIndicator size="large" color="#fff" />
     </View>
   );
-  
 
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
-      {googleLoading && <LoadingOverlay/>}
+      {googleLoading && <LoadingOverlay />}
       <View style={styles.centeredView}>
         <Text style={styles.welcomeText}>Welcome Back</Text>
         <Text style={styles.infoText}>

@@ -23,17 +23,18 @@ import Video from 'react-native-video';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
-const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/9624456266';
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/4940380881';
+// const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-3940256099942544/9214589741';
 
 const {width} = Dimensions.get('screen');
-const reelItemWidth = width / 3 ; // Subtracting a small value for padding/gaps
-const reelItemHeight = reelItemWidth * 1.5;
+const reelItemWidth = width / 3; // Subtracting a small value for padding/gaps
+const reelItemHeight = reelItemWidth * 1.7;
 
 const ViewProfile = () => {
-    const route = useRoute();
-    const advsid = route.params;
+  const route = useRoute();
+  const advsid = route.params;
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
   const [details, setDetails] = useState(null);
@@ -88,7 +89,7 @@ const ViewProfile = () => {
       },
     );
     const jsonresponse = await response.json();
-    console.log("hsjs",jsonresponse);
+    console.log('hsjs', jsonresponse);
 
     setDetails(jsonresponse);
     setIsFollowing(jsonresponse?.followers?.includes(user.userid));
@@ -136,7 +137,7 @@ const ViewProfile = () => {
     setReels(jsonresponse || []);
 
     const total = jsonresponse.reduce(
-      (acc, reel) => acc + (reel.data?.views?.length|| 0),
+      (acc, reel) => acc + (reel.data?.views?.length || 0),
       0,
     );
     setTotalViews(total);
@@ -158,13 +159,13 @@ const ViewProfile = () => {
             adviserid: advsid,
             followerid: user.userid,
           }),
-        }
+        },
       );
       const jsonresponse = await response.json();
       console.log('Follow response', jsonresponse);
 
       if (response.ok) {
-        console.log("higg")
+        console.log('higg');
         setIsFollowing(true);
       } else {
         console.error('Failed to follow:', response.statusText);
@@ -187,14 +188,13 @@ const ViewProfile = () => {
             adviserid: advsid,
             followerid: user.userid,
           }),
-        }
+        },
       );
       const jsonresponse = await response.json();
       console.log('UnFollow response', jsonresponse);
 
-
       if (response.ok) {
-        console.log("higga")
+        console.log('higga');
         setIsFollowing(false);
       } else {
         console.error('Failed to unfollow:', response.statusText);
@@ -213,10 +213,10 @@ const ViewProfile = () => {
   };
 
   const [videoAspectRatio, setVideoAspectRatio] = useState(16 / 9); // Default aspect ratio
-  
-  const handleLoad = (data) => {
+
+  const handleLoad = data => {
     // Calculate the aspect ratio
-    const { width, height } = data.naturalSize;
+    const {width, height} = data.naturalSize;
     setVideoAspectRatio(width / height);
   };
 
@@ -224,8 +224,11 @@ const ViewProfile = () => {
   const resizeMode = videoAspectRatio >= 1 ? 'contain' : 'cover';
 
   const renderReelItem = ({item}) => (
-    
-    <TouchableOpacity style={styles.reelItem} onPress={()=>navigation.navigate('singleReel', { video : item, creator : details})}>
+    <TouchableOpacity
+      style={styles.reelItem}
+      onPress={() =>
+        navigation.navigate('singleReel', {video: item, creator: details})
+      }>
       <Video
         source={{uri: item.data.post_file}} // Use video source
         style={styles.reelThumbnail}
@@ -285,13 +288,16 @@ const ViewProfile = () => {
   //   itemVisiblePercentThreshold: 60,
   // };
 
-  const handleLinkPress = (url) => {
+  const handleLinkPress = url => {
     if (url) {
       // Ensure the URL has the correct scheme
-      const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
-  
-      Linking.openURL(validUrl).catch((err) => {
-        console.error("Failed to open URL:", err);
+      const validUrl =
+        url.startsWith('http://') || url.startsWith('https://')
+          ? url
+          : `https://${url}`;
+
+      Linking.openURL(validUrl).catch(err => {
+        console.error('Failed to open URL:', err);
         Alert.alert('Error', 'Failed to open the link.');
       });
     }
@@ -302,12 +308,12 @@ const ViewProfile = () => {
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* Header Image */}
       <BannerAd
-      unitId={adUnitId}
-      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-      requestOptions={{
-        requestNonPersonalizedAdsOnly:true,
-      }}
-    />
+        unitId={adUnitId}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true,
+        }}
+      />
       <View style={styles.headerContainer}>
         <Image
           source={
@@ -589,7 +595,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderColor: '#17191A',
     borderWidth: 2,
-    backgroundColor:'white'
+    backgroundColor: 'white',
   },
   profileDetails: {
     flex: 1,
@@ -639,9 +645,9 @@ const styles = StyleSheet.create({
   },
   reelsSection: {
     marginTop: 20,
-    flex:1,
-    justifyContent:'center',
-    width:'100%'
+    flex: 1,
+    justifyContent: 'center',
+    width: '100%',
   },
   reelColumnWrapper: {
     justifyContent: 'flex-start',
@@ -674,7 +680,7 @@ const styles = StyleSheet.create({
   reelThumbnail: {
     // width: '100%',
     // height: '100%',
-    aspectRatio:9/16,
+    aspectRatio: 9 / 16,
     // flex:1
   },
   reelInfo: {

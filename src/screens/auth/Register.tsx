@@ -21,6 +21,7 @@ import {setUser} from '../../features/user/userSlice';
 import {useDispatch} from 'react-redux';
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const Register = () => {
   const navigation = useNavigation();
   const [rememberMe, setRememberMe] = useState(false);
@@ -54,7 +55,8 @@ const Register = () => {
           },
           body: JSON.stringify({
             email: userInfo.user.email,
-            
+            username:userInfo.user.name,
+            profile_photo: userInfo.user.photo,
           }),
         },
       );
@@ -69,7 +71,17 @@ const Register = () => {
           userid: jsonresponse.userid,
         }),
       );
-      navigation.navigate('setProfile');
+      // const isExists = await checkProfileExist(jsonresponse.userid);
+      // if (isExists) {
+      //   navigation.reset({
+      //     index: 0,
+      //     routes: [{ name: 'Main' }],
+      //   });
+      // }
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
     } catch (error: any) {
       switch (error.code) {
         case statusCodes.SIGN_IN_CANCELLED:
@@ -84,6 +96,43 @@ const Register = () => {
         default:
           console.log('Some Other Error Happened', error);
       }
+    }
+  };
+
+  const checkProfileExist = async (userid) => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/creator/getuser/${userid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const jsonresponse = await response.json();
+      console.log('checkProfileExist', jsonresponse);
+      if (jsonresponse.professional_title) {
+        // Store the data in AsyncStorage before returning true
+        await AsyncStorage.setItem(
+          'user',
+          JSON.stringify({
+            name: jsonresponse.username,
+            professional_title: jsonresponse.professional_title,
+            discription: jsonresponse.professional_bio,
+            interests: jsonresponse.interests,
+            social_links: jsonresponse.social_links,
+            profile_photo: jsonresponse.profile_photo,
+            profile_background: jsonresponse.profile_background,
+            userid: userid,
+          })
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking profile existence:', error);
+      return false; // In case of error, assume profile does not exist
     }
   };
 

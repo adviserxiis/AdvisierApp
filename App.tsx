@@ -7,6 +7,8 @@ import {Alert, Linking, PermissionsAndroid, Platform} from 'react-native';
 import {useEffect} from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
 import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
+
+
 const App = () => {
   async function requestUserPermission() {
     const authStatus = await messaging().requestPermission();

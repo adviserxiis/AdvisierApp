@@ -398,6 +398,7 @@ const SetProfile = () => {
           <TextInput
             placeholder="Ex. Software Developer"
             value={title}
+            placeholderTextColor='#838383'
             onChangeText={setTitle}
             style={{
               height: 44,
@@ -428,6 +429,7 @@ const SetProfile = () => {
               maxLength={60}
               value={description}
               onChangeText={setDescription}
+              placeholderTextColor='#838383'
               style={{
                 height: 44,
                 backgroundColor: '#3A3B3C',
@@ -457,6 +459,7 @@ const SetProfile = () => {
               editable={false}
               multiline={false}
               numberOfLines={4}
+              placeholderTextColor='#838383'
               value={interests.join(', ').substring(0, 44)}
               style={{
                 height: 44,
@@ -486,6 +489,7 @@ const SetProfile = () => {
               editable={false}
               multiline={false}
               numberOfLines={4}
+              placeholderTextColor='#838383'
               value={
                 Array.isArray(links)
                   ? links.map(link => link.type).join(', ')

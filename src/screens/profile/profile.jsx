@@ -15,6 +15,7 @@ import {
   Easing,
   Dimensions,
   TouchableWithoutFeedback,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -28,17 +29,17 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 const {width} = Dimensions.get('window');
-import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import DeletePost from './screen/DeletePost';
+// import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
-const adUnitId = __DEV__
-  ? TestIds.BANNER
-  : 'ca-app-pub-1658613370450501/9624456266';
+// const adUnitId = __DEV__
+//   ? TestIds.BANNER
+//   : 'ca-app-pub-1658613370450501/9624456266';
 
 const reelItemWidth = width / 3; // Subtracting a small value for padding/gaps
-const reelItemHeight = reelItemWidth * 1.5;
+const reelItemHeight = reelItemWidth * 1.7;
 
 const Profile = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -49,13 +50,15 @@ const Profile = () => {
   // const [currentPlaying, setCurrentPlaying] = useState(null);
   // const [viewableItems, setViewableItems] = useState([]);
   const [totalViews, setTotalViews] = useState(0);
-  const [name, setName] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [interests, setInterests] = useState([]);
-  const [links, setLinks] = useState([]);
-  const [profileImage, setProfileImage] = useState(null);
-  const [bannerImage, setBannerImage] = useState(null);
+  const [profile, setProfile] = useState({
+    name: '',
+    title: '',
+    description: '',
+    interests: [],
+    links: [],
+    profileImage: null,
+    bannerImage: null,
+  });
   const [modalVisible, setModalVisible] = useState(false);
   const [modalYPosition] = useState(new Animated.Value(-200)); // Initial position off-screen
   const [modalOpacity] = useState(new Animated.Value(0));
@@ -143,6 +146,8 @@ const Profile = () => {
               //   index: 0,
               //   routes: [{ name: 'Login' }],
               // });
+
+              
             } catch (error) {
               console.error('Error during logout:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -156,38 +161,50 @@ const Profile = () => {
 
   const getuser = async () => {
     try {
-      const storedProfileData = await AsyncStorage.getItem('user');
+      // Fetch user info and profile data concurrently
+      const [userInfo, storedProfileData] = await Promise.all([
+        GoogleSignin.getCurrentUser(),
+        AsyncStorage.getItem('user')
+      ]);
+  
+      // Parse and set profile data if available
       if (storedProfileData) {
+        console.log('Fetching user data for ID:', user.userid);
         const profileData = JSON.parse(storedProfileData);
-        console.log('sgywyw', profileData.profile_photo);
-        setName(profileData.name || '');
-        setTitle(profileData.professional_title || '');
-        setDescription(profileData.discription || '');
-        setInterests(profileData.interests || []);
-        setLinks(profileData.social_links || []);
-        setProfileImage(profileData.profile_photo || null);
-        setBannerImage(profileData.profile_background || null);
+        setProfile(prev => ({
+          ...prev,
+          name: profileData.name || userInfo.user.name,
+          title: profileData.professional_title || '',
+          description: profileData.discription || '',
+          interests: profileData.interests || [],
+          links: profileData.social_links || [],
+          profileImage: profileData.profile_photo || userInfo.user.photo,
+          bannerImage: profileData.profile_background || null,
+        }));
       }
+  
+      // Fetch user details
+      const response = await fetch(`https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`);
+      
+      // Check if the response is OK (status code 200)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      // Check the content type of the response
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Expected JSON response');
+      }
+  
+      // Parse JSON response
+      const jsonResponse = await response.json();
+      setDetails(jsonResponse);
     } catch (error) {
-      console.error('Failed to load profile data:', error);
+      console.error('Failed to load user data:', error);
     }
-
-    const response = await fetch(
-      `https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    );
-    const jsonresponse = await response.json();
-    console.log('shsjj', jsonresponse);
-    setDetails(jsonresponse);
-    // setReels(jsonresponse.reels || []);
-    // console.log("hah",response);
-    // console.log('jsj',user.userid);
   };
+  
 
   useFocusEffect(
     useCallback(() => {
@@ -266,24 +283,27 @@ const Profile = () => {
                   }),
                 },
               );
-  
+
               // Fetch updated reels list after deletion
               getReels();
-  
+
               const jsonResponse = await response.json();
               console.log('Reel deleted:', jsonResponse);
-  
+
               // Optional: You can show another alert for success
               // Alert.alert('Success', 'The reel has been deleted.');
             } catch (error) {
               console.error('Error deleting reel:', error);
-              Alert.alert('Error', 'Failed to delete the reel. Please try again.');
+              Alert.alert(
+                'Error',
+                'Failed to delete the reel. Please try again.',
+              );
             }
           },
           style: 'destructive', // Optional: Makes the delete button red on iOS
         },
       ],
-      { cancelable: false }
+      {cancelable: false},
     );
   };
   // useEffect(() => {
@@ -370,13 +390,16 @@ const Profile = () => {
   //   itemVisiblePercentThreshold: 60,
   // };
 
-  const handleLinkPress = (url) => {
+  const handleLinkPress = url => {
     if (url) {
       // Ensure the URL has the correct scheme
-      const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
-  
-      Linking.openURL(validUrl).catch((err) => {
-        console.error("Failed to open URL:", err);
+      const validUrl =
+        url.startsWith('http://') || url.startsWith('https://')
+          ? url
+          : `https://${url}`;
+
+      Linking.openURL(validUrl).catch(err => {
+        console.error('Failed to open URL:', err);
         Alert.alert('Error', 'Failed to open the link.');
       });
     }

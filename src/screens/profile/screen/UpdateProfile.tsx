@@ -200,6 +200,7 @@ const UpdateProfile = () => {
         type: 'image/jpeg',
       });
     }
+ 
   
     if (bannerImage) {
       // const bannerImageUrl = uploadSingleImage(bannerImage);
@@ -446,6 +447,7 @@ const UpdateProfile = () => {
           <TextInput
             placeholder="Name"
             value={name}
+            placeholderTextColor='#838383'
             onChangeText={setName}
             style={{
               height: 44,
@@ -458,6 +460,7 @@ const UpdateProfile = () => {
           <TextInput
             placeholder="Ex. Software Developer"
             value={title}
+            placeholderTextColor='#838383'
             onChangeText={setTitle}
             style={{
               height: 44,
@@ -487,6 +490,7 @@ const UpdateProfile = () => {
               // numberOfLines={4}
               maxLength={60}
               value={description}
+              placeholderTextColor='#838383'
               onChangeText={setDescription}
               style={{
                 height: 44,
@@ -516,6 +520,7 @@ const UpdateProfile = () => {
               placeholder="Choose your interested in"
               editable={false}
               multiline={false}
+              placeholderTextColor='#838383'
               numberOfLines={4}
               value={interests.join(', ').substring(0, 44)}
               style={{
@@ -545,6 +550,7 @@ const UpdateProfile = () => {
               placeholder="Add your important links"
               editable={false}
               multiline={false}
+              placeholderTextColor='#838383'
               numberOfLines={4}
               value={
                 Array.isArray(links)

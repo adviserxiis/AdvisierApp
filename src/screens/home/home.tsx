@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, Text, StatusBar, StyleSheet, FlatList, Dimensions } from 'react-native';
+import { View, Text, StatusBar, StyleSheet, FlatList, Dimensions, FlatListProps } from 'react-native';
 import VideoPlayer from './components/VideoPlayer';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
@@ -36,8 +36,8 @@ const Home = () => {
     getVideoList();
   }, []);
 
-  const handleViewableItemsChanged = useCallback(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
+  const handleViewableItemsChanged = useCallback(({ changed ,viewableItems }) => {
+    if (viewableItems.length > 0 && viewableItems[0].isViewable) {
       setCurrentIndex(viewableItems[0].index);
     }
   }, []);
@@ -77,8 +77,8 @@ const Home = () => {
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         showsVerticalScrollIndicator={false}
-        initialNumToRender={1}
-        maxToRenderPerBatch={2}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
         windowSize={5}
         removeClippedSubviews
         pagingEnabled
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     width: screenWidth,
     height: screenHeight,
-    // position:'relative',
+    // // position:'relative',
   },
 });
 
