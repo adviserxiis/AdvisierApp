@@ -44,10 +44,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   mainText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#000000', // Text color
     fontFamily: 'InriaSerif-Bold',
     marginBottom: 5,
+    width:'100%',
+    textAlign:'center',
   },
   subText: {
     fontSize: 14,
@@ -56,6 +58,8 @@ const styles = StyleSheet.create({
     opacity:0.5,
     color: '#000000', // Text color
     fontFamily: 'InriaSans-Regular',
+    width:'100%',
+    textAlign:'center',
   },
 });
 

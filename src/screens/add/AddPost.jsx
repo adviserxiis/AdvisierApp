@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   PermissionsAndroid,
   Platform,
   Pressable,
@@ -33,7 +34,8 @@ const AddPost = () => {
   const [location, setLocation] = useState('');
   const [resizeMode, setResizeMode] = useState('cover');
   const [loading, setLoading] = useState(false);
-  const [duration,setDuration] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(new Animated.Value(0));
   // console.log(user.userid);
 
   const requestPermissions = async () => {
@@ -47,7 +49,7 @@ const AddPost = () => {
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
-          }
+          },
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           console.log('You can access the storage');
@@ -62,22 +64,23 @@ const AddPost = () => {
 
   const handleSelectVideo = () => {
     requestPermissions().then(() => {
-      launchImageLibrary({ mediaType: 'video', quality: 1 }, response => {
+      launchImageLibrary({mediaType: 'video', quality: 1}, response => {
         if (response.didCancel) {
           console.log('User canceled video picker');
         } else if (response.errorCode) {
           Alert.alert('Error', response.errorMessage);
         } else {
           const video = response.assets[0];
-          setVideo(video);
-          console.log(video);
-          setDuration(video.duration);
-          console.log("Duration", video.duration);
+          if (video && video.uri) {
+            setVideo(video);
+            console.log('Selected Video:', video);
+            setDuration(video.duration);
+            console.log('Duration', video.duration);
+          }
         }
       });
     });
   };
-
 
   const handleLoad = ({naturalSize}) => {
     const aspectRatio = naturalSize.width / naturalSize.height;
@@ -161,6 +164,23 @@ const AddPost = () => {
       return;
     }
     setLoading(true);
+    setProgress(0);
+
+    const updateProgress = () => {
+      return new Promise(resolve => {
+        let currentProgress = 0;
+
+        const interval = setInterval(() => {
+          currentProgress += 0.05; // Increase progress (adjust speed as needed)
+          setProgress(prevProgress => Math.min(prevProgress + 0.05, 1)); // Ensure progress does not exceed 100%
+
+          if (currentProgress >= 1) {
+            clearInterval(interval);
+            resolve(); // Resolve promise when progress reaches 100%
+          }
+        }, 500);
+      });
+    };
 
     const fileUri = video.uri;
     const fileName = fileUri.substring(fileUri.lastIndexOf('/') + 1);
@@ -207,12 +227,14 @@ const AddPost = () => {
           console.log('sndns', jsonResponse);
           if (postResponse.ok) {
             // Alert.alert('Success', 'Your post has been saved.');
-            Alert.alert('Success', 'Post saved successfully!');
-            // navigation.goBack();
-            // Optionally, reset the form after saving
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await updateProgress();
             setVideo(null);
             setDescription('');
             setLocation('');
+            Alert.alert('Success', 'Post saved successfully!');
+            // navigation.goBack();
+            // Optionally, reset the form after saving
           } else {
             throw new Error(
               jsonResponse.error || 'Failed to save post. Please try again.',
@@ -237,9 +259,74 @@ const AddPost = () => {
 
   return (
     <View style={styles.container}>
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="white" />
+      {loading && video && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}>
+          <View
+            style={{
+              padding: 10,
+              backgroundColor: '#17191A',
+              borderRadius: 5,
+              flexDirection: 'row',
+              alignItems: 'center',
+              width: '90%',
+            }}>
+            <Video
+              source={{uri: video.uri}}
+              paused={true}
+              muted
+              resizeMode="cover"
+              style={{
+                height: 40,
+                width: 40,
+              }}
+            />
+            <View
+              style={{
+                width: '100%',
+                flex: 1,
+                flexDirection: 'column',
+              }}>
+              <View
+                style={{
+                  marginLeft: 20,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 16,
+                    fontFamily: 'Poppins-Medium',
+                  }}>
+                  {description}
+                </Text>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 16,
+                    fontFamily: 'Poppins-Medium',
+                  }}>
+                  {`${(progress * 100).toFixed(0)}%`}
+                </Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View
+                  style={[styles.progressBar, {width: `${progress * 100}%`}]}
+                />
+              </View>
+            </View>
+          </View>
         </View>
       )}
       <View style={styles.header}>
@@ -272,7 +359,7 @@ const AddPost = () => {
                 repeat={true}
                 onLoad={handleLoad}
               />
-              
+
               {showControls && (
                 <View style={styles.overlayContainer}>
                   <TouchableOpacity
@@ -297,10 +384,10 @@ const AddPost = () => {
               )}
             </TouchableOpacity>
             <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={handleDeleteVideo}>
-                <Icon name="trash" size={18} color="white" />
-              </TouchableOpacity>
+              style={styles.deleteButton}
+              onPress={handleDeleteVideo}>
+              <Icon name="trash" size={18} color="white" />
+            </TouchableOpacity>
           </View>
         )}
         <View
@@ -314,12 +401,13 @@ const AddPost = () => {
             onChangeText={setDescription}
             multiline={true}
             placeholder="Write Caption..."
-            placeholderTextColor='#838383'
+            placeholderTextColor="#838383"
             style={{
               height: 100,
               width: '100%',
               borderBottomColor: 'gray',
               borderBottomWidth: 1,
+              color: 'white',
               fontFamily: 'Poppins-Regular',
             }}
           />
@@ -345,12 +433,13 @@ const AddPost = () => {
             value={location}
             onChangeText={setLocation}
             placeholder="Add location"
-            placeholderTextColor='#838383'
+            placeholderTextColor="#838383"
             style={{
               height: 49,
               width: '100%',
               borderBottomColor: 'gray',
               borderBottomWidth: 1,
+              color: 'white',
               fontFamily: 'Poppins-Regular',
             }}
           />
@@ -393,6 +482,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 999,
+  },
+  progressBarContainer: {
+    width: '90%',
+    height: 4,
+    marginLeft: 20,
+    backgroundColor: '#e0e0e0',
+    marginTop: 15,
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#0069B4',
   },
   closeButton: {
     padding: 10,
