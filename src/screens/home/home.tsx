@@ -13,8 +13,6 @@ const Home = () => {
   const flatListRef = useRef(null);
   const BottomTabHeight = useBottomTabBarHeight();
   const screenHeight = Dimensions.get('window').height-BottomTabHeight;
-  
-
   useEffect(() => {
     const getVideoList = async () => {
       try {
@@ -36,7 +34,7 @@ const Home = () => {
     getVideoList();
   }, []);
 
-  const handleViewableItemsChanged = useCallback(({ changed ,viewableItems }) => {
+  const handleViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems.length > 0 && viewableItems[0].isViewable) {
       setCurrentIndex(viewableItems[0].index);
     }
@@ -67,7 +65,7 @@ const Home = () => {
   const memoizedList = useMemo(() => list, [list]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container]}>
       <StatusBar hidden />
       <FlatList
         ref={flatListRef}
@@ -77,11 +75,17 @@ const Home = () => {
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         showsVerticalScrollIndicator={false}
-        initialNumToRender={10}
+        initialNumToRender={8}
         maxToRenderPerBatch={10}
         windowSize={5}
         removeClippedSubviews
         pagingEnabled
+        // onScroll={e => {
+        //   const index = Math.round(
+        //     e.nativeEvent.contentOffset.y / (screenHeight),
+        //   );
+        //   setCurrentIndex(index);
+        // }}
       />
     </View>
   );
@@ -95,8 +99,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     width: screenWidth,
     height: screenHeight,
-    // // position:'relative',
+    position:'relative',
   },
 });
 
 export default React.memo(Home);
+

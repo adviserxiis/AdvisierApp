@@ -10,14 +10,9 @@ import Profile from '../screens/profile/profile';
 import Icon from 'react-native-vector-icons/Feather';
 import Search from '../screens/search/Search';
 import AddPost from '../screens/add/AddPost';
-import SetProfile from '../screens/auth/SetProfile';
 import UpdateProfile from '../screens/profile/screen/UpdateProfile';
 import ViewProfile from '../screens/home/screen/ViewProfile';
-import CameraGallery from '../screens/add/CameraGallery';
-import Login from '../screens/auth/Login';
 import SingleReel from '../screens/home/screen/SingleReel';
-import deletePost from '../screens/profile/screen/DeletePost';
-import DeletePost from '../screens/profile/screen/DeletePost';
 // import Login from '../screens/auth/Login';
 
 //Home Stack
@@ -40,7 +35,7 @@ function HomeStackScreen() {
         }}
       />
       <HomeStack.Screen
-        name='singleReel'
+        name="singleReel"
         component={SingleReel}
         options={{
           headerShown: false,
@@ -50,9 +45,9 @@ function HomeStackScreen() {
   );
 }
 
-//Post Stack 
+//Post Stack
 const PostStack = createStackNavigator();
-function PostStackScreen (){
+function PostStackScreen() {
   return (
     <PostStack.Navigator>
       {/* <PostStack.Screen 
@@ -62,53 +57,61 @@ function PostStackScreen (){
           headerShown: false,
         }}
       /> */}
-      <PostStack.Screen 
-        name='CreatePost'
+      <PostStack.Screen
+        name="CreatePost"
         component={AddPost}
         options={{
           headerShown: false,
         }}
       />
     </PostStack.Navigator>
-  )
+  );
+}
+
+//Search Stack
+const SearchStack = createStackNavigator();
+function SearchStackScreen() {
+  return (
+    <SearchStack.Navigator>
+      <SearchStack.Screen
+        name="SearchMain"
+        component={Search}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <SearchStack.Screen
+        name="ViewProfile"
+        component={ViewProfile}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </SearchStack.Navigator>
+  );
 }
 
 //Profile Stack
 const ProfileStack = createStackNavigator();
-function ProfileStackScreen (){
+function ProfileStackScreen() {
   return (
     <ProfileStack.Navigator>
-      
       <ProfileStack.Screen
-      name='profile'
-      component={Profile} options={{
-        headerShown: false,
-      }}/>
-      <ProfileStack.Screen 
-        name='singleReel'
+        name="profile"
+        component={Profile}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <ProfileStack.Screen
+        name="singleReel"
         component={SingleReel}
         options={{
           headerShown: false,
         }}
       />
-      {/* <ProfileStack.Screen
-        name='deletePost'
-        component={DeletePost}
-        options={{
-          // headerShown:true,
-          headerTintColor:'white',
-          // headerShadowVisible:false,
-          headerStyle:{
-            backgroundColor:'#17191A',
-          },
-          headerTitleStyle:{},
-          title:'Delete Post',
-          headerTitleAlign:'center',
-          
-        }}
-      /> */}
     </ProfileStack.Navigator>
-  )
+  );
 }
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
@@ -152,7 +155,7 @@ function MyTabs() {
       })}>
       <Tab.Screen name="Home" component={HomeStackScreen} />
       <Tab.Screen name="AddPost" component={PostStackScreen} />
-      <Tab.Screen name="Search" component={Search} />
+      <Tab.Screen name="Search" component={SearchStackScreen} />
       <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
   );
@@ -168,7 +171,7 @@ function MyStack() {
         component={MyTabs}
         options={{headerShown: false}}
       />
-        {/* <Stack.Screen
+      {/* <Stack.Screen
           name="Login"
           component={Login}
           options={{
@@ -179,7 +182,7 @@ function MyStack() {
         name="updateProfile"
         component={UpdateProfile}
         options={{headerShown: false}}
-        />
+      />
     </Stack.Navigator>
   );
 }

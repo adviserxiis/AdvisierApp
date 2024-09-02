@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  PermissionsAndroid,
   Platform,
   Pressable,
   ScrollView,
@@ -32,19 +33,51 @@ const AddPost = () => {
   const [location, setLocation] = useState('');
   const [resizeMode, setResizeMode] = useState('cover');
   const [loading, setLoading] = useState(false);
+  const [duration,setDuration] = useState(0);
   // console.log(user.userid);
-  const handleSelectVideo = () => {
-    launchImageLibrary({mediaType: 'video', quality: 1}, response => {
-      if (response.didCancel) {
-        console.log('User canceled video picker');
-      } else if (response.errorCode) {
-        Alert.alert('Error', response.errorMessage);
-      } else {
-        setVideo(response.assets[0]);
-        console.log(response.assets[0]);
+
+  const requestPermissions = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: 'Access to Storage',
+            message: 'We need access to your storage to select videos.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('You can access the storage');
+        } else {
+          console.log('Storage permission denied');
+        }
+      } catch (err) {
+        console.warn(err);
       }
+    }
+  };
+
+  const handleSelectVideo = () => {
+    requestPermissions().then(() => {
+      launchImageLibrary({ mediaType: 'video', quality: 1 }, response => {
+        if (response.didCancel) {
+          console.log('User canceled video picker');
+        } else if (response.errorCode) {
+          Alert.alert('Error', response.errorMessage);
+        } else {
+          const video = response.assets[0];
+          setVideo(video);
+          console.log(video);
+          setDuration(video.duration);
+          console.log("Duration", video.duration);
+        }
+      });
     });
   };
+
 
   const handleLoad = ({naturalSize}) => {
     const aspectRatio = naturalSize.width / naturalSize.height;
@@ -166,6 +199,7 @@ const AddPost = () => {
                 fileType: 'video',
                 location: location,
                 description: description,
+                duration: duration,
               }),
             },
           );
@@ -280,6 +314,7 @@ const AddPost = () => {
             onChangeText={setDescription}
             multiline={true}
             placeholder="Write Caption..."
+            placeholderTextColor='#838383'
             style={{
               height: 100,
               width: '100%',
@@ -310,6 +345,7 @@ const AddPost = () => {
             value={location}
             onChangeText={setLocation}
             placeholder="Add location"
+            placeholderTextColor='#838383'
             style={{
               height: 49,
               width: '100%',
@@ -326,7 +362,6 @@ const AddPost = () => {
             justifyContent: 'center',
             alignItems: 'center',
             gap: 10,
-            paddingHorizontal: 5,
             marginTop: 30,
           }}>
           {/* <Pressable style={styles.closeButton}>

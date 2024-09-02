@@ -34,6 +34,18 @@
 		8709EAA0089F4A80AD92C192 /* Poppins-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5E3BC998129046E7B84DFD66 /* Poppins-Thin.ttf */; };
 		684F30B7B1B140FC971E1AD9 /* Poppins-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6B1779D8749B46DFBF0934C1 /* Poppins-ThinItalic.ttf */; };
 		15B1453E273B4612BB8CD2A1 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0EDFF84F073342F398ED74D7 /* OFL.txt */; };
+		0402CB37C6154D9CA34B81DC /* InriaSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FDD21138C7B74908AEF14B29 /* InriaSans-Bold.ttf */; };
+		E58E2069C50944CE8B6F726C /* InriaSans-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 47F25C60E5E84BDBBE40F934 /* InriaSans-BoldItalic.ttf */; };
+		AF4309E43E0842B2A949B36D /* InriaSans-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04BECE2227E04234A0C759D3 /* InriaSans-Italic.ttf */; };
+		A15B1601A6024FF3A43589A1 /* InriaSans-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F26102836CB24EE9ACDA0A3D /* InriaSans-Light.ttf */; };
+		B1D147071C8745C5A5F7979A /* InriaSans-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 524359D1B67B44E4A9EE2E1B /* InriaSans-LightItalic.ttf */; };
+		67A203B739D449ABAEBF8CEC /* InriaSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AA9BC9E2354740F18F97F5C8 /* InriaSans-Regular.ttf */; };
+		A551AA14B72545868982F7F3 /* InriaSerif-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D7A57D916D5E4E8C90B111F9 /* InriaSerif-Bold.ttf */; };
+		7F9D275AA280429FB67CBB77 /* InriaSerif-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E09937E8A48F4FB3959A38CE /* InriaSerif-BoldItalic.ttf */; };
+		6419FB84EB674F669193BC65 /* InriaSerif-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3BCD9930359A4E16856B5405 /* InriaSerif-Italic.ttf */; };
+		32C5EC20AEBD4B268BA4F820 /* InriaSerif-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D682FB1D0C0E466B9930D2EB /* InriaSerif-Light.ttf */; };
+		41457A4276F04F6DBA054F5D /* InriaSerif-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AED1DBA9EB024496A5B84ABA /* InriaSerif-LightItalic.ttf */; };
+		4D26B398049745F9A8EBBF97 /* InriaSerif-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 76B04C1748054B739AF42346 /* InriaSerif-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +97,18 @@
 		5E3BC998129046E7B84DFD66 /* Poppins-Thin.ttf */ = {isa = PBXFileReference; name = "Poppins-Thin.ttf"; path = "../src/assets/fonts/Poppins-Thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		6B1779D8749B46DFBF0934C1 /* Poppins-ThinItalic.ttf */ = {isa = PBXFileReference; name = "Poppins-ThinItalic.ttf"; path = "../src/assets/fonts/Poppins-ThinItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		0EDFF84F073342F398ED74D7 /* OFL.txt */ = {isa = PBXFileReference; name = "OFL.txt"; path = "../src/assets/fonts/OFL.txt"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		FDD21138C7B74908AEF14B29 /* InriaSans-Bold.ttf */ = {isa = PBXFileReference; name = "InriaSans-Bold.ttf"; path = "../src/assets/fonts/InriaSans-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		47F25C60E5E84BDBBE40F934 /* InriaSans-BoldItalic.ttf */ = {isa = PBXFileReference; name = "InriaSans-BoldItalic.ttf"; path = "../src/assets/fonts/InriaSans-BoldItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		04BECE2227E04234A0C759D3 /* InriaSans-Italic.ttf */ = {isa = PBXFileReference; name = "InriaSans-Italic.ttf"; path = "../src/assets/fonts/InriaSans-Italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		F26102836CB24EE9ACDA0A3D /* InriaSans-Light.ttf */ = {isa = PBXFileReference; name = "InriaSans-Light.ttf"; path = "../src/assets/fonts/InriaSans-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		524359D1B67B44E4A9EE2E1B /* InriaSans-LightItalic.ttf */ = {isa = PBXFileReference; name = "InriaSans-LightItalic.ttf"; path = "../src/assets/fonts/InriaSans-LightItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		AA9BC9E2354740F18F97F5C8 /* InriaSans-Regular.ttf */ = {isa = PBXFileReference; name = "InriaSans-Regular.ttf"; path = "../src/assets/fonts/InriaSans-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D7A57D916D5E4E8C90B111F9 /* InriaSerif-Bold.ttf */ = {isa = PBXFileReference; name = "InriaSerif-Bold.ttf"; path = "../src/assets/fonts/InriaSerif-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		E09937E8A48F4FB3959A38CE /* InriaSerif-BoldItalic.ttf */ = {isa = PBXFileReference; name = "InriaSerif-BoldItalic.ttf"; path = "../src/assets/fonts/InriaSerif-BoldItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3BCD9930359A4E16856B5405 /* InriaSerif-Italic.ttf */ = {isa = PBXFileReference; name = "InriaSerif-Italic.ttf"; path = "../src/assets/fonts/InriaSerif-Italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D682FB1D0C0E466B9930D2EB /* InriaSerif-Light.ttf */ = {isa = PBXFileReference; name = "InriaSerif-Light.ttf"; path = "../src/assets/fonts/InriaSerif-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		AED1DBA9EB024496A5B84ABA /* InriaSerif-LightItalic.ttf */ = {isa = PBXFileReference; name = "InriaSerif-LightItalic.ttf"; path = "../src/assets/fonts/InriaSerif-LightItalic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		76B04C1748054B739AF42346 /* InriaSerif-Regular.ttf */ = {isa = PBXFileReference; name = "InriaSerif-Regular.ttf"; path = "../src/assets/fonts/InriaSerif-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -214,6 +238,18 @@
 				5E3BC998129046E7B84DFD66 /* Poppins-Thin.ttf */,
 				6B1779D8749B46DFBF0934C1 /* Poppins-ThinItalic.ttf */,
 				0EDFF84F073342F398ED74D7 /* OFL.txt */,
+				FDD21138C7B74908AEF14B29 /* InriaSans-Bold.ttf */,
+				47F25C60E5E84BDBBE40F934 /* InriaSans-BoldItalic.ttf */,
+				04BECE2227E04234A0C759D3 /* InriaSans-Italic.ttf */,
+				F26102836CB24EE9ACDA0A3D /* InriaSans-Light.ttf */,
+				524359D1B67B44E4A9EE2E1B /* InriaSans-LightItalic.ttf */,
+				AA9BC9E2354740F18F97F5C8 /* InriaSans-Regular.ttf */,
+				D7A57D916D5E4E8C90B111F9 /* InriaSerif-Bold.ttf */,
+				E09937E8A48F4FB3959A38CE /* InriaSerif-BoldItalic.ttf */,
+				3BCD9930359A4E16856B5405 /* InriaSerif-Italic.ttf */,
+				D682FB1D0C0E466B9930D2EB /* InriaSerif-Light.ttf */,
+				AED1DBA9EB024496A5B84ABA /* InriaSerif-LightItalic.ttf */,
+				76B04C1748054B739AF42346 /* InriaSerif-Regular.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -334,6 +370,18 @@
 				8709EAA0089F4A80AD92C192 /* Poppins-Thin.ttf in Resources */,
 				684F30B7B1B140FC971E1AD9 /* Poppins-ThinItalic.ttf in Resources */,
 				15B1453E273B4612BB8CD2A1 /* OFL.txt in Resources */,
+				0402CB37C6154D9CA34B81DC /* InriaSans-Bold.ttf in Resources */,
+				E58E2069C50944CE8B6F726C /* InriaSans-BoldItalic.ttf in Resources */,
+				AF4309E43E0842B2A949B36D /* InriaSans-Italic.ttf in Resources */,
+				A15B1601A6024FF3A43589A1 /* InriaSans-Light.ttf in Resources */,
+				B1D147071C8745C5A5F7979A /* InriaSans-LightItalic.ttf in Resources */,
+				67A203B739D449ABAEBF8CEC /* InriaSans-Regular.ttf in Resources */,
+				A551AA14B72545868982F7F3 /* InriaSerif-Bold.ttf in Resources */,
+				7F9D275AA280429FB67CBB77 /* InriaSerif-BoldItalic.ttf in Resources */,
+				6419FB84EB674F669193BC65 /* InriaSerif-Italic.ttf in Resources */,
+				32C5EC20AEBD4B268BA4F820 /* InriaSerif-Light.ttf in Resources */,
+				41457A4276F04F6DBA054F5D /* InriaSerif-LightItalic.ttf in Resources */,
+				4D26B398049745F9A8EBBF97 /* InriaSerif-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

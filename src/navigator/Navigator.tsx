@@ -26,7 +26,9 @@ const Navigator = () => {
       } catch (error) {
         console.log('Error fetching user data:', error);
       } finally {
-        setIsLoading(false);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000); 
       }
     };
 

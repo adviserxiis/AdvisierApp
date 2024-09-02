@@ -82,8 +82,8 @@ android {
         applicationId "com.advisiorapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 26
-        versionName "3.5"
+        versionCode 29
+        versionName "3.8"
     }
     signingConfigs {
         release {
@@ -123,7 +123,7 @@ dependencies {
   implementation 'com.google.android.gms:play-services-safetynet:18.1.0'
   implementation("com.google.android.gms:play-services-ads:23.3.0")
   implementation 'com.google.firebase:firebase-messaging:23.2.1'
-  
+  implementation project(':react-native-linear-gradient')
 // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
     if (hermesEnabled.toBoolean()) {

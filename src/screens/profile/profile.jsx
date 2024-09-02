@@ -32,6 +32,7 @@ const {width} = Dimensions.get('window');
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import DeletePost from './screen/DeletePost';
+import Card from './components/Card';
 // import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
 // const adUnitId = __DEV__
@@ -50,6 +51,7 @@ const Profile = () => {
   // const [currentPlaying, setCurrentPlaying] = useState(null);
   // const [viewableItems, setViewableItems] = useState([]);
   const [totalViews, setTotalViews] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
   const [profile, setProfile] = useState({
     name: '',
     title: '',
@@ -62,6 +64,8 @@ const Profile = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalYPosition] = useState(new Animated.Value(-200)); // Initial position off-screen
   const [modalOpacity] = useState(new Animated.Value(0));
+  const [selectedMonth, setSelectedMonth] = useState('Jan Views');
+  const [views, setViews] = useState('1K');
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -146,8 +150,6 @@ const Profile = () => {
               //   index: 0,
               //   routes: [{ name: 'Login' }],
               // });
-
-              
             } catch (error) {
               console.error('Error during logout:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -164,9 +166,9 @@ const Profile = () => {
       // Fetch user info and profile data concurrently
       const [userInfo, storedProfileData] = await Promise.all([
         GoogleSignin.getCurrentUser(),
-        AsyncStorage.getItem('user')
+        AsyncStorage.getItem('user'),
       ]);
-  
+
       // Parse and set profile data if available
       if (storedProfileData) {
         console.log('Fetching user data for ID:', user.userid);
@@ -182,21 +184,23 @@ const Profile = () => {
           bannerImage: profileData.profile_background || null,
         }));
       }
-  
+
       // Fetch user details
-      const response = await fetch(`https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`);
-      
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`,
+      );
+
       // Check if the response is OK (status code 200)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       // Check the content type of the response
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Expected JSON response');
       }
-  
+
       // Parse JSON response
       const jsonResponse = await response.json();
       setDetails(jsonResponse);
@@ -204,7 +208,6 @@ const Profile = () => {
       console.error('Failed to load user data:', error);
     }
   };
-  
 
   useFocusEffect(
     useCallback(() => {
@@ -212,6 +215,14 @@ const Profile = () => {
       getReels();
     }, []),
   );
+
+  const handleMonthClick = () => {
+    // Logic to handle month click, e.g., open a dropdown or modal to select different months.
+    console.log('Month clicked');
+    // For demonstration, we're toggling between Jan Views and Feb Views
+    setSelectedMonth(selectedMonth === 'Jan Views' ? 'Feb Views' : 'Jan Views');
+    setViews(views === '1K' ? '2K' : '1K');
+  };
 
   const shareProfile = async () => {
     const shareOptions = {
@@ -253,6 +264,12 @@ const Profile = () => {
       0,
     );
     setTotalViews(total);
+
+    const totalDuration = jsonresponse.reduce(
+      (acc, reel) => acc + (reel?.data?.video_duration || 0), // Assuming duration is in seconds
+      0,
+    );
+    setTotalDuration(totalDuration);
   };
 
   const deletePost = postid => {
@@ -576,102 +593,119 @@ const Profile = () => {
           )}
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            width: '100%',
-            borderRadius: 15,
-          }}>
-          <View style={{alignItems: 'center'}}>
-            <Text
-              style={{
-                color: '#9C9C9C',
-                fontSize: 10,
-                letterSpacing: 1,
-                fontFamily: 'Poppins-Regular',
-                lineHeight: 15,
-              }}>
-              Followers
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#ffffff',
-                fontFamily: 'Poppins-Medium',
-                lineHeight: 21,
-                letterSpacing: 1,
-                marginTop: 2,
-              }}>
-              {details?.followers?.length || 0}
-            </Text>
-          </View>
+        {/* <View style={{
+          flexDirection: 'row',
+          width:'100%',
+          justifyContent: 'space-between',
+          alignItems:'center',
+        }}> */}
           <View
             style={{
-              height: 35,
-              width: 1,
-              backgroundColor: 'gray',
-            }}
-          />
-          <View style={{alignItems: 'center'}}>
-            <Text
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              alignItems: 'center',
+              flex:1,
+              borderRadius: 15,
+              marginRight:10,
+            }}>
+            <View style={{alignItems: 'center'}}>
+              <Text
+                style={{
+                  color: '#9C9C9C',
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  fontFamily: 'Poppins-Regular',
+                  lineHeight: 15,
+                }}>
+                Followers
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: '#ffffff',
+                  fontFamily: 'Poppins-Medium',
+                  lineHeight: 21,
+                  letterSpacing: 1,
+                  marginTop: 2,
+                }}>
+                {details?.followers?.length || 0}
+              </Text>
+            </View>
+            <View
               style={{
-                color: '#9C9C9C',
-                fontSize: 10,
-                letterSpacing: 1,
-                fontFamily: 'Poppins-Regular',
-                lineHeight: 15,
-              }}>
-              Reels
-            </Text>
-            <Text
+                height: 35,
+                width: 1,
+                backgroundColor: 'gray',
+              }}
+            />
+            <View style={{alignItems: 'center'}}>
+              <Text
+                style={{
+                  color: '#9C9C9C',
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  fontFamily: 'Poppins-Regular',
+                  lineHeight: 15,
+                }}>
+                Reels
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  lineHeight: 21,
+                  fontFamily: 'Poppins-Medium',
+                  marginTop: 2,
+                  letterSpacing: 1,
+                }}>
+                {reels.length || 0}
+              </Text>
+            </View>
+            <View
               style={{
-                fontSize: 14,
-                color: 'white',
-                lineHeight: 21,
-                fontFamily: 'Poppins-Medium',
-                marginTop: 2,
-                letterSpacing: 1,
-              }}>
-              {reels.length || 0}
-            </Text>
+                height: 35,
+                width: 1,
+                backgroundColor: 'gray',
+              }}
+            />
+            <View style={{alignItems: 'center'}}>
+              <Text
+                style={{
+                  color: '#9C9C9C',
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  fontFamily: 'Poppins-Regular',
+                  lineHeight: 15,
+                }}>
+                Views
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: 'white',
+                  lineHeight: 21,
+                  fontFamily: 'Poppins-Medium',
+                  marginTop: 2,
+                  letterSpacing: 1,
+                }}>
+                {totalViews || 0}
+              </Text>
+            </View>
           </View>
-          <View
-            style={{
-              height: 35,
-              width: 1,
-              backgroundColor: 'gray',
-            }}
-          />
-          <View style={{alignItems: 'center'}}>
-            <Text
-              style={{
-                color: '#9C9C9C',
-                fontSize: 10,
-                letterSpacing: 1,
-                fontFamily: 'Poppins-Regular',
-                lineHeight: 15,
-              }}>
-              Views
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: 'white',
-                lineHeight: 21,
-                fontFamily: 'Poppins-Medium',
-                marginTop: 2,
-                letterSpacing: 1,
-              }}>
-              {totalViews || 0}
-            </Text>
-          </View>
-        </View>
+          {/* <TouchableOpacity style={styles.monthView} onPress={handleMonthClick}>
+            <Text style={styles.label}>{selectedMonth}</Text>
+            <Text style={styles.value}>{views}</Text>
+          </TouchableOpacity> */}
+        {/* </View> */}
 
         {/* <TouchableOpacity onPress={logout}>
           <Text>Logout</Text>
         </TouchableOpacity> */}
+
+        <Card
+          followers={details?.followers?.length || 0}
+          duration={totalDuration}
+        />
       </View>
       <View style={styles.reelsSection}>
         {reels.length === 0 ? (
@@ -700,6 +734,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#17191A',
+  },
+  label: {
+    color: '#9C9C9C',
+    fontSize: 10,
+    lineHeight: 15,
+    fontFamily: 'Poppins-Medium',
+  },
+  value: {
+    color: '#fff',
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: 'Poppins-Medium',
   },
   modalContainer: {
     position: 'absolute',
@@ -743,6 +789,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
+  },
+  monthView: {
+    alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
   },
   shareIcon: {
     position: 'absolute',
@@ -826,8 +879,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   reelsList: {
-    // paddingVertical: 10,
-
     gap: 1,
   },
   reelItem: {

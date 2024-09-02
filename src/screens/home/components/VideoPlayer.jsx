@@ -11,6 +11,8 @@ import {
   Platform,
   Alert,
   AppState,
+  Animated,
+  GestureResponderEvent,
 } from 'react-native';
 import Video from 'react-native-video';
 import Orientation from 'react-native-orientation-locker';
@@ -25,6 +27,10 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const {width: screenWidth} = Dimensions.get('window');
+
 const VideoPlayer = ({
   video,
   isVisible,
@@ -41,6 +47,10 @@ const VideoPlayer = ({
   const [error, setError] = useState(null);
   const videoRef = useRef(null);
   const [videoQuality, setVideoQuality] = useState('high');
+  const [progress, setProgress] = useState(new Animated.Value(0));
+  const [videoDuration, setVideoDuration] = useState(0);
+  // const videoPlayerRef = useRef(null);
+  const [progressBarWidth, setProgressBarWidth] = useState(screenWidth);
   const user = useSelector(state => state.user);
   const [like, setLike] = useState(video?.data?.likes?.includes(user.userid));
   const navigation = useNavigation();
@@ -93,6 +103,36 @@ const VideoPlayer = ({
   //   };
   // }, []);
 
+  const handleProgress = useCallback(
+    data => {
+      if (data.currentTime && data.seekableDuration) {
+        const progressValue = data.currentTime / data.seekableDuration;
+
+        Animated.timing(progress, {
+          toValue: progressValue,
+          duration: 100,
+          useNativeDriver: false,
+        }).start();
+      }
+    },
+    [progress],
+  );
+
+  const handleTouch = (event: GestureResponderEvent) => {
+    const touchX = event.nativeEvent.locationX;
+    const newPosition = (touchX / progressBarWidth) * videoDuration;
+
+    if (videoRef.current) {
+      videoRef.current.seek(newPosition);
+    }
+  };
+
+  const onLayout = useCallback(event => {
+    const { width } = event.nativeEvent.layout;
+    setProgressBarWidth(width);
+  }, []);
+
+
   useFocusEffect(
     useCallback(() => {
       if (currentIndex === index) {
@@ -141,22 +181,62 @@ const VideoPlayer = ({
 
   const AddLiked = async videoid => {
     console.log(videoid);
-    const response = await fetch(
-      'https://adviserxiis-backend-three.vercel.app/post/addlike',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const userObjectString = await AsyncStorage.getItem('user');
+    let userObject = null;
+
+    if (userObjectString) {
+      userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
+      console.log('User', userObject.name);
+    } else {
+      console.error('No user found in AsyncStorage');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/post/addlike',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            postid: videoid,
+            userid: user.userid, // Access userid from userObject
+          }),
         },
-        body: JSON.stringify({
-          postid: videoid,
-          userid: user.userid,
-        }),
-      },
-    );
-    const jsonresponse = await response.json();
-    console.log('Hiws', jsonresponse);
-    setLike(true);
+      );
+
+      const jsonResponse = await response.json();
+      console.log('Add like response:', jsonResponse);
+
+      if (response.status === 200) {
+        setLike(true);
+        console.log('Hiesdddhdjasdjabjcjd');
+
+        const NotificationResponse = await fetch(
+          'https://adviserxiis-backend-three.vercel.app/notification/sendnotification',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              deviceToken: video?.adviser?.data?.device_token,
+              title: 'Post Liked Update',
+              body: `${userObject.name} liked Your Reel`,
+            }),
+          },
+        );
+
+        const notificationJsonResponse = await NotificationResponse.json();
+        console.log('Notification response:', notificationJsonResponse);
+      } else {
+        console.error('Failed to add like:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error in AddLiked request:', error);
+    }
   };
 
   const removeLike = async videoid => {
@@ -237,7 +317,7 @@ const VideoPlayer = ({
 
   // Only render the video component if it is visible and there is no error
   const renderVideo = useMemo(() => {
-    // if (!isVisible || currentIndex !== index) return null;
+    if (!isVisible || currentIndex !== index) return null;
 
     return (
       <>
@@ -264,9 +344,8 @@ const VideoPlayer = ({
             preload={true}
             bitrate={videoQuality === 'high' ? 1500000 : 500000}
             onLoadStart={() => setBuffering(true)}
-            onLoad={() => {
-              setBuffering(false);
-            }}
+            onLoad={data => setVideoDuration(data.duration)}
+            onProgress={handleProgress}
           />
           {buffering && !error && (
             <ActivityIndicator
@@ -290,6 +369,22 @@ const VideoPlayer = ({
               onPress={handlePlayPause}
             />
           )}
+          <TouchableOpacity
+            style={styles.progressBarContainer}
+            onLayout={onLayout}
+            onTouchEnd={handleTouch}>
+            <Animated.View
+              style={[
+                styles.progressBar,
+                {
+                  width: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                },
+              ]}
+            />
+          </TouchableOpacity>
         </TouchableOpacity>
       </>
     );
@@ -303,6 +398,8 @@ const VideoPlayer = ({
     mute,
     videoError,
     error,
+    progress,
+    handleTouch,
   ]);
 
   return (
@@ -435,7 +532,7 @@ const styles = StyleSheet.create({
     // aspectRatio:9/16,
     // top:0,
     // left:0,
-    // right:0
+    // right:0,
     alignSelf: 'center',
   },
   fullScreenVideo: {
@@ -489,6 +586,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  progressBarContainer: {
+    position: 'absolute',
+    bottom: 65,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: 'white',
   },
   headerContent: {
     flexDirection: 'row',

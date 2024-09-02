@@ -7,11 +7,12 @@ import {
   Image,
   ActivityIndicator,
   TouchableWithoutFeedback,
+  Animated,
 } from 'react-native';
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import Video from 'react-native-video';
 import {useFocusEffect, useRoute} from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Icon3 from 'react-native-vector-icons/Entypo';
 import Icon2 from 'react-native-vector-icons/MaterialIcons';
@@ -24,14 +25,20 @@ const SingleReel = () => {
   const route = useRoute();
   const {video, creator} = route.params;
   console.log('sjd', video);
-  const user=useSelector(state=>state.user);
+  const user = useSelector(state => state.user);
   console.log('jshb', creator);
   const [likeCount, setLikeCount] = useState((video.data.likes || []).length);
   const [like, setLike] = useState(video?.data?.likes?.includes(user.userid));
   const [paused, setPaused] = useState(false);
-  const [mute,setMute]=useState(false);
+  const [mute, setMute] = useState(false);
   const [buffering, setBuffering] = useState(false);
-  const [error, setError]= useState('');
+  const [error, setError] = useState('');
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  // const tapRef = useRef(null);
+  const progressBarWidth = useRef(new Animated.Value(0)).current;
+  const videoPlayerRef = useRef(null);
+
   const onBuffer = useCallback(buffer => {
     setBuffering(buffer.isBuffering);
   }, []);
@@ -51,7 +58,7 @@ const SingleReel = () => {
       return () => {
         setPaused(true);
       };
-    }, [])
+    }, []),
   );
 
   const likeHandler = useCallback(async () => {
@@ -85,7 +92,7 @@ const SingleReel = () => {
     setLike(true);
   };
 
-  const removeLike = async (videoid) => {
+  const removeLike = async videoid => {
     const response = await fetch(
       'https://adviserxiis-backend-three.vercel.app/post/removelike',
       {
@@ -108,7 +115,6 @@ const SingleReel = () => {
   };
 
   const sharePost = async () => {
-
     const response = await fetch(
       'https://adviserxiis-backend-three.vercel.app/post/sharepost',
       {
@@ -122,7 +128,7 @@ const SingleReel = () => {
       },
     );
     const jsonresponse = await response.json();
-    console.log("share post id ",jsonresponse)
+    console.log('share post id ', jsonresponse);
 
     const shareOptions = {
       message: `Check out ${creator?.username}new reels on this amazing Luink.ai!`,
@@ -135,7 +141,7 @@ const SingleReel = () => {
       if (result) {
         console.log('Shared successfully:', result);
       }
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.message) {
         // Alert.alert('Error', error.message);
       } else if (error.dismissedAction) {
@@ -166,12 +172,39 @@ const SingleReel = () => {
     setPaused(prev => !prev);
   }, []);
 
+  const onProgress = useCallback(data => {
+    if (data.currentTime) {
+      setVideoCurrentTime(data.currentTime);
+      setVideoDuration(data.seekableDuration);
+
+      Animated.timing(progressBarWidth, {
+        toValue:
+          (data.currentTime / data.seekableDuration) *
+          Dimensions.get('window').width,
+        duration: 100,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, []);
+
+  const handleTouch = event => {
+    const touchX = event.nativeEvent.locationX;
+    const progressBarWidthValue = Dimensions.get('window').width;
+    const newPosition = (touchX / progressBarWidthValue) * videoDuration;
+
+    // Seek to the new position
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.seek(newPosition);
+      setPaused(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <TouchableWithoutFeedback onPress={handlePlayPause}>
         <Video
-          source={{ uri: video?.data?.post_file }}
+          ref={videoPlayerRef}
+          source={{uri: video?.data?.post_file}}
           style={styles.video}
           resizeMode="cover"
           controls={false}
@@ -180,6 +213,7 @@ const SingleReel = () => {
           paused={paused} // Pauses the video when required
           onBuffer={onBuffer} // Handle buffering
           onError={videoError}
+          onProgress={onProgress}
         />
       </TouchableWithoutFeedback>
       {buffering && ( // Display loading indicator while buffering
@@ -190,15 +224,15 @@ const SingleReel = () => {
         />
       )}
 
-        {paused && !buffering && (
-            <Icon3
-              name="controller-play"
-              size={50}
-              color="white"
-              style={styles.centeredIcon}
-              onPress={handlePlayPause}
-            />
-          )}
+      {paused && !buffering && (
+        <Icon3
+          name="controller-play"
+          size={50}
+          color="white"
+          style={styles.centeredIcon}
+          onPress={handlePlayPause}
+        />
+      )}
 
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -221,10 +255,10 @@ const SingleReel = () => {
       <View style={styles.overlay}>
         <View style={styles.userInfo}>
           <TouchableOpacity
-            // onPress={() =>
-            //   navigation.navigate('ViewProfile', video?.adviser?.id)
-            // }
-            >
+          // onPress={() =>
+          //   navigation.navigate('ViewProfile', video?.adviser?.id)
+          // }
+          >
             <Image
               // source={{uri: `${video?.adviser?.data?.profile_photo}`}}
               source={
@@ -237,13 +271,11 @@ const SingleReel = () => {
           </TouchableOpacity>
           <View style={{flexDirection: 'column', width: '73%'}}>
             <TouchableOpacity
-              // onPress={() =>
-              //   navigation.navigate('ViewProfile', video?.adviser?.id)
-              // }
-              >
-              <Text style={styles.userName}>
-                {creator?.username}
-              </Text>
+            // onPress={() =>
+            //   navigation.navigate('ViewProfile', video?.adviser?.id)
+            // }
+            >
+              <Text style={styles.userName}>{creator?.username}</Text>
             </TouchableOpacity>
             <Text style={styles.description}>{video?.data?.description}</Text>
           </View>
@@ -287,6 +319,18 @@ const SingleReel = () => {
               </TouchableOpacity> */}
         </View>
       </View>
+      <TouchableOpacity
+        style={styles.progressBarContainer}
+        onPress={handleTouch}>
+        <Animated.View
+          style={[
+            styles.progressBar,
+            {
+              width: progressBarWidth,
+            },
+          ]}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -311,6 +355,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  progressBarContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    justifyContent: 'center',
+  },
+  progressBar: {
+    height: 3,
+    backgroundColor: 'white',
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -331,7 +387,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     left: 16,
-    right:10,
+    right: 10,
   },
   userInfo: {
     flexDirection: 'row',
@@ -342,7 +398,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 50,
-    backgroundColor:'white'
+    backgroundColor: 'white',
   },
   userName: {
     fontSize: 14,

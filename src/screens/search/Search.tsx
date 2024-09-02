@@ -1,31 +1,139 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import React, {useState} from 'react';
+import {
+  SafeAreaView,
+  StyleSheet,
+  TextInput,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  FlatList,
+  Image,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
 const Search = () => {
   const [search, setSearch] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const navigation = useNavigation();
+
+  const handleSearch = async text => {
+    setSearch(text);
+    console.log('Entered Text', text);
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/creator/getuserbyname/${text}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const jsonResponse = await response.json();
+      console.log('Response:', jsonResponse); // Check the structure of the response
+
+      const users = jsonResponse.map((user, idx) => ({
+        id: user.id,
+        profilePhoto: user.profile_photo,
+        name: user.username,
+        description: user.professional_title,
+      }));
+      setFilteredUsers(users);
+      // Ensure jsonResponse is an array and filter accordingly
+      // if (Array.isArray(jsonResponse)) {
+      //   const filtered = jsonResponse.filter(user => {
+      //     // Add checks to avoid accessing properties of undefined
+      //     return user && user.name && user.name.toLowerCase().includes(text.toLowerCase());
+      //   });
+      //   setFilteredUsers(filtered);
+      // } else {
+      //   console.error('Unexpected response format:', jsonResponse);
+      // }
+    } catch (error) {
+      console.error('Search error:', error);
+      // Optionally, set an error state to show an error message to the user
+    }
+  };
+
+  const renderItem = ({item}) => (
+    <TouchableOpacity activeOpacity={0.5} style={styles.userContainer} onPress={()=>navigation.navigate('ViewProfile', item.id )}>
+      {item.profilePhoto ? (
+      <Image source={{uri: item.profilePhoto}} style={styles.profilePhoto} />
+    ) : (
+      <View style={{
+        width: 50,
+        height: 50,
+        backgroundColor: 'white',
+        borderRadius: 25,
+        marginRight:10,
+        justifyContent:'center',
+        alignItems:'center',
+      }}>
+
+        <Icon
+          name="user"
+          size={20}
+          color="#B0B3B8"
+        />
+      </View>
+    )}
+      <View style={styles.userInfo}>
+        <Text style={styles.userName}>{item.name}</Text>
+        <Text style={styles.userDescription}>{item.description}</Text>
+      </View>
+      {/* <TouchableOpacity style={styles.closeButton} onPress={() => handleClose(item.id)}>
+        <Icon name="x" size={20} color="#B0B3B8" />
+      </TouchableOpacity> */}
+    </TouchableOpacity>
+  );
+
+  // const handleClose = (userId) => {
+  //   // Handle the close action, such as removing the user from the list
+  //   const updatedUsers = filteredUsers.filter(user => user.id !== userId);
+  //   setFilteredUsers(updatedUsers);
+  // };
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{flex: 1}}
       // behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Adjust for iOS
     >
       <SafeAreaView style={styles.container}>
         <View style={styles.searchContainer}>
           {isFocused && (
-            <Icon name="search" size={18} color="#B0B3B8" style={styles.searchIcon} />
+            <Icon
+              name="search"
+              size={18}
+              color="#B0B3B8"
+              style={styles.searchIcon}
+            />
           )}
           <TextInput
             placeholder="Search"
             style={styles.searchInput}
             value={search}
-            onChangeText={(text) => setSearch(text)}
+            onChangeText={handleSearch}
             placeholderTextColor="#B0B3B8"
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
           />
         </View>
+        <FlatList
+          data={filteredUsers}
+          showsVerticalScrollIndicator={false}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContainer}
+        />
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -39,11 +147,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#17191A',
     paddingHorizontal: 16,
   },
+  listContainer: {
+    flexGrow: 1,
+  },
+  profilePhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  profilePhotoIcon: {
+    // padding: 12,
+    // height:50,
+    // width:50,
+    // backgroundColor: '#FFFFFF', // or any other background color you prefer
+    // alignContent: 'center',
+    // justifyContent: 'center',
+    // borderRadius: 25, // Match the border radius to the profilePhoto for a consistent look
+    // marginRight: 10,
+  },
+  userContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    // backgroundColor:'#333',
+    marginVertical: 5,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#3A3B3C',
-    marginVertical: 30,
+    marginTop: 30,
+    marginBottom:10,
     paddingHorizontal: 10,
     borderRadius: 8,
   },
@@ -54,5 +190,21 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     color: '#FFF',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    color: '#FFF',
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+  },
+  userDescription: {
+    color: '#B0B3B8',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+  },
+  closeButton: {
+    padding: 5,
   },
 });

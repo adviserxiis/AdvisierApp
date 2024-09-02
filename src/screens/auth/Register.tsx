@@ -39,6 +39,8 @@ const Register = () => {
   }, []);
 
   const handleGoogleSign = async () => {
+    const device_token = await AsyncStorage.getItem('device-Token')
+    console.log('Debic', device_token);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
@@ -57,6 +59,7 @@ const Register = () => {
             email: userInfo.user.email,
             username:userInfo.user.name,
             profile_photo: userInfo.user.photo,
+            deviceToken: device_token,
           }),
         },
       );
@@ -167,6 +170,7 @@ const Register = () => {
       Alert.alert('Terms and Conditions', 'You must agree to the terms and conditions.');
       return;
     }
+    
 
     try {
       const response = await fetch(

@@ -24,6 +24,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 const Login = () => {
   const navigation = useNavigation();
@@ -44,6 +45,8 @@ const Login = () => {
 
   const handleGoogleSign = async () => {
     setGoogleLoading(true);
+    const device_token = await AsyncStorage.getItem('device-Token')
+    console.log('Debic', device_token);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
@@ -51,6 +54,12 @@ const Login = () => {
         userInfo.idToken,
       );
       await auth().signInWithCredential(googleCredential);
+
+      // const token = await messaging().getToken();
+      // if (token) {
+      //   await AsyncStorage.setItem('user', token);
+      // }
+
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/signinwithgoogle',
         {
@@ -60,20 +69,38 @@ const Login = () => {
           },
           body: JSON.stringify({
             email: userInfo.user.email,
-            username:userInfo.user.name,
+            username: userInfo.user.name,
             profile_photo: userInfo.user.photo,
+            deviceToken: device_token,
           }),
         },
       );
       const jsonresponse = await response.json();
       console.log('jahs', jsonresponse);
       console.log('useird', jsonresponse.userid);
-      storeData('user', userInfo.user);
+      const newData = {
+        userid: jsonresponse.userid,
+        name: userInfo.user.name,
+        email: userInfo.user.email,
+        profile_photo: userInfo.user.photo,
+      };
+      await AsyncStorage.setItem(
+        'user',
+        JSON.stringify({
+          name: userInfo.user.name,
+          email: userInfo.user.email,
+          profile_photo: userInfo.user.photo,
+          userid: jsonresponse.userid,
+        }),
+      );
+      // await AsyncStorage.setItem('user', JSON.stringify(newData));
+      storeData('user', newData);
       dispatch(
         setUser({
           email: userInfo.user.email,
-          // password: '',
+          username: userInfo.user.name,
           userid: jsonresponse.userid,
+          profile_photo: userInfo.user.photo,
         }),
       );
       // const isExists = await checkProfileExist(jsonresponse.userid);
@@ -165,7 +192,11 @@ const Login = () => {
       setLoading(false);
       return;
     }
-
+    
+    const device_token = await AsyncStorage.getItem('device-Token')
+    console.log('Debic', device_token);
+    
+    
     try {
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/login',
@@ -177,6 +208,7 @@ const Login = () => {
           body: JSON.stringify({
             email: email,
             password: password,
+            deviceToken: device_token,
           }),
         },
       );
@@ -186,6 +218,9 @@ const Login = () => {
         storeData('user', jsonresponse.userid);
         dispatch(setUser({email, password, userid: jsonresponse.userid}));
         const isExists = await checkProfileExist(jsonresponse.userid);
+
+        
+
         if (isExists) {
           navigation.reset({
             index: 0,

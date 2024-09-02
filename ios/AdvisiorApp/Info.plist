@@ -67,6 +67,18 @@
 		<string>Poppins-SemiBoldItalic.ttf</string>
 		<string>Poppins-Thin.ttf</string>
 		<string>Poppins-ThinItalic.ttf</string>
+		<string>InriaSans-Bold.ttf</string>
+		<string>InriaSans-BoldItalic.ttf</string>
+		<string>InriaSans-Italic.ttf</string>
+		<string>InriaSans-Light.ttf</string>
+		<string>InriaSans-LightItalic.ttf</string>
+		<string>InriaSans-Regular.ttf</string>
+		<string>InriaSerif-Bold.ttf</string>
+		<string>InriaSerif-BoldItalic.ttf</string>
+		<string>InriaSerif-Italic.ttf</string>
+		<string>InriaSerif-Light.ttf</string>
+		<string>InriaSerif-LightItalic.ttf</string>
+		<string>InriaSerif-Regular.ttf</string>
 	</array>
 </dict>
 </plist>

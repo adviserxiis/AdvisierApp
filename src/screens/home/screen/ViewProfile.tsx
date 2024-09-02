@@ -35,6 +35,7 @@ const reelItemHeight = reelItemWidth * 1.7;
 const ViewProfile = () => {
   const route = useRoute();
   const advsid = route.params;
+  // console.log("useid", advsid);
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
   const [details, setDetails] = useState(null);
@@ -51,6 +52,7 @@ const ViewProfile = () => {
   const [links, setLinks] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [bannerImage, setBannerImage] = useState(null);
+  
 
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
@@ -147,6 +149,13 @@ const ViewProfile = () => {
   }, []);
 
   const followUser = async () => {
+    const userObjectString = await AsyncStorage.getItem('user');
+    let  userObject = null;
+
+    if (userObjectString) {
+      userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
+      console.log('User', userObject.name);
+    }
     try {
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/followcreator',
@@ -167,6 +176,22 @@ const ViewProfile = () => {
       if (response.ok) {
         console.log('higg');
         setIsFollowing(true);
+        const NotificationResponse = await fetch(
+          'https://adviserxiis-backend-three.vercel.app/notification/sendnotification',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              deviceToken:details?.device_token,
+              title:'Following User Update',
+              body:`${userObject?.name} started following you!!`
+            }),
+          },
+        );
+        const jsonresponse = await NotificationResponse.json();
+        console.log('Follow response', jsonresponse);
       } else {
         console.error('Failed to follow:', response.statusText);
       }

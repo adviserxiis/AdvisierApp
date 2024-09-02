@@ -7,7 +7,21 @@ import {Alert, Linking, PermissionsAndroid, Platform} from 'react-native';
 import {useEffect} from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
 import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// notifee.onBackgroundEvent(async ({ type, detail }) => {
+//   console.log('Background event received:', type, detail);
+
+//   if (type === EventType.PRESS) {
+//     // Handle the press action
+//     const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.advisiorapp';
+//     if (Platform.OS === 'android') {
+//       Linking.openURL(playStoreUrl).catch(err =>
+//         console.error("Couldn't load page", err),
+//       );
+//     }
+//   }
+// });
 
 const App = () => {
   async function requestUserPermission() {
@@ -23,6 +37,7 @@ const App = () => {
 
   const getToken = async () => {
     const token = await messaging().getToken();
+    await AsyncStorage.setItem('device-Token', token);
     console.log('Token = ', token);
   };
 
@@ -52,15 +67,15 @@ const App = () => {
     .initialize()
     .then(() => console.log('Ads initialized'));
 
-  async function handleNotificationClick() {
-    const playStoreUrl =
-      'https://play.google.com/store/apps/details?id=com.advisiorapp';
-    if (Platform.OS === 'android') {
-      Linking.openURL(playStoreUrl).catch(err =>
-        console.error("Couldn't load page", err),
-      );
-    }
-  }
+  // async function handleNotificationClick() {
+  //   const playStoreUrl =
+  //     'https://play.google.com/store/apps/details?id=com.advisiorapp';
+  //   if (Platform.OS === 'android') {
+  //     Linking.openURL(playStoreUrl).catch(err =>
+  //       console.error("Couldn't load page", err),
+  //     );
+  //   }
+  // }
 
   useEffect(() => {
     requestUserPermission();
@@ -87,15 +102,15 @@ const App = () => {
       // Display the notification using Notifee
       displayNotification(remoteMessage);
     });
-    const unsubscribeNotifee = notifee.onForegroundEvent(({type, detail}) => {
-      if (type === EventType.PRESS) {
-        handleNotificationClick();
-      }
-    });
+    // const unsubscribeNotifee = notifee.onForegroundEvent(({type, detail}) => {
+    //   if (type === EventType.PRESS) {
+    //     handleNotificationClick();
+    //   }
+    // });
 
     return () => {
       unsubscribe();
-      unsubscribeNotifee();
+      // unsubscribeNotifee();
     };
   }, []);
 

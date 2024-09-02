@@ -2,6 +2,54 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/fonts/InriaSans-Bold.ttf",
+      "sha1": "296ff7429ddf34cf155d05bbf9855012e94e8e02"
+    },
+    {
+      "path": "src/assets/fonts/InriaSans-BoldItalic.ttf",
+      "sha1": "304267fdc84b4711eef47b1a61d83d1de3554c42"
+    },
+    {
+      "path": "src/assets/fonts/InriaSans-Italic.ttf",
+      "sha1": "6de9355dfea86b93fd58af526b9944097a458357"
+    },
+    {
+      "path": "src/assets/fonts/InriaSans-Light.ttf",
+      "sha1": "153c0cbf554ef91c8fe43c8b464fc3e128cd4c92"
+    },
+    {
+      "path": "src/assets/fonts/InriaSans-LightItalic.ttf",
+      "sha1": "46e6b62c6c16e627d78ce372597d34c44e6b0805"
+    },
+    {
+      "path": "src/assets/fonts/InriaSans-Regular.ttf",
+      "sha1": "b56ee911415e9bbb591caf6bfc3d8283e9339f41"
+    },
+    {
+      "path": "src/assets/fonts/InriaSerif-Bold.ttf",
+      "sha1": "6d472f4c54a66c4f3d102a4523020066149390ae"
+    },
+    {
+      "path": "src/assets/fonts/InriaSerif-BoldItalic.ttf",
+      "sha1": "4fa037a60a3fd9f0c39106ac7588709aef54a779"
+    },
+    {
+      "path": "src/assets/fonts/InriaSerif-Italic.ttf",
+      "sha1": "b43ffc94ecdc405346741428ae604ad53c9585a5"
+    },
+    {
+      "path": "src/assets/fonts/InriaSerif-Light.ttf",
+      "sha1": "58cb7f4e594bb04785a376c7659caf3196215812"
+    },
+    {
+      "path": "src/assets/fonts/InriaSerif-LightItalic.ttf",
+      "sha1": "75e2976d6be0593721d289d3e85205d4f12a5e4a"
+    },
+    {
+      "path": "src/assets/fonts/InriaSerif-Regular.ttf",
+      "sha1": "c9a699f48f08554a42ffea5772ac3d456affb8a6"
+    },
+    {
       "path": "src/assets/fonts/OFL.txt",
       "sha1": "9f27955a401cc9ea5ba3503027a4ea502c87e70c"
     },
