@@ -4,44 +4,47 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Text, View} from 'react-native';
-import Home from '../screens/home/home';
 import User from '../screens/user/user';
 import Profile from '../screens/profile/profile';
 import Icon from 'react-native-vector-icons/Feather';
 import Search from '../screens/search/Search';
 import AddPost from '../screens/add/AddPost';
 import UpdateProfile from '../screens/profile/screen/UpdateProfile';
-import ViewProfile from '../screens/home/screen/ViewProfile';
-import SingleReel from '../screens/home/screen/SingleReel';
+import ViewProfile from '../screens/reels/screen/ViewProfile';
+import SingleReel from '../screens/reels/screen/SingleReel';
+import SearchText from '../screens/search/screen/SearchText';
+import reel from '../screens/reels/Reel';
+import Home from '../screens/home/home';
 // import Login from '../screens/auth/Login';
 
+
 //Home Stack
-const HomeStack = createStackNavigator();
-function HomeStackScreen() {
+const ReelStack = createStackNavigator();
+function ReelStackScreen() {
   return (
-    <HomeStack.Navigator>
-      <HomeStack.Screen
+    <ReelStack.Navigator>
+      <ReelStack.Screen
         name="MainHome"
-        component={Home}
+        component={reel}
         options={{
           headerShown: false,
         }}
       />
-      <HomeStack.Screen
+      <ReelStack.Screen
         name="ViewProfile"
         component={ViewProfile}
         options={{
           headerShown: false,
         }}
       />
-      <HomeStack.Screen
+      <ReelStack.Screen
         name="singleReel"
         component={SingleReel}
         options={{
           headerShown: false,
         }}
       />
-    </HomeStack.Navigator>
+    </ReelStack.Navigator>
   );
 }
 
@@ -76,6 +79,13 @@ function SearchStackScreen() {
       <SearchStack.Screen
         name="SearchMain"
         component={Search}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <SearchStack.Screen
+        name='SearchText'
+        component={SearchText}
         options={{
           headerShown: false,
         }}
@@ -122,25 +132,44 @@ function MyTabs() {
         headerShown: false,
         tabBarLabel: '',
         tabBarStyle: {
-          height: 64,
+          height: 74,
+          paddingTop:10,
           borderColor: '#17191A',
-          paddingTop: 10,
           backgroundColor: '#17191A',
         },
         tabBarInactiveTintColor: 'white',
         tabBarHideOnKeyboard: true,
-        tabBarIcon: ({color, size}) => {
+        tabBarIcon: ({color, size, focused}) => {
           let iconName;
+          let iconColor = color;
 
           switch (route.name) {
             case 'Home':
               iconName = 'home';
               break;
-            case 'AddPost':
-              iconName = 'plus';
-              break;
             case 'Search':
               iconName = 'search';
+              break;
+            case 'AddPost':
+              iconName = 'plus';
+              iconColor = focused ? 'black' : 'black';
+              return (
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 30,
+                    backgroundColor: 'white',
+                    justifyContent: 'center',
+                    alignItems: 'center', // Center the Add button in the navbar
+                  }}
+                >
+                  <Icon name={iconName} size={26} color={iconColor} />
+                </View>
+              );
+              break;
+            case 'Reel':
+              iconName = 'play';
               break;
             case 'Profile':
               iconName = 'user';
@@ -150,12 +179,20 @@ function MyTabs() {
               break;
           }
 
-          return <Icon name={iconName} size={size} color={color} />;
+          return <Icon name={iconName} size={24} color={color} />;
         },
       })}>
-      <Tab.Screen name="Home" component={HomeStackScreen} />
-      <Tab.Screen name="AddPost" component={PostStackScreen} />
+      <Tab.Screen name='Home' component={Home} options={{
+        headerShown:true,
+        title:'',
+        headerStyle: {
+          backgroundColor: '#17191A',
+        },
+        // headerShadowVisible:false
+      }}/>
       <Tab.Screen name="Search" component={SearchStackScreen} />
+      <Tab.Screen name="AddPost" component={PostStackScreen}/>
+      <Tab.Screen name="Reel" component={ReelStackScreen} />
       <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
   );

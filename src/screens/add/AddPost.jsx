@@ -20,6 +20,16 @@ import Video from 'react-native-video';
 import Ionic from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import storage from '@react-native-firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Mixpanel} from 'mixpanel-react-native';
+
+const trackAutomaticEvents = false;
+const mixpanel = new Mixpanel(
+  'f03fcb4e7e5cdc7d32f57611937c5525',
+  trackAutomaticEvents,
+);
+mixpanel.init();
+
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 const AddPost = () => {
   const navigation = useNavigation();
@@ -151,6 +161,36 @@ const AddPost = () => {
   //     Alert.alert('Error', 'There was an error saving your post. Please try again.');
   //   }
   // };
+  const notifyAllUsers = async () => {
+    const storedProfileData = await AsyncStorage.getItem('user');
+    const profileData = JSON.parse(storedProfileData);
+    console.log('Profile Data', profileData.name);
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/notification/sendnotificationtoall', // Replace with your backend endpoint
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: 'Watch Reel',
+            body: `${profileData.name} Uploaded a new reel!`,
+          }),
+        },
+      );
+
+      const jsonresponse = await response.json();
+      console.log('Notificed', jsonresponse);
+
+      if (!response.ok) {
+        throw new Error('Failed to notify users.');
+      }
+    } catch (error) {
+      console.log('Notification Error:', error.message || error);
+      Alert.alert('Notification Error', 'Failed to notify users.');
+    }
+  };
 
   const savePost = async () => {
     if (!video) {
@@ -171,8 +211,8 @@ const AddPost = () => {
         let currentProgress = 0;
 
         const interval = setInterval(() => {
-          currentProgress += 0.05; // Increase progress (adjust speed as needed)
-          setProgress(prevProgress => Math.min(prevProgress + 0.05, 1)); // Ensure progress does not exceed 100%
+          currentProgress += 0.2; // Increase progress (adjust speed as needed)
+          setProgress(prevProgress => Math.min(prevProgress + 0.2, 1)); // Ensure progress does not exceed 100%
 
           if (currentProgress >= 1) {
             clearInterval(interval);
@@ -227,12 +267,20 @@ const AddPost = () => {
           console.log('sndns', jsonResponse);
           if (postResponse.ok) {
             // Alert.alert('Success', 'Your post has been saved.');
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             await updateProgress();
+            await notifyAllUsers();
             setVideo(null);
             setDescription('');
             setLocation('');
+            mixpanel.identify(user.userid); // Identifies the user by unique ID
+            // mixpanel.getPeople().set({
+            //   $name: name,
+            // });
+            // mixpanel.setLoggingEnabled(true);
+            mixpanel.track('Post Creation');
             Alert.alert('Success', 'Post saved successfully!');
+
             // navigation.goBack();
             // Optionally, reset the form after saving
           } else {

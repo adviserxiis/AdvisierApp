@@ -60,6 +60,15 @@ const linkLogos = {
   Spotify: require('../../assets/images/spotify.png'),
 };
 
+import {Mixpanel} from 'mixpanel-react-native';
+
+const trackAutomaticEvents = false;
+const mixpanel = new Mixpanel(
+  'f03fcb4e7e5cdc7d32f57611937c5525',
+  trackAutomaticEvents,
+);
+mixpanel.init();
+
 const SetProfile = () => {
   const [bannerImage, setBannerImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
@@ -191,6 +200,15 @@ const SetProfile = () => {
             userid : userid,
           }),
         );
+
+        mixpanel.identify(userid); // Identifies the user by unique ID
+        mixpanel.getPeople().set({
+          $name: name,
+        });
+        // mixpanel.setLoggingEnabled(true);
+        mixpanel.track('Creator Login', {
+          name: name,
+        });
         // navigation.navigate('Main');
         navigation.reset({index: 0, routes: [{name: 'Main'}]});
       } else {

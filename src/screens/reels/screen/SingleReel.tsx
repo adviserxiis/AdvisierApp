@@ -19,6 +19,7 @@ import Icon2 from 'react-native-vector-icons/MaterialIcons';
 import Ionic from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import Share from 'react-native-share';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 // import { Ionicons, FontAwesome } from '@expo/vector-icons'; // Use react-native-vector-icons if not using Expo
 
 const SingleReel = () => {
@@ -38,6 +39,18 @@ const SingleReel = () => {
   // const tapRef = useRef(null);
   const progressBarWidth = useRef(new Animated.Value(0)).current;
   const videoPlayerRef = useRef(null);
+  const [aspectRatio, setAspectRatio] = useState(1); 
+  const BottomTabHeight = useBottomTabBarHeight()
+  const screenHeight = Dimensions.get('window').height - BottomTabHeight;
+
+  const getResizeMode = () => (aspectRatio > 1 ? 'contain' : 'cover');
+
+  const onLoad = (data) => {
+    // Calculate aspect ratio: width / height
+    const ratio = data.naturalSize.width / data.naturalSize.height;
+    setAspectRatio(ratio); // Set the aspect ratio state
+    setBuffering(false);
+  };
 
   const onBuffer = useCallback(buffer => {
     setBuffering(buffer.isBuffering);
@@ -205,8 +218,8 @@ const SingleReel = () => {
         <Video
           ref={videoPlayerRef}
           source={{uri: video?.data?.post_file}}
-          style={styles.video}
-          resizeMode="cover"
+          style={[styles.video, { height: screenHeight }]}
+          resizeMode={getResizeMode()}
           controls={false}
           muted={mute}
           repeat={true}
@@ -214,6 +227,7 @@ const SingleReel = () => {
           onBuffer={onBuffer} // Handle buffering
           onError={videoError}
           onProgress={onProgress}
+          onLoad={onLoad}
         />
       </TouchableWithoutFeedback>
       {buffering && ( // Display loading indicator while buffering
@@ -345,6 +359,7 @@ const styles = StyleSheet.create({
   video: {
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
+    
   },
   header: {
     position: 'absolute',
@@ -426,7 +441,7 @@ const styles = StyleSheet.create({
   centeredIcon: {
     position: 'absolute',
     left: '50%',
-    top: '50%',
+    top: '52%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   actionText: {

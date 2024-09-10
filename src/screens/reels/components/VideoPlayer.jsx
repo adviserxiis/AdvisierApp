@@ -31,13 +31,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const {width: screenWidth} = Dimensions.get('window');
 
+
 const VideoPlayer = ({
   video,
   isVisible,
   index,
   currentIndex,
   mute,
-  setMute,
+  setMute
 }) => {
   const videoSrc = video.data.post_file;
   const [paused, setPaused] = useState(true);
@@ -56,6 +57,9 @@ const VideoPlayer = ({
   const navigation = useNavigation();
   const BottomTabHeight = useBottomTabBarHeight();
   const screenHeight = Dimensions.get('window').height - BottomTabHeight;
+  const [aspectRatio, setAspectRatio] = useState(1);
+
+  const getResizeMode = () => (aspectRatio > 1 ? 'contain' : 'cover');
 
   useEffect(() => {
     const handleAppStateChange = nextAppState => {
@@ -315,6 +319,14 @@ const VideoPlayer = ({
     // console.log('View Update Response', jsonresponse);
   }, [video?.id, user.userid]);
 
+  const onLoad = (data) => {
+    setVideoDuration(data.duration);
+    // Calculate aspect ratio: width / height
+    const ratio = data.naturalSize.width / data.naturalSize.height;
+    setAspectRatio(ratio); // Set the aspect ratio state
+    setBuffering(false);
+  };
+
   // Only render the video component if it is visible and there is no error
   const renderVideo = useMemo(() => {
     if (!isVisible || currentIndex !== index) return null;
@@ -331,7 +343,7 @@ const VideoPlayer = ({
             style={[styles.video, {height: screenHeight}]}
             controls={false}
             paused={paused}
-            resizeMode="cover"
+            resizeMode={getResizeMode()}
             onBuffer={onBuffer}
             onError={videoError}
             fullscreen={isFullScreen}
@@ -344,7 +356,7 @@ const VideoPlayer = ({
             preload={true}
             bitrate={videoQuality === 'high' ? 1500000 : 500000}
             onLoadStart={() => setBuffering(true)}
-            onLoad={data => setVideoDuration(data.duration)}
+            onLoad={onLoad}
             onProgress={handleProgress}
           />
           {buffering && !error && (
@@ -556,13 +568,13 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     position: 'absolute',
     left: '50%',
-    top: '50%',
+    top: '48%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   centeredIcon: {
     position: 'absolute',
     left: '50%',
-    top: '50%',
+    top: '48%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   errorContainer: {
@@ -589,11 +601,12 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     position: 'absolute',
-    bottom: 65,
+    bottom: 75,
     left: 0,
     right: 0,
     height: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex:1000,
   },
   progressBar: {
     height: '100%',
@@ -629,7 +642,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: 'absolute',
-    bottom: 95,
+    bottom: 105,
     left: 16,
     right: 10,
   },

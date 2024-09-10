@@ -16,6 +16,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -25,7 +26,11 @@ import {clearData} from '../../utils/store';
 import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 const {width} = Dimensions.get('window');
@@ -33,6 +38,8 @@ import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import DeletePost from './screen/DeletePost';
 import Card from './components/Card';
+import {BlurView} from '@react-native-community/blur';
+import PostItem from './components/Postitem';
 // import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
 // const adUnitId = __DEV__
@@ -48,6 +55,7 @@ const Profile = () => {
   const [details, setDetails] = useState(null);
   const [reels, setReels] = useState([]);
   const user = useSelector(state => state.user);
+  const [posts, setPosts] = useState([]);
   // const [currentPlaying, setCurrentPlaying] = useState(null);
   // const [viewableItems, setViewableItems] = useState([]);
   const [totalViews, setTotalViews] = useState(0);
@@ -66,6 +74,17 @@ const Profile = () => {
   const [modalOpacity] = useState(new Animated.Value(0));
   const [selectedMonth, setSelectedMonth] = useState('Jan Views');
   const [views, setViews] = useState('1K');
+  const [refreshing, setRefreshing] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [visiblePostIndex, setVisiblePostIndex] = useState(null);
+  const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
+
+  const onViewableItemsChanged = useRef(({viewableItems}) => {
+    if (viewableItems.length > 0) {
+      setVisiblePostIndex(viewableItems[0].index); // Set index of visible post
+    }
+  });
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -108,7 +127,6 @@ const Profile = () => {
   };
 
   const dispatch = useDispatch();
-
   const logout = () => {
     Alert.alert(
       'Logout',
@@ -145,6 +163,7 @@ const Profile = () => {
               // Clear user data in Redux
               dispatch(clearUser());
 
+              // navigation.replace('Login');
               // Reset navigation and navigate to the Login screen
               // navigation.reset({
               //   index: 0,
@@ -183,6 +202,8 @@ const Profile = () => {
           profileImage: profileData.profile_photo || userInfo.user.photo,
           bannerImage: profileData.profile_background || null,
         }));
+      } else {
+        console.log('User info is not available or user data is not stored.');
       }
 
       // Fetch user details
@@ -204,6 +225,7 @@ const Profile = () => {
       // Parse JSON response
       const jsonResponse = await response.json();
       setDetails(jsonResponse);
+      return jsonResponse;
     } catch (error) {
       console.error('Failed to load user data:', error);
     }
@@ -270,6 +292,7 @@ const Profile = () => {
       0,
     );
     setTotalDuration(totalDuration);
+    return jsonresponse;
   };
 
   const deletePost = postid => {
@@ -422,8 +445,63 @@ const Profile = () => {
     }
   };
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true); // Start refreshing
+
+    try {
+      const newDetails = await getuser();
+      const newReels = await getReels();
+
+      console.log('Fetched details:', newDetails);
+      console.log('Fetched reels:', newReels);
+
+      setDetails(newDetails);
+      setReels(newReels);
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    } finally {
+      setRefreshing(false); // Stop refreshing
+    }
+  }, []);
+
+  const getPostList = async () => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/post/gethomepostsofadviser/${user.userid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const jsonResponse = await response.json();
+      console.log('SJisis', jsonResponse);
+      setPosts(jsonResponse);
+    } catch (error) {
+      console.error('Error fetching video list:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      getPostList();
+    }, []),
+  );
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['black']} // Set loading spinner color to white
+          tintColor="transparent"
+          progressBackgroundColor="white"
+        />
+      }>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* Header Image */}
       {/* <BannerAd
@@ -483,20 +561,6 @@ const Profile = () => {
                 />
                 <Text style={styles.modalText}>Share</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => {
-                  hideModal();
-                  navigation.navigate('deletePost')
-                }}>
-                <Icon2
-                  name="trash"
-                  size={16}
-                  color="white"
-                  style={styles.modalIcon}
-                />
-                <Text style={styles.modalText}>Delete</Text>
-              </TouchableOpacity> */}
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
@@ -599,100 +663,100 @@ const Profile = () => {
           justifyContent: 'space-between',
           alignItems:'center',
         }}> */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            flex: 1,
+            borderRadius: 15,
+            marginRight: 10,
+          }}>
+          <View style={{alignItems: 'center'}}>
+            <Text
+              style={{
+                color: '#9C9C9C',
+                fontSize: 10,
+                letterSpacing: 1,
+                fontFamily: 'Poppins-Regular',
+                lineHeight: 15,
+              }}>
+              Followers
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: '#ffffff',
+                fontFamily: 'Poppins-Medium',
+                lineHeight: 21,
+                letterSpacing: 1,
+                marginTop: 2,
+              }}>
+              {details?.followers?.length || 0}
+            </Text>
+          </View>
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              flex:1,
-              borderRadius: 15,
-              marginRight:10,
-            }}>
-            <View style={{alignItems: 'center'}}>
-              <Text
-                style={{
-                  color: '#9C9C9C',
-                  fontSize: 10,
-                  letterSpacing: 1,
-                  fontFamily: 'Poppins-Regular',
-                  lineHeight: 15,
-                }}>
-                Followers
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#ffffff',
-                  fontFamily: 'Poppins-Medium',
-                  lineHeight: 21,
-                  letterSpacing: 1,
-                  marginTop: 2,
-                }}>
-                {details?.followers?.length || 0}
-              </Text>
-            </View>
-            <View
+              height: 35,
+              width: 1,
+              backgroundColor: 'gray',
+            }}
+          />
+          <View style={{alignItems: 'center'}}>
+            <Text
               style={{
-                height: 35,
-                width: 1,
-                backgroundColor: 'gray',
-              }}
-            />
-            <View style={{alignItems: 'center'}}>
-              <Text
-                style={{
-                  color: '#9C9C9C',
-                  fontSize: 10,
-                  letterSpacing: 1,
-                  fontFamily: 'Poppins-Regular',
-                  lineHeight: 15,
-                }}>
-                Reels
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: 'white',
-                  lineHeight: 21,
-                  fontFamily: 'Poppins-Medium',
-                  marginTop: 2,
-                  letterSpacing: 1,
-                }}>
-                {reels.length || 0}
-              </Text>
-            </View>
-            <View
+                color: '#9C9C9C',
+                fontSize: 10,
+                letterSpacing: 1,
+                fontFamily: 'Poppins-Regular',
+                lineHeight: 15,
+              }}>
+              Reels
+            </Text>
+            <Text
               style={{
-                height: 35,
-                width: 1,
-                backgroundColor: 'gray',
-              }}
-            />
-            <View style={{alignItems: 'center'}}>
-              <Text
-                style={{
-                  color: '#9C9C9C',
-                  fontSize: 10,
-                  letterSpacing: 1,
-                  fontFamily: 'Poppins-Regular',
-                  lineHeight: 15,
-                }}>
-                Views
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: 'white',
-                  lineHeight: 21,
-                  fontFamily: 'Poppins-Medium',
-                  marginTop: 2,
-                  letterSpacing: 1,
-                }}>
-                {totalViews || 0}
-              </Text>
-            </View>
+                fontSize: 14,
+                color: 'white',
+                lineHeight: 21,
+                fontFamily: 'Poppins-Medium',
+                marginTop: 2,
+                letterSpacing: 1,
+              }}>
+              {reels?.length || 0}
+            </Text>
           </View>
-          {/* <TouchableOpacity style={styles.monthView} onPress={handleMonthClick}>
+          <View
+            style={{
+              height: 35,
+              width: 1,
+              backgroundColor: 'gray',
+            }}
+          />
+          <View style={{alignItems: 'center'}}>
+            <Text
+              style={{
+                color: '#9C9C9C',
+                fontSize: 10,
+                letterSpacing: 1,
+                fontFamily: 'Poppins-Regular',
+                lineHeight: 15,
+              }}>
+              Views
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: 'white',
+                lineHeight: 21,
+                fontFamily: 'Poppins-Medium',
+                marginTop: 2,
+                letterSpacing: 1,
+              }}>
+              {totalViews || 0}
+            </Text>
+          </View>
+        </View>
+        {/* <TouchableOpacity style={styles.monthView} onPress={handleMonthClick}>
             <Text style={styles.label}>{selectedMonth}</Text>
             <Text style={styles.value}>{views}</Text>
           </TouchableOpacity> */}
@@ -707,8 +771,77 @@ const Profile = () => {
           duration={totalDuration}
         />
       </View>
-      <View style={styles.reelsSection}>
-        {reels.length === 0 ? (
+
+      <View style={styles.navbar}>
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            activeTab === 'posts' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('posts')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'posts' && styles.activeNavText,
+            ]}>
+            POSTS
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            activeTab === 'reels' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('reels')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'reels' && styles.activeNavText,
+            ]}>
+            REELS
+          </Text>
+          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'reels' ? (
+        reels.length === 0 ? (
+          <View style={styles.noReelsContainer}>
+            <Text style={styles.noReelsText}>No reels uploaded</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={reels}
+            renderItem={renderReelItem}
+            keyExtractor={item => item.id}
+            numColumns={3}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.reelsList}
+            columnWrapperStyle={styles.reelColumnWrapper}
+            // onViewableItemsChanged={onViewableItemsChanged}
+            // viewabilityConfig={viewabilityConfig}
+          />
+        )
+      ) : ( posts.length === 0 ? (
+        <View style={styles.noPostsContainer}>
+          <Text style={styles.noPostsText}>No posts available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          showsVerticalScrollIndicator={false}
+          renderItem={({item, index}) => (
+            <PostItem post={item} isVisible={visiblePostIndex === index} />
+          )}
+          keyExtractor={item => item.id}
+          onViewableItemsChanged={onViewableItemsChanged.current}
+          viewabilityConfig={viewabilityConfig}
+        />
+      )
+      )}
+
+      {/* <View style={styles.reelsSection}>
+        {reels?.length === 0 ? (
           <View style={styles.noReelsContainer}>
             <Text style={styles.noReelsText}>No reels uploaded</Text>
           </View>
@@ -725,7 +858,30 @@ const Profile = () => {
             // viewabilityConfig={viewabilityConfig}
           />
         )}
-      </View>
+      </View> */}
+
+      {/* {isVisible && (
+        <Modal
+        transparent
+        animationType="fade"
+        visible={isVisible}
+        onRequestClose={() => setIsVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.cardContainer}>
+            <View style={styles.card}>
+              <Text style={styles.text}>
+                You’re just <Text style={styles.boldText}>20 followers</Text> away to <Text style={styles.boldText}>start earning!</Text>
+              </Text>
+              <Text style={styles.text}>Keep going—create more content to get there!</Text>
+              <TouchableOpacity style={styles.button} onPress={() => setIsVisible(false)}>
+                <Text style={styles.buttonText}>Create Content</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      )} */}
     </ScrollView>
   );
 };
@@ -746,6 +902,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     fontFamily: 'Poppins-Medium',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    // Semi-transparent background
   },
   modalContainer: {
     position: 'absolute',
@@ -834,6 +997,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     lineHeight: 21,
   },
+  noPostsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  noPostsText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular',
+  },
   noReelsContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -914,6 +1088,64 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontFamily: 'Poppins-Regular',
+  },
+  absolute: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  cardContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: '#333',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '80%',
+  },
+  text: {
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 90,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  navButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  activeNavButton: {
+    borderBottomColor: '#0069B4',
+    borderBottomWidth: 2,
+    borderRadius: 2,
+  },
+  activeNavText: {
+    color: '#0069B4', // Text color for active tab
   },
 });
 

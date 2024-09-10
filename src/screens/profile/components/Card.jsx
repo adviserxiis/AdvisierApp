@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   mainText: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#000000', // Text color
     fontFamily: 'InriaSerif-Bold',
     marginBottom: 5,

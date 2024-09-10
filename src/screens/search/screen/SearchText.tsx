@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {
   SafeAreaView,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
-const Search = () => {
+const SearchText = () => {
   const [search, setSearch] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -65,27 +65,26 @@ const Search = () => {
   };
 
   const renderItem = ({item}) => (
-    <TouchableOpacity activeOpacity={0.5} style={styles.userContainer} onPress={()=>navigation.navigate('ViewProfile', item.id )}>
+    <TouchableOpacity
+      activeOpacity={0.5}
+      style={styles.userContainer}
+      onPress={() => navigation.navigate('ViewProfile', item.id)}>
       {item.profilePhoto ? (
-      <Image source={{uri: item.profilePhoto}} style={styles.profilePhoto} />
-    ) : (
-      <View style={{
-        width: 50,
-        height: 50,
-        backgroundColor: 'white',
-        borderRadius: 25,
-        marginRight:10,
-        justifyContent:'center',
-        alignItems:'center',
-      }}>
-
-        <Icon
-          name="user"
-          size={20}
-          color="#B0B3B8"
-        />
-      </View>
-    )}
+        <Image source={{uri: item.profilePhoto}} style={styles.profilePhoto} />
+      ) : (
+        <View
+          style={{
+            width: 50,
+            height: 50,
+            backgroundColor: 'white',
+            borderRadius: 25,
+            marginRight: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Icon name="user" size={20} color="#B0B3B8" />
+        </View>
+      )}
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.name}</Text>
         <Text style={styles.userDescription}>{item.description}</Text>
@@ -108,45 +107,48 @@ const Search = () => {
       // behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Adjust for iOS
     >
       <SafeAreaView style={styles.container}>
-        <TouchableOpacity onPress={()=>navigation.navigate('SearchText')} style={styles.searchContainer}>
-          <Icon
-              name="search"
-              size={18}
-              color="#B0B3B8"
-              style={styles.searchIcon}
-            />
-            <Text style={{
+        <View
+          style={{
+            flexDirection: 'row',
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop:12,
+            marginBottom:10,
+          }}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={20} color="white" />
+          </TouchableOpacity>
+          <View style={styles.searchContainer}>
+            {/* <Text style={{
               fontSize: 14,
               paddingLeft:3,
-            }}>Search by name or category</Text>
-          {/* <TextInput
-            placeholder="Search by name or category"
-            style={styles.searchInput}
-            value={search}
-            onChangeText={handleSearch}
-            placeholderTextColor="#B0B3B8"
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-          /> */}
-        </TouchableOpacity>
-        {/* <FlatList
+            }}>Search by name or category</Text> */}
+            <TextInput
+              placeholder="Search by name or category"
+              style={styles.searchInput}
+              value={search}
+              autoFocus={true}
+              onChangeText={handleSearch}
+              placeholderTextColor="#B0B3B8"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+            />
+          </View>
+        </View>
+        <FlatList
           data={filteredUsers}
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
-        /> */}
-
-        <View>
-
-          
-        </View>
+        />
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
 };
 
-export default Search;
+export default SearchText;
 
 const styles = StyleSheet.create({
   container: {
@@ -184,12 +186,13 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '90%',
     backgroundColor: '#3A3B3C',
     marginTop: 12,
-    marginBottom:10,
+    marginBottom: 10,
     paddingHorizontal: 10,
     borderRadius: 8,
-    height:40
+    height: 40,
   },
   searchIcon: {
     marginRight: 3,

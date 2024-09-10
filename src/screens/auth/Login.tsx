@@ -25,6 +25,18 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
+import {Mixpanel} from 'mixpanel-react-native';
+
+const trackAutomaticEvents = false;
+const mixpanel = new Mixpanel(
+  'f03fcb4e7e5cdc7d32f57611937c5525',
+  trackAutomaticEvents,
+);
+mixpanel.init();
+
+// import Mixpanel from 'react-native-mixpanel';
+
+// Mixpanel.sharedInstanceWithToken('f03fcb4e7e5cdc7d32f57611937c5525');
 
 const Login = () => {
   const navigation = useNavigation();
@@ -45,7 +57,7 @@ const Login = () => {
 
   const handleGoogleSign = async () => {
     setGoogleLoading(true);
-    const device_token = await AsyncStorage.getItem('device-Token')
+    const device_token = await AsyncStorage.getItem('device-Token');
     console.log('Debic', device_token);
     try {
       await GoogleSignin.hasPlayServices();
@@ -112,10 +124,24 @@ const Login = () => {
       // } else {
       //   navigation.navigate('setProfile');
       // }
+
+      // Track the login event
+      mixpanel.identify(jsonresponse.userid); // Identifies the user by unique ID
+      mixpanel.getPeople().set({
+        $email: userInfo.user.email, // Set properties like email
+        $name: userInfo.user.name, // Set user's name// Any custom properties
+      });
+      // mixpanel.setLoggingEnabled(true);
+      mixpanel.track('Creator Login', {
+        userID: jsonresponse.userid,
+        email: userInfo.user.email,
+      });
+
       navigation.reset({
         index: 0,
         routes: [{name: 'Main'}],
       });
+      
     } catch (error: any) {
       switch (error.code) {
         case statusCodes.SIGN_IN_CANCELLED:
@@ -192,11 +218,10 @@ const Login = () => {
       setLoading(false);
       return;
     }
-    
-    const device_token = await AsyncStorage.getItem('device-Token')
+
+    const device_token = await AsyncStorage.getItem('device-Token');
     console.log('Debic', device_token);
-    
-    
+
     try {
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/login',
@@ -219,7 +244,16 @@ const Login = () => {
         dispatch(setUser({email, password, userid: jsonresponse.userid}));
         const isExists = await checkProfileExist(jsonresponse.userid);
 
-        
+        // Track the login event
+        mixpanel.identify(jsonresponse.userid); // Identifies the user by unique ID
+        mixpanel.getPeople().set({
+          $email: email,
+        });
+        // mixpanel.setLoggingEnabled(true);
+        mixpanel.track('Creator Login', {
+          userID: jsonresponse.userid,
+          email: email,
+        });
 
         if (isExists) {
           navigation.reset({

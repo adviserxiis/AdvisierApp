@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
+import PostItems from '../../home/components/PostItems';
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/4940380881';
 // const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-3940256099942544/9214589741';
@@ -52,6 +53,16 @@ const ViewProfile = () => {
   const [links, setLinks] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [bannerImage, setBannerImage] = useState(null);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [posts, setPosts]=useState([]);
+  const [visiblePostIndex, setVisiblePostIndex] = useState(null);
+  const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
+
+  const onViewableItemsChanged = useRef(({viewableItems}) => {
+    if (viewableItems.length > 0) {
+      setVisiblePostIndex(viewableItems[0].index); // Set index of visible post
+    }
+  });
   
 
   const toggleDescription = () => {
@@ -117,7 +128,7 @@ const ViewProfile = () => {
       }
     } catch (error: any) {
       if (error.message) {
-        Alert.alert('Error', error.message);
+        // Alert.alert('Error', error.message);
       } else if (error.dismissedAction) {
         console.log('Share dismissed');
       }
@@ -327,6 +338,28 @@ const ViewProfile = () => {
       });
     }
   };
+
+  useEffect(() => {
+    const getPostList = async () => {
+      try {
+        const response = await fetch(
+          `https://adviserxiis-backend-three.vercel.app/post/gethomepostsofadviser/${advsid}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        const jsonResponse = await response.json();
+        console.log("SJisis", jsonResponse);
+        setPosts(jsonResponse);
+      } catch (error) {
+        console.error('Error fetching video list:', error);
+      }
+    };
+    getPostList();
+  }, []);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -557,7 +590,60 @@ const ViewProfile = () => {
           <Text>Logout</Text>
         </TouchableOpacity> */}
       </View>
-      <View style={styles.reelsSection}>
+
+      <View style={styles.navbar}>
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'posts' && styles.activeNavButton]}
+          onPress={() => setActiveTab('posts')}
+        >
+          <Text style={[styles.navText, activeTab === 'posts' && styles.activeNavText]}>POSTS</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'reels' && styles.activeNavButton]}
+          onPress={() => setActiveTab('reels')}
+        >
+          <Text style={[styles.navText, activeTab === 'reels' && styles.activeNavText]}>REELS</Text>
+          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'reels' ? (
+        reels.length === 0 ? (
+          <View style={styles.noReelsContainer}>
+            <Text style={styles.noReelsText}>No reels uploaded</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={reels}
+            renderItem={renderReelItem}
+            keyExtractor={item => item.id}
+            numColumns={3}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.reelsList}
+            columnWrapperStyle={styles.reelColumnWrapper}
+            // onViewableItemsChanged={onViewableItemsChanged}
+            // viewabilityConfig={viewabilityConfig}
+          />
+        )
+      ) : ( posts.length === 0 ? (
+        <View style={styles.noPostsContainer}>
+          <Text style={styles.noPostsText}>No posts available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          showsVerticalScrollIndicator={false}
+          renderItem={({item, index}) => (
+            <PostItems post={item} isVisible={visiblePostIndex === index} />
+          )}
+          keyExtractor={item => item.id}
+          onViewableItemsChanged={onViewableItemsChanged.current}
+          viewabilityConfig={viewabilityConfig}
+        />
+      )
+      )}
+
+      {/* <View style={styles.reelsSection}>
         {reels.length === 0 ? (
           <View style={styles.noReelsContainer}>
             <Text style={styles.noReelsText}>No reels uploaded</Text>
@@ -575,7 +661,7 @@ const ViewProfile = () => {
             // viewabilityConfig={viewabilityConfig}
           />
         )}
-      </View>
+      </View> */}
     </ScrollView>
   );
 };
@@ -645,6 +731,17 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   noReelsText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular',
+  },
+  noPostsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  noPostsText: {
     color: 'white',
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
@@ -722,6 +819,28 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: 'Poppins-Regular',
   },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal:90,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  navButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  activeNavButton: {
+    borderBottomColor: '#0069B4',
+    borderBottomWidth: 2,
+    borderRadius:2
+  },
+  activeNavText: {
+    color: '#0069B4', // Text color for active tab
+  },
+
 });
 
 export default ViewProfile;

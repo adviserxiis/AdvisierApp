@@ -16,12 +16,18 @@ import {
   StatusBar,
   ActivityIndicator,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
 import {storeData} from '../../utils/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref as sRef,
+  uploadBytes,
+  getDownloadURL,
+} from 'firebase/storage';
 import storage from '@react-native-firebase/storage';
 const interestsList = [
   'Actor',
@@ -79,15 +85,15 @@ const UpdateProfile = () => {
 
   const userid = useSelector(state => state.user.userid);
 
-  const convertToSocialLinks = (linksArray:any) => {
+  const convertToSocialLinks = (linksArray: any) => {
     console.log('linksArray:', linksArray);
-  
+
     // Check if linksArray is actually an array
     if (!Array.isArray(linksArray)) {
       console.error('Expected an array but received:', typeof linksArray);
       return {};
     }
-  
+
     return linksArray.reduce((acc, link) => {
       if (
         link &&
@@ -102,49 +108,46 @@ const UpdateProfile = () => {
     }, {});
   };
 
-  // const uploadSingleImage = async (file) => {
-  //   // const storage = getStorage();
-    
-  //   // Generate a unique filename using timestamp and a random number
-  //   const uniqueFilename = `images/${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  //   const imageRef = sRef(storage, uniqueFilename);
-  
+  // const uploadSingleImage = async imageUri => {
+  //   if (imageUri.startsWith('https://') || imageUri.startsWith('http://')) {
+  //     console.log('Skipping upload for remote URL:', imageUri);
+  //     return imageUri; // Return the existing URL instead of uploading
+  //   }
+
+  //   const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+  //   const uploadUri =
+  //     Platform.OS === 'android' ? imageUri.replace('file://', '') : imageUri;
+
+  //   const reference = storage().ref(filename);
+  //   const task = reference.putFile(uploadUri);
+
   //   try {
-  //     // Upload the image to Firebase Storage
-  //     const snapshot = await uploadBytes(imageRef, file);
-      
-  //     // Get the download URL for the uploaded image
-  //     const downloadURL = await getDownloadURL(snapshot.ref);
-  //     console.log('Image URL:', downloadURL);
-  
-  //     // Return the download URL
-  //     return downloadURL;
-  //   } catch (error) {
-  //     console.error('Error uploading image:', error.message || error);
-  //     throw error;
+  //     await task;
+  //     const url = await reference.getDownloadURL();
+  //     console.log('Image URL:', url);
+  //     return url;
+  //   } catch (e) {
+  //     console.error('Image upload failed:', e);
+  //     return null;
   //   }
   // };
-
-
-  
 
   // const linksArray = [
   //   { type: 'Facebook', url: 'https://facebook.com/user' },
   //   { type: 'Twitter', url: 'https://twitter.com/user' }
   // ];
-  
+
   // console.log('Input data:', linksArray);
-  
 
   const loadProfileData = async () => {
     try {
-      console.log("shsjd")
-      console.log(userid)
+      console.log('shsjd');
+      console.log(userid);
       const storedProfileData = await AsyncStorage.getItem('user');
       if (storedProfileData) {
-        console.log("hie",storedProfileData);
+        console.log('hie', storedProfileData);
         const profileData = JSON.parse(storedProfileData);
-        console.log("hfd",profileData.name)
+        console.log('hfd', profileData.name);
         setName(profileData.name || '');
         setTitle(profileData.professional_title || '');
         setDescription(profileData.discription || '');
@@ -153,14 +156,43 @@ const UpdateProfile = () => {
         setProfileImage(profileData.profile_photo || null);
         setBannerImage(profileData.profile_background || null);
       }
+
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/creator/getuser/${userid}`,
+      );
+
+      // Check if the response is OK (status code 200)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Check the content type of the response
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Expected JSON response');
+      }
+
+      // Parse JSON response
+      const jsonResponse = await response.json();
+      // setDetails(jsonResponse);
+      console.log('User Details', jsonResponse);
+      setName(jsonResponse.username || '');
+      setTitle(jsonResponse.professional_title || '');
+      setDescription(jsonResponse.professional_bio || '');
+      setInterests(jsonResponse.interests || []);
+      setLinks(jsonResponse.social_links || []);
+      setProfileImage(jsonResponse.profile_photo || null);
+      setBannerImage(jsonResponse.profile_background || null);
     } catch (error) {
       console.error('Failed to load profile data:', error);
     }
   };
-  useEffect(() => {
 
+  useEffect(() => {
     loadProfileData();
   }, []);
+
+  
 
   // console.log('Current user ID:', userid);
 
@@ -168,9 +200,9 @@ const UpdateProfile = () => {
     setIsLoading(true);
     const formData = new FormData();
     console.log('Links:', links);
-  
+
     let social;
-  
+
     // Check if links is an array or an object
     if (Array.isArray(links)) {
       social = convertToSocialLinks(links);
@@ -180,62 +212,65 @@ const UpdateProfile = () => {
       console.error('Unexpected type for links:', typeof links);
       social = {};
     }
-  
+
     console.log('Social:', social);
-  
+
     // Validation check
     if (!name || !title || !description || !interests) {
       Alert.alert('Validation Error', 'Please fill all the fields');
       setIsLoading(false);
       return; // Stop execution if validation fails
     }
-  
-    // Append images to formData if they exist
-    if (profileImage) {
-      // const profileImageUrl = uploadSingleImage(profileImage)
-      // console.log("Profile IMage Url",profileImageUrl)
+
+    // Append images to formData if they exist, or add a placeholder
+    if (profileImage && !profileImage.startsWith('https://')) {
+      console.log('Profile Image URL:', profileImage);
       formData.append('profile_photo', {
         uri: Platform.OS === 'android' ? `file://${profileImage}` : profileImage,
         name: 'profile_photo.jpg',
         type: 'image/jpeg',
       });
     }
- 
-  
-    if (bannerImage) {
-      // const bannerImageUrl = uploadSingleImage(bannerImage);
-      // console.log("Profile IMage Url",bannerImageUrl);
+
+    if (bannerImage && !bannerImage.startsWith('https://')) {
+      console.log('Banner Image URL:', bannerImage);
       formData.append('profile_background', {
         uri: Platform.OS === 'android' ? `file://${bannerImage}` : bannerImage,
         name: 'profile_background.jpg',
         type: 'image/jpeg',
       });
     }
-  
+    
     // Append other form fields
     formData.append('userid', userid);
-    formData.append('data', JSON.stringify({
-      name,
-      professional_title: title,
-      discription: description,
-      interests,
-      social_links: social,
-    }));
-  
+    formData.append(
+      'data',
+      JSON.stringify({
+        name,
+        professional_title: title,
+        discription: description,
+        interests,
+        social_links: social,
+      }),
+    );
+
     try {
       console.log('FormData:', formData);
-  
+
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/savedetails',
         {
           method: 'POST',
           body: formData,
-        }
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
       );
-  
+
       const jsonResponse = await response.json();
       console.log('Response:', jsonResponse);
-  
+
       if (response.ok) {
         // Save user details to AsyncStorage
         await AsyncStorage.setItem(
@@ -249,11 +284,10 @@ const UpdateProfile = () => {
             profile_photo: profileImage,
             profile_background: bannerImage,
             userid: userid,
-          })
+          }),
         );
         loadProfileData();
-        navigation.navigate('profile');
-        // navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+        navigation.goBack();
       } else {
         Alert.alert('Error', jsonResponse.error || 'Something went wrong');
       }
@@ -265,7 +299,8 @@ const UpdateProfile = () => {
     }
   };
 
-  const pickImage = () => {
+
+  const pickBannerImage = () => {
     ImagePicker.openPicker({
       width: 420,
       height: 165,
@@ -274,7 +309,7 @@ const UpdateProfile = () => {
     })
       .then(image => {
         setBannerImage(image.path);
-        console.log(image.path);
+        console.log("Banner Image Path",image.path);
       })
       .catch(error => {
         if (error.message !== 'User cancelled image selection') {
@@ -365,240 +400,242 @@ const UpdateProfile = () => {
         </View>
       </Modal>
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle={'light-content'} backgroundColor="#17191A" />
-        <View style={styles.bannerContainer}>
-          {bannerImage && (
-            <Image
-              source={{uri: bannerImage}}
-              style={styles.bannerImage}
-              resizeMode="contain"
-            />
-          )}
-          {bannerImage && (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <StatusBar barStyle={'light-content'} backgroundColor="#17191A" />
+          <View style={styles.bannerContainer}>
+            {bannerImage && (
+              <Image
+                source={{uri: bannerImage}}
+                style={styles.bannerImage}
+                resizeMode="contain"
+              />
+            )}
+            {bannerImage && (
+              <Pressable
+                onPress={pickBannerImage}
+                style={styles.bannerEditIconContainer}>
+                <Image
+                  source={require('../../../assets/images/pen.png')}
+                  style={styles.editIcon}
+                />
+              </Pressable>
+            )}
+            {!bannerImage && (
+              <Pressable onPress={pickBannerImage} style={styles.uploadButton}>
+                <Text style={styles.uploadText}>Upload banner</Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View
+            style={{
+              height: 90,
+              width: 90,
+              backgroundColor: 'white',
+              position: 'absolute',
+              top: 110,
+              borderWidth: 3,
+              borderRadius: 50,
+              borderColor: '#17191A',
+              left: '50%',
+              marginLeft: -45,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            {profileImage && (
+              <Image
+                source={{uri: profileImage}}
+                style={styles.profileImage}
+                resizeMode="cover"
+              />
+            )}
             <Pressable
-              onPress={pickImage}
-              style={styles.bannerEditIconContainer}>
+              onPress={pickProfileImage}
+              style={{
+                padding: 5,
+                backgroundColor: 'black',
+                borderRadius: 50,
+                position: 'absolute',
+                right: 0,
+                top: 55,
+                borderColor: 'white',
+                borderWidth: 1,
+              }}>
               <Image
                 source={require('../../../assets/images/pen.png')}
-                style={styles.editIcon}
+                alt="upload"
+                style={{
+                  height: 10,
+                  width: 10,
+                }}
               />
             </Pressable>
-          )}
-          {!bannerImage && (
-            <Pressable onPress={pickImage} style={styles.uploadButton}>
-              <Text style={styles.uploadText}>Upload banner</Text>
-            </Pressable>
-          )}
-        </View>
-
-        <View
-          style={{
-            height: 90,
-            width: 90,
-            backgroundColor: 'white',
-            position: 'absolute',
-            top: 110,
-            borderWidth: 3,
-            borderRadius: 50,
-            borderColor: '#17191A',
-            left: '50%',
-            marginLeft: -45,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          {profileImage && (
-            <Image
-              source={{uri: profileImage}}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          )}
-          <Pressable
-            onPress={pickProfileImage}
-            style={{
-              padding: 5,
-              backgroundColor: 'black',
-              borderRadius: 50,
-              position: 'absolute',
-              right: 0,
-              top: 55,
-              borderColor: 'white',
-              borderWidth: 1,
-            }}>
-            <Image
-              source={require('../../../assets/images/pen.png')}
-              alt="upload"
-              style={{
-                height: 10,
-                width: 10,
-              }}
-            />
-          </Pressable>
-        </View>
-
-        <View
-          style={{
-            flex: 1,
-            paddingHorizontal: 20,
-            marginTop: 100,
-            flexDirection: 'column',
-            gap: 20,
-          }}>
-          <TextInput
-            placeholder="Name"
-            value={name}
-            placeholderTextColor='#838383'
-            onChangeText={setName}
-            style={{
-              height: 44,
-              backgroundColor: '#3A3B3C',
-              color: 'white',
-              paddingLeft: 10,
-              borderRadius: 10,
-            }}
-          />
-          <TextInput
-            placeholder="Ex. Software Developer"
-            value={title}
-            placeholderTextColor='#838383'
-            onChangeText={setTitle}
-            style={{
-              height: 44,
-              backgroundColor: '#3A3B3C',
-              color: 'white',
-              paddingLeft: 10,
-              borderRadius: 10,
-            }}
-          />
-          <View
-            style={{
-              marginTop: -10,
-            }}>
-            <Text
-              style={{
-                fontSize: 10,
-                fontFamily: 'Poppins-Regular',
-                color: 'white',
-                opacity: 0.5,
-                textAlign: 'right',
-              }}>
-              {description.length}/60
-            </Text>
-            <TextInput
-              placeholder="Description"
-              // multiline={true}
-              // numberOfLines={4}
-              maxLength={60}
-              value={description}
-              placeholderTextColor='#838383'
-              onChangeText={setDescription}
-              style={{
-                height: 44,
-                backgroundColor: '#3A3B3C',
-                color: 'white',
-                paddingLeft: 10,
-                borderRadius: 10,
-              }}
-            />
           </View>
-          <Pressable
-            onPress={() => setModalVisible(true)}
-            style={{
-              marginTop: -10,
-            }}>
-            <Text
-              style={{
-                fontSize: 10,
-                fontFamily: 'Poppins-Regular',
-                color: 'white',
-                opacity: 0.5,
-                textAlign: 'right',
-              }}>
-              max 5
-            </Text>
-            <TextInput
-              placeholder="Choose your interested in"
-              editable={false}
-              multiline={false}
-              placeholderTextColor='#838383'
-              numberOfLines={4}
-              value={interests.join(', ').substring(0, 44)}
-              style={{
-                height: 44,
-                backgroundColor: '#3A3B3C',
-                color: 'white',
-                paddingLeft: 10,
-                borderRadius: 10,
-                textAlignVertical: 'top',
-                fontSize: 14,
-              }}
-            />
-            <Image
-              source={require('../../../assets/images/arrow.png')}
-              style={{
-                width: 12,
-                height: 12,
-                resizeMode: 'contain',
-                position: 'absolute',
-                right: 15,
-                top: 33,
-              }}
-            />
-          </Pressable>
-          <Pressable onPress={() => setModalLinkVisible(true)}>
-            <TextInput
-              placeholder="Add your important links"
-              editable={false}
-              multiline={false}
-              placeholderTextColor='#838383'
-              numberOfLines={4}
-              value={
-                Array.isArray(links)
-                  ? links.map(link => link.type).join(', ')
-                  : ''
-              }
-              style={{
-                height: 44,
-                backgroundColor: '#3A3B3C',
-                color: 'white',
-                paddingLeft: 10,
-                borderRadius: 10,
-                textAlignVertical: 'top',
-                fontSize: 14,
-              }}
-            />
-            <Image
-              source={require('../../../assets/images/arrow.png')}
-              style={{
-                width: 12,
-                height: 12,
-                resizeMode: 'contain',
-                position: 'absolute',
-                right: 15,
-                top: 15,
-              }}
-            />
-          </Pressable>
 
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: 10,
-              paddingHorizontal: 5,
-              marginTop: 30,
+              flex: 1,
+              paddingHorizontal: 20,
+              marginTop: 100,
+              flexDirection: 'column',
+              gap: 20,
             }}>
+            <TextInput
+              placeholder="Name"
+              value={name}
+              placeholderTextColor="#838383"
+              onChangeText={setName}
+              style={{
+                height: 44,
+                backgroundColor: '#3A3B3C',
+                color: 'white',
+                paddingLeft: 10,
+                borderRadius: 10,
+              }}
+            />
+            <TextInput
+              placeholder="Ex. Software Developer"
+              value={title}
+              placeholderTextColor="#838383"
+              onChangeText={setTitle}
+              style={{
+                height: 44,
+                backgroundColor: '#3A3B3C',
+                color: 'white',
+                paddingLeft: 10,
+                borderRadius: 10,
+              }}
+            />
+            <View
+              style={{
+                marginTop: -10,
+              }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  opacity: 0.5,
+                  textAlign: 'right',
+                }}>
+                {description.length}/60
+              </Text>
+              <TextInput
+                placeholder="Description"
+                // multiline={true}
+                // numberOfLines={4}
+                maxLength={60}
+                value={description}
+                placeholderTextColor="#838383"
+                onChangeText={setDescription}
+                style={{
+                  height: 44,
+                  backgroundColor: '#3A3B3C',
+                  color: 'white',
+                  paddingLeft: 10,
+                  borderRadius: 10,
+                }}
+              />
+            </View>
             <Pressable
-              onPress={() => navigation.goBack()}
-              style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Back</Text>
+              onPress={() => setModalVisible(true)}
+              style={{
+                marginTop: -10,
+              }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  opacity: 0.5,
+                  textAlign: 'right',
+                }}>
+                max 5
+              </Text>
+              <TextInput
+                placeholder="Choose your interested in"
+                editable={false}
+                multiline={false}
+                placeholderTextColor="#838383"
+                numberOfLines={4}
+                value={interests.join(', ').substring(0, 44)}
+                style={{
+                  height: 44,
+                  backgroundColor: '#3A3B3C',
+                  color: 'white',
+                  paddingLeft: 10,
+                  borderRadius: 10,
+                  textAlignVertical: 'top',
+                  fontSize: 14,
+                }}
+              />
+              <Image
+                source={require('../../../assets/images/arrow.png')}
+                style={{
+                  width: 12,
+                  height: 12,
+                  resizeMode: 'contain',
+                  position: 'absolute',
+                  right: 15,
+                  top: 33,
+                }}
+              />
             </Pressable>
-            <Pressable style={styles.saveButton} onPress={handleSaveDetails}>
-              <Text style={styles.saveButtonText}>Save</Text>
+            <Pressable onPress={() => setModalLinkVisible(true)}>
+              <TextInput
+                placeholder="Add your important links"
+                editable={false}
+                multiline={false}
+                placeholderTextColor="#838383"
+                numberOfLines={4}
+                value={
+                  Array.isArray(links)
+                    ? links.map(link => link.type).join(', ')
+                    : ''
+                }
+                style={{
+                  height: 44,
+                  backgroundColor: '#3A3B3C',
+                  color: 'white',
+                  paddingLeft: 10,
+                  borderRadius: 10,
+                  textAlignVertical: 'top',
+                  fontSize: 14,
+                }}
+              />
+              <Image
+                source={require('../../../assets/images/arrow.png')}
+                style={{
+                  width: 12,
+                  height: 12,
+                  resizeMode: 'contain',
+                  position: 'absolute',
+                  right: 15,
+                  top: 15,
+                }}
+              />
             </Pressable>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 10,
+                paddingHorizontal: 5,
+                marginTop: 30,
+              }}>
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Back</Text>
+              </Pressable>
+              <Pressable style={styles.saveButton} onPress={handleSaveDetails}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        </ScrollView>
 
         <Modal
           animationType="slide"
