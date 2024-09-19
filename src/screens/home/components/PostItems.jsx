@@ -1,16 +1,19 @@
 import {
+  Alert,
+  Dimensions,
   FlatList,
   Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import Icon3 from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,22 +21,41 @@ import {useSelector} from 'react-redux';
 import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {BlurView} from '@react-native-community/blur';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
+import Icon1 from 'react-native-vector-icons/MaterialIcons';
 
-const PostItems = ({post, isVisible}) => {
+const PostItems = ({post, isVisible, getpost}) => {
   const user = useSelector(state => state.user);
 
   const [like, setLike] = useState(post?.data?.likes?.includes(user.userid));
-  const [likeCount, setLikeCount] = useState((post.data.likes || []).length);
+  const [likeCount, setLikeCount] = useState(
+    (post.data.likes || []).length || 0,
+  );
   const [paused, setPaused] = useState(!isVisible);
   const [showControls, setShowControls] = useState(false);
   const [progress, setProgress] = useState({
     currentTime: 0,
     seekableDuration: 0,
   });
-  const videoRef = useRef(null);
+
+  const videoRef = useRef([]);
+
+  const setVideoRef = (index, ref) => {
+    videoRef.current[index] = ref; // Store refs in an array to control individual videos
+  };
+  const [pausedIndex, setPausedIndex] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const [commentCount, setCommentCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Update the comment count when the screen is focused
+      const updatedCommentCount = (post.data.comments || []).length || 0;
+      setCommentCount(updatedCommentCount);
+    }, [post]),
+  );
 
   const openCommentsModal = () => {
     setModalVisible(true); // Open modal on comment icon press
@@ -56,11 +78,6 @@ const PostItems = ({post, isVisible}) => {
           },
         },
       );
-
-      // if (!response.ok) {
-      //   throw new Error('Error fetching comments');
-      // }
-
       const data = await response.json();
 
       // console.log('Response Data:', data.comments);
@@ -77,9 +94,18 @@ const PostItems = ({post, isVisible}) => {
   );
 
   const [newComment, setNewComment] = useState('');
-  
 
   const handleAddComment = async () => {
+    const userObjectString = await AsyncStorage.getItem('user');
+    let userObject = null;
+
+    if (userObjectString) {
+      userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
+      console.log('User', userObject.name);
+    } else {
+      console.error('No user found in AsyncStorage');
+      return;
+    }
     try {
       const postid = post?.id;
       console.log('Post ID:', postid);
@@ -115,8 +141,26 @@ const PostItems = ({post, isVisible}) => {
         console.error('Backend error:', data.error);
       } else {
         // setComments([...comments, data]); // Uncomment if comments updating works fine.
-        // setNewComment('');
+
         fetchComment();
+        getpost();
+        const NotificationResponse = await fetch(
+          'https://adviserxiis-backend-three.vercel.app/notification/sendnotification',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              deviceToken: post?.adviser?.data?.device_token,
+              title: 'Commented Now',
+              body: `${userObject.name} has comment on your post!`,
+            }),
+          },
+        );
+        const notificationJsonResponse = await NotificationResponse.json();
+        console.log('Notification response:', notificationJsonResponse);
+        setNewComment('');
       }
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -132,14 +176,17 @@ const PostItems = ({post, isVisible}) => {
   };
 
   const likeHandler = useCallback(async () => {
+    console.log('jd', likeCount);
     if (like) {
       await removeLike(post?.id);
       setLikeCount(prevCount => prevCount - 1);
     } else {
-      await AddLiked(post?.id);
       setLikeCount(prevCount => prevCount + 1);
+      await AddLiked(post?.id);
     }
   }, [like, post?.id]);
+
+  const navigation = useNavigation();
 
   const postid = post?.id;
   const AddLiked = async postid => {
@@ -224,6 +271,62 @@ const PostItems = ({post, isVisible}) => {
     setLike(false);
   };
 
+  const deletePost = commentIndex => {
+    const postid = post?.id;
+    console.log('Post Id', postid);
+    console.log('COmment Id', commentIndex);
+
+    Alert.alert(
+      'Delete Comment',
+      'Are you sure you want to delete this comment?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete canceled'),
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              console.log('Deleting reel with ID:', postid);
+              const response = await fetch(
+                'https://adviserxiis-backend-three.vercel.app/post/deletecomment',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    postid: postid,
+                    commentIndex: commentIndex,
+                  }),
+                },
+              );
+
+              // Fetch updated reels list after deletion
+              const jsonResponse = await response.json();
+              console.log('Comment deleted:', jsonResponse);
+              fetchComment();
+              getpost();
+
+              // Optional: You can show another alert for success
+              // Alert.alert('Success', 'The reel has been deleted.');
+            } catch (error) {
+              console.error('Error deleting reel:', error);
+              Alert.alert(
+                'Error',
+                'Failed to delete the comment. Please try again.',
+              );
+            }
+          },
+          style: 'destructive', // Optional: Makes the delete button red on iOS
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
   function timeAgo(dop) {
     // console.log(dop);
     const postDate = new Date(dop);
@@ -255,12 +358,21 @@ const PostItems = ({post, isVisible}) => {
   };
 
   const handleSeek = value => {
-    videoRef.current.seek(value);
+    if (videoRef.current[currentIndex]?.seek) {
+      videoRef.current[currentIndex].seek(value);
+    } else {
+      console.error('Seek function not available on video ref.');
+    }
   };
 
   const handleVideoEnd = () => {
+    const video = videoRef.current[currentIndex];
+    if (video && typeof video.seek === 'function') {
+      video.seek(0); // Seek back to the start of the video
+    } else {
+      console.error('Seek function not available on video ref.');
+    }
     setPaused(true);
-    videoRef.current.seek(0); // Seek back to the start of the video
   };
 
   const togglePlayPause = () => {
@@ -273,6 +385,24 @@ const PostItems = ({post, isVisible}) => {
       }, 2000);
     }
   };
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const onViewableItemsChanged = useRef(({viewableItems}) => {
+    if (viewableItems.length > 0) {
+      setCurrentIndex(viewableItems[0].index);
+    }
+  }).current;
+
+  // Viewability config to detect when 50% of the item is visible
+
+  useEffect(() => {
+    // Update the pausedIndex to the current index
+    setPausedIndex(currentIndex);
+  }, [currentIndex]);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
 
   const shareProfile = async () => {
     const shareOptions = {
@@ -298,16 +428,24 @@ const PostItems = ({post, isVisible}) => {
     <View>
       <View style={styles.postContainer}>
         <View style={styles.header}>
-          <Image
-            source={
-              post?.adviser?.data?.profile_photo
-                ? {uri: post?.adviser?.data?.profile_photo}
-                : require('../../../assets/images/bane.png')
-            }
-            style={styles.profilePic}
-          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PostView', post?.adviser?.id)}>
+            <Image
+              source={
+                post?.adviser?.data?.profile_photo
+                  ? {uri: post?.adviser?.data?.profile_photo}
+                  : require('../../../assets/images/bane.png')
+              }
+              style={styles.profilePic}
+            />
+          </TouchableOpacity>
           <View style={styles.headerText}>
-            <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
+            <Pressable
+              onPress={() =>
+                navigation.navigate('PostView', post?.adviser?.id)
+              }>
+              <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
+            </Pressable>
             <Text style={styles.role}>
               • {post?.adviser?.data?.professional_title} •{' '}
               {timeAgo(post?.data?.dop)}
@@ -315,77 +453,338 @@ const PostItems = ({post, isVisible}) => {
           </View>
         </View>
         <Text style={styles.message}>{post?.data?.description}</Text>
-        {post?.data?.file_type === 'image' && (
-          <Image
-            source={{uri: post?.data?.post_file}}
-            style={styles.postMediaImage} // Style for the image
-            resizeMode="cover"
-          />
-        )}
-        {post?.data?.file_type === 'long_video' && (
-          <View>
-            <TouchableOpacity
-              onPress={togglePlayPause}
-              style={{width: '100%', height: 200}}>
-              <Video
-                source={{uri: post?.data?.post_file}}
-                style={styles.postMediaVideo}
-                controls={false}
-                paused={paused}
-                onProgress={handleVideoProgress}
-                ref={videoRef}
-                onEnd={handleVideoEnd}
-                resizeMode="contain"
-              />
-              {showControls && (
-                <View style={styles.overlayControls}>
-                  <Icon
-                    name={paused ? 'play' : 'pause'}
-                    size={40}
-                    color="white"
-                  />
+        <Text
+          style={{
+            fontSize: 14,
+            fontFamily: 'Poppins-Medium',
+            color: '#388DEB',
+            textDecorationLine: 'underline',
+          }}>
+          {post?.data?.luitags}
+        </Text>
+        {post?.data?.file_type === 'image' &&
+        Array.isArray(post?.data?.post_file) ? (
+          // Handle array of images
+          <>
+            <FlatList
+              data={post?.data?.post_file}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item}) => (
+                <Image
+                  source={{uri: item}}
+                  style={styles.postMediaImage} // Style for the image
+                  resizeMode="contain"
+                />
+              )}
+              pagingEnabled
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={viewabilityConfig}
+            />
+            <View style={styles.indicatorContainer}>
+              {Array.isArray(post?.data?.post_file) && (
+                <View style={styles.indicatorWrapper}>
+                  {post?.data?.post_file.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.indicator,
+                        {
+                          backgroundColor:
+                            index === currentIndex ? '#388DEB' : '#333', // Change color based on current page
+                        },
+                      ]}
+                    />
+                  ))}
                 </View>
               )}
-            </TouchableOpacity>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingHorizontal: 15,
-                marginTop: 20,
-              }}>
-              <Text style={{color: 'white'}}>
-                {format(progress.currentTime)}
-              </Text>
-              <Slider
-                style={{width: '70%', height: 40}}
-                minimumValue={0}
-                maximumValue={progress.seekableDuration}
-                value={progress.currentTime}
-                onSlidingComplete={handleSeek}
-                minimumTrackTintColor="#FFFFFF"
-                maximumTrackTintColor="#FFFFFF"
-              />
-              <Text style={{color: 'white'}}>
-                {format(progress.seekableDuration)}
-              </Text>
             </View>
-          </View>
+          </>
+        ) : (
+          post?.data?.file_type === 'image' && (
+            // Handle single image
+            <Image
+              source={{uri: post?.data?.post_file}}
+              style={styles.postMediaImage} // Style for the image
+              resizeMode="contain"
+            />
+          )
         )}
+
+        {post?.data?.file_type === 'long_video' &&
+        Array.isArray(post?.data?.post_file) ? (
+          <>
+            <FlatList
+              data={post?.data?.post_file}
+              keyExtractor={(item, index) => index.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              renderItem={({item, index}) => (
+                <View>
+                  <TouchableOpacity
+                    onPress={togglePlayPause}
+                    style={{
+                      width: Dimensions.get('window').width - 30,
+                      height: 260,
+                    }}>
+                    <Video
+                      source={{uri: item.video_url}}
+                      style={styles.postMediaVideo}
+                      resizeMode="contain"
+                      controls={false}
+                      paused={paused} // Pause if not the current visible video
+                      onProgress={handleVideoProgress}
+                      ref={ref => setVideoRef(index, ref)} // Set ref for each video
+                      onEnd={handleVideoEnd}
+                    />
+                    {showControls && (
+                      <View style={styles.overlayControls}>
+                        <Icon
+                          name={paused ? 'play' : 'pause'}
+                          size={40}
+                          color="white"
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      bottom: 10,
+                      paddingHorizontal: 15,
+                      marginTop: 20,
+                    }}>
+                    <Text style={{color: 'white'}}>
+                      {format(progress.currentTime)}
+                    </Text>
+                    <Slider
+                      style={{width: '75%', height: 40}}
+                      minimumValue={0}
+                      maximumValue={progress.seekableDuration}
+                      value={progress.currentTime}
+                      onSlidingComplete={handleSeek}
+                      minimumTrackTintColor="#FFFFFF"
+                      maximumTrackTintColor="#FFFFFF"
+                    />
+                    <Text style={{color: 'white'}}>
+                      {format(progress.seekableDuration)}
+                    </Text>
+                  </View>
+                </View>
+              )}
+              onViewableItemsChanged={onViewableItemsChanged} // Track visible items
+              viewabilityConfig={viewabilityConfig}
+            />
+            <View style={styles.indicatorContainer}>
+              {Array.isArray(post?.data?.post_file) && (
+                <View style={styles.indicatorWrapper}>
+                  {post?.data?.post_file.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.indicator,
+                        {
+                          backgroundColor:
+                            index === currentIndex ? '#388DEB' : '#333', // Change color based on current page
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          </>
+        ) : (
+          post?.data?.file_type === 'long_video' && (
+            // Handle single video
+            <View>
+              <TouchableOpacity
+                onPress={togglePlayPause}
+                style={{width: '100%', height: 200}}>
+                <Video
+                  source={{uri: post?.data?.post_file}}
+                  style={styles.postMediaVideo}
+                  controls={false}
+                  paused={currentVideoIndex != index}
+                  onProgress={handleVideoProgress}
+                  ref={videoRef}
+                  onEnd={handleVideoEnd}
+                  resizeMode="contain"
+                />
+                {showControls && (
+                  <View style={styles.overlayControls}>
+                    <Icon
+                      name={paused ? 'play' : 'pause'}
+                      size={40}
+                      color="white"
+                    />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingHorizontal: 15,
+                  marginTop: 20,
+                }}>
+                <Text style={{color: 'white'}}>
+                  {format(progress.currentTime)}
+                </Text>
+                <Slider
+                  style={{width: '70%', height: 40}}
+                  minimumValue={0}
+                  maximumValue={progress.seekableDuration}
+                  value={progress.currentTime}
+                  onSlidingComplete={handleSeek}
+                  minimumTrackTintColor="#FFFFFF"
+                  maximumTrackTintColor="#FFFFFF"
+                />
+                <Text style={{color: 'white'}}>
+                  {format(progress.seekableDuration)}
+                </Text>
+              </View>
+            </View>
+          )
+        )}
+
+        {/* {post?.data?.file_type === 'long_video' &&
+        Array.isArray(post?.data?.post_file) ? (
+          // Handle array of videos
+          <FlatList
+            data={post?.data?.post_file}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item}) => (
+              <View key={item?.url} style={{marginBottom: 20}}>
+                <TouchableOpacity
+                  onPress={togglePlayPause}
+                  style={{width: Dimensions.get('window').width-20, height: 200}}>
+                  <Video
+                    source={{uri: item?.video_url}}
+                    style={styles.postMediaVideo}
+                    controls={false}
+                    paused={paused}
+                    onProgress={handleVideoProgress}
+                    ref={videoRef}
+                    onEnd={handleVideoEnd}
+                    resizeMode="contain"
+                  />
+                  {showControls && (
+                    <View style={styles.overlayControls}>
+                      <Icon
+                        name={paused ? 'play' : 'pause'}
+                        size={40}
+                        color="white"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingHorizontal: 15,
+                    marginTop: 20,
+                    width:'70%'
+                  }}>
+                  <Text style={{color: 'white'}}>
+                    {format(progress.currentTime)}
+                  </Text>
+                  <Slider
+                    style={{width: '70%', height: 40}}
+                    minimumValue={0}
+                    maximumValue={progress.seekableDuration}
+                    value={progress.currentTime}
+                    onSlidingComplete={handleSeek}
+                    minimumTrackTintColor="#FFFFFF"
+                    maximumTrackTintColor="#FFFFFF"
+                  />
+                  <Text style={{color: 'white'}}>
+                    {format(progress.seekableDuration)}
+                  </Text>
+                </View>
+              </View>
+            )}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          />
+        ) : (
+          post?.data?.file_type === 'long_video' && (
+            // Handle single video
+            <View>
+              <TouchableOpacity
+                onPress={togglePlayPause}
+                style={{width: '100%', height: 200}}>
+                <Video
+                  source={{uri: post?.data?.post_file}}
+                  style={styles.postMediaVideo}
+                  controls={false}
+                  paused={paused}
+                  onProgress={handleVideoProgress}
+                  ref={videoRef}
+                  onEnd={handleVideoEnd}
+                  resizeMode="contain"
+                />
+                {showControls && (
+                  <View style={styles.overlayControls}>
+                    <Icon
+                      name={paused ? 'play' : 'pause'}
+                      size={40}
+                      color="white"
+                    />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingHorizontal: 15,
+                  marginTop: 20,
+                }}>
+                <Text style={{color: 'white'}}>
+                  {format(progress.currentTime)}
+                </Text>
+                <Slider
+                  style={{width: '70%', height: 40}}
+                  minimumValue={0}
+                  maximumValue={progress.seekableDuration}
+                  value={progress.currentTime}
+                  onSlidingComplete={handleSeek}
+                  minimumTrackTintColor="#FFFFFF"
+                  maximumTrackTintColor="#FFFFFF"
+                />
+                <Text style={{color: 'white'}}>
+                  {format(progress.seekableDuration)}
+                </Text>
+              </View>
+            </View>
+          )
+        )} */}
+
         <View style={styles.interaction}>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 10,
+              gap: 20,
             }}>
             <TouchableOpacity onPress={likeHandler} style={styles.iconWithText}>
               <Icon3
                 name={like ? 'heart' : 'heart-outline'}
                 size={20}
-                color={like ? 'red' : 'white'}
+                color={like ? '#FA4445' : 'white'}
               />
               <Text style={styles.iconText}>{likeCount}</Text>
             </TouchableOpacity>
@@ -393,12 +792,11 @@ const PostItems = ({post, isVisible}) => {
               style={styles.iconWithText}
               onPress={openCommentsModal}>
               <Icon3 name="chatbubble-outline" size={20} color="white" />
-              <Text style={styles.iconText}>{(post.data.comments || []).length || 0}</Text>
+              <Text style={styles.iconText}>{commentCount}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={shareProfile}>
-
-          <Icon3 name="share" size={20} color="white" />
+            <Icon1 name="share" size={20} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -433,7 +831,7 @@ const PostItems = ({post, isVisible}) => {
             <FlatList
               data={comments}
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({item}) => (
+              renderItem={({item, index}) => (
                 <View style={styles.commentContainer}>
                   <Image
                     source={
@@ -444,9 +842,19 @@ const PostItems = ({post, isVisible}) => {
                     style={styles.commentProfilePic}
                   />
                   <View style={styles.commentTextContainer}>
-                    <Text style={styles.commentUsername}>{item?.adviserDetails?.username}</Text>
+                    <Text style={styles.commentUsername}>
+                      {item?.adviserDetails?.username}
+                    </Text>
                     <Text style={styles.commentText}>{item?.message}</Text>
                   </View>
+                  {item?.adviserDetails?.id === user.userid && (
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => deletePost(index)} // Assuming handleRemoveComment exists
+                    >
+                      <Icon1 name="delete" size={20} color="white" />
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
               showsVerticalScrollIndicator={false}
@@ -496,22 +904,36 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   postMediaImage: {
-    width: '100%', // Full width of the container
+    width: Dimensions.get('window').width - 30, // Full width of the container
     height: 250, // Adjust height as needed
     borderRadius: 15, // Rounded corners for a modern look
     marginTop: 10, // Space between the image and the text/content
+    backgroundColor: 'black',
   },
   postMediaVideo: {
-    width: '100%', // Full width for the video
+    width: Dimensions.get('window').width - 30, // Full width for the video
     height: 250, // Adjust the height depending on the media type
     borderRadius: 15, // Same styling as the image
     backgroundColor: '#000', // Background color for the video element
     marginTop: 10, // Space between video and text/content
   },
+  indicatorContainer: {
+    alignItems: 'center',
+    marginTop: 10, // Space between the images and the indicator
+  },
+  indicatorWrapper: {
+    flexDirection: 'row',
+  },
+  indicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 4,
+    marginHorizontal: 3,
+  },
   overlayControls: {
     position: 'absolute',
-    top: '60%',
-    left: '45%',
+    top: '46%',
+    left: '44%',
     zIndex: 10,
   },
   name: {
@@ -533,7 +955,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
   },
   iconWithText: {
     flexDirection: 'row',

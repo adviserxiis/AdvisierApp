@@ -15,10 +15,42 @@ import SingleReel from '../screens/reels/screen/SingleReel';
 import SearchText from '../screens/search/screen/SearchText';
 import reel from '../screens/reels/Reel';
 import Home from '../screens/home/home';
+import PostScreen from '../screens/home/screen/PostScreen';
+import PostView from '../screens/home/screen/PostView';
 // import Login from '../screens/auth/Login';
 
-
 //Home Stack
+const HomeStack = createStackNavigator();
+function HomeStackScreen() {
+  return (
+    <HomeStack.Navigator>
+      <HomeStack.Screen
+        name="HomeMain"
+        component={Home}
+        options={{
+          headerShown: true,
+          title: '',
+          headerStyle: {
+            backgroundColor: '#17191A',
+          },
+          // headerShadowVisible:false
+        }}
+      />
+      <HomeStack.Screen name='PostView' component={PostView} options={{
+        headerShown:false,
+      }}/>
+      <HomeStack.Screen
+        name="singleReel"
+        component={SingleReel}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </HomeStack.Navigator>
+  );
+}
+
+//Reel Stack
 const ReelStack = createStackNavigator();
 function ReelStackScreen() {
   return (
@@ -84,7 +116,7 @@ function SearchStackScreen() {
         }}
       />
       <SearchStack.Screen
-        name='SearchText'
+        name="SearchText"
         component={SearchText}
         options={{
           headerShown: false,
@@ -93,6 +125,13 @@ function SearchStackScreen() {
       <SearchStack.Screen
         name="ViewProfile"
         component={ViewProfile}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <SearchStack.Screen
+        name="singleReel"
+        component={SingleReel}
         options={{
           headerShown: false,
         }}
@@ -133,7 +172,7 @@ function MyTabs() {
         tabBarLabel: '',
         tabBarStyle: {
           height: 74,
-          paddingTop:10,
+          paddingTop: 10,
           borderColor: '#17191A',
           backgroundColor: '#17191A',
         },
@@ -162,8 +201,7 @@ function MyTabs() {
                     backgroundColor: 'white',
                     justifyContent: 'center',
                     alignItems: 'center', // Center the Add button in the navbar
-                  }}
-                >
+                  }}>
                   <Icon name={iconName} size={26} color={iconColor} />
                 </View>
               );
@@ -182,16 +220,9 @@ function MyTabs() {
           return <Icon name={iconName} size={24} color={color} />;
         },
       })}>
-      <Tab.Screen name='Home' component={Home} options={{
-        headerShown:true,
-        title:'',
-        headerStyle: {
-          backgroundColor: '#17191A',
-        },
-        // headerShadowVisible:false
-      }}/>
+      <Tab.Screen name="Home" component={HomeStackScreen} />
       <Tab.Screen name="Search" component={SearchStackScreen} />
-      <Tab.Screen name="AddPost" component={PostStackScreen}/>
+      {/* <Tab.Screen name="AddPost" component={PostStackScreen} /> */}
       <Tab.Screen name="Reel" component={ReelStackScreen} />
       <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
@@ -219,6 +250,31 @@ function MyStack() {
         name="updateProfile"
         component={UpdateProfile}
         options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CreatePost"
+        component={AddPost}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="PostScreen"
+        component={PostScreen}
+        options={{
+          title: 'Create Post',
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Poppins-Medium',
+            fontSize: 18,
+            marginTop: 8,
+            color:'white'
+          },
+          headerStyle: {
+            backgroundColor: '#17191A', // Set the header background to black
+          },
+          headerTintColor: 'white',
+        }}
       />
     </Stack.Navigator>
   );

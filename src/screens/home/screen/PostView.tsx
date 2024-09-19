@@ -33,7 +33,7 @@ const {width} = Dimensions.get('screen');
 const reelItemWidth = width / 3; // Subtracting a small value for padding/gaps
 const reelItemHeight = reelItemWidth * 1.7;
 
-const ViewProfile = () => {
+const PostView = () => {
   const route = useRoute();
   const advsid = route.params;
   // console.log("useid", advsid);
@@ -74,6 +74,8 @@ const ViewProfile = () => {
   //     dispatch(clearUser());
   //     navigation.navigate('Login');
   //   };
+
+  
 
   const getuser = async () => {
     try {
@@ -843,7 +845,6 @@ const styles = StyleSheet.create({
   navText:{
     color:'#fff'
   }
-
 });
 
-export default ViewProfile;
+export default PostView;

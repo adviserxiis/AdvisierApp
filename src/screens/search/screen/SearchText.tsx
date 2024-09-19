@@ -1,5 +1,5 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useState} from 'react';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -19,6 +19,13 @@ const SearchText = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const navigation = useNavigation();
+  const route = useRoute();
+
+  useEffect(() => {
+    if (route.params?.selectedCategory) {
+      setSearch(route.params.selectedCategory); // Set the initial value to the selected category
+    }
+  }, [route.params?.selectedCategory]);
 
   const handleSearch = async text => {
     setSearch(text);

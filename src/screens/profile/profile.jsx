@@ -79,6 +79,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [visiblePostIndex, setVisiblePostIndex] = useState(null);
   const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
+  const [modalPopUp, setModalPopUp] = useState(false);
 
   const onViewableItemsChanged = useRef(({viewableItems}) => {
     if (viewableItems.length > 0) {
@@ -225,6 +226,12 @@ const Profile = () => {
       // Parse JSON response
       const jsonResponse = await response.json();
       setDetails(jsonResponse);
+      const modalShown = await AsyncStorage.getItem('modalShown');
+      if(modalShown === null && jsonResponse?.followers?.length < 100){
+        console.log("Modal pop up again")
+        setModalPopUp(true);
+        await AsyncStorage.setItem('modalShown', 'true');
+      }
       return jsonResponse;
     } catch (error) {
       console.error('Failed to load user data:', error);
@@ -233,18 +240,19 @@ const Profile = () => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log("His");
       getuser();
       getReels();
     }, []),
   );
 
-  const handleMonthClick = () => {
-    // Logic to handle month click, e.g., open a dropdown or modal to select different months.
-    console.log('Month clicked');
-    // For demonstration, we're toggling between Jan Views and Feb Views
-    setSelectedMonth(selectedMonth === 'Jan Views' ? 'Feb Views' : 'Jan Views');
-    setViews(views === '1K' ? '2K' : '1K');
-  };
+  // const handleMonthClick = () => {
+  //   // Logic to handle month click, e.g., open a dropdown or modal to select different months.
+  //   console.log('Month clicked');
+  //   // For demonstration, we're toggling between Jan Views and Feb Views
+  //   setSelectedMonth(selectedMonth === 'Jan Views' ? 'Feb Views' : 'Jan Views');
+  //   setViews(views === '1K' ? '2K' : '1K');
+  // };
 
   const shareProfile = async () => {
     const shareOptions = {
@@ -279,6 +287,10 @@ const Profile = () => {
     );
     const jsonresponse = await response.json();
     console.log('Hwos', jsonresponse);
+
+    // if(jsonresponse.length === 0){
+    //   setModalPopUp(true);
+    // }
     setReels(jsonresponse || []);
 
     const total = jsonresponse.reduce(
@@ -822,7 +834,7 @@ const Profile = () => {
             // viewabilityConfig={viewabilityConfig}
           />
         )
-      ) : ( posts.length === 0 ? (
+      ) : posts.length === 0 ? (
         <View style={styles.noPostsContainer}>
           <Text style={styles.noPostsText}>No posts available</Text>
         </View>
@@ -831,13 +843,16 @@ const Profile = () => {
           data={posts}
           showsVerticalScrollIndicator={false}
           renderItem={({item, index}) => (
-            <PostItem post={item} isVisible={visiblePostIndex === index} />
+            <PostItem
+              post={item}
+              isVisible={visiblePostIndex === index}
+              getPostlist={getPostList}
+            />
           )}
           keyExtractor={item => item.id}
           onViewableItemsChanged={onViewableItemsChanged.current}
           viewabilityConfig={viewabilityConfig}
         />
-      )
       )}
 
       {/* <View style={styles.reelsSection}>
@@ -860,28 +875,50 @@ const Profile = () => {
         )}
       </View> */}
 
-      {/* {isVisible && (
+      {modalPopUp && (
         <Modal
-        transparent
-        animationType="fade"
-        visible={isVisible}
-        onRequestClose={() => setIsVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.cardContainer}>
-            <View style={styles.card}>
-              <Text style={styles.text}>
-                You’re just <Text style={styles.boldText}>20 followers</Text> away to <Text style={styles.boldText}>start earning!</Text>
+          animationType="slide"
+          transparent={true}
+          visible={modalPopUp}
+          onRequestClose={() => {
+            setModalPopUp(!modalPopUp);
+          }}>
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              {/* Icon */}
+              <View style={styles.iconContainer}>
+                <Image
+                  source={require('../../assets/images/rupees.png')}
+                  resizeMethod="contain"
+                  style={{
+                    width: 80,
+                    height: 80,
+                  }}
+                />
+              </View>
+
+              {/* Notification Text */}
+              <Text style={styles.mainText}>
+                You're just{' '}
+                <Text style={styles.boldText}>
+                  {100 - details?.followers?.length || 0} followers
+                </Text>{' '}
+                away to <Text style={styles.boldText}>start earning!</Text>
               </Text>
-              <Text style={styles.text}>Keep going—create more content to get there!</Text>
-              <TouchableOpacity style={styles.button} onPress={() => setIsVisible(false)}>
+              <Text style={styles.subText}>
+                Keep going—create more content to get there!
+              </Text>
+
+              {/* Button */}
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => setModalPopUp(false)}>
                 <Text style={styles.buttonText}>Create Content</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-      )} */}
+        </Modal>
+      )}
     </ScrollView>
   );
 };
@@ -1146,6 +1183,66 @@ const styles = StyleSheet.create({
   },
   activeNavText: {
     color: '#0069B4', // Text color for active tab
+  },
+  navText: {
+    color: 'white',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: 300,
+    backgroundColor: '#333',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  iconContainer: {
+    marginBottom: 10,
+  },
+  currencySymbol: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  mainText: {
+    fontSize: 17,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 10,
+    fontFamily: 'Poppins-Regular',
+  },
+  boldText: {
+    fontFamily: 'Poppins-Bold',
+  },
+  subText: {
+    fontSize: 16,
+    color: '#bbb',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: 'Poppins-Regular',
+  },
+  button: {
+    backgroundColor: '#0069B4',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
   },
 });
 

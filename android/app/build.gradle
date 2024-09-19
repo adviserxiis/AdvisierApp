@@ -82,8 +82,8 @@ android {
         applicationId "com.advisiorapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 36
-        versionName "4.5"
+        versionCode 49
+        versionName "5.8"
     }
     signingConfigs {
         release {
@@ -111,6 +111,8 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+
+            resValue "string", "CodePushDeploymentKey", project.ext.has("CodePushDeploymentKey") ? project.CodePushDeploymentKey : "@string/CodePushDeploymentKey"
         }
     }
 }

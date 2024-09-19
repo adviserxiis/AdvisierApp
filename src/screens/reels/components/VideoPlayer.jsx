@@ -353,7 +353,7 @@ const VideoPlayer = ({
             bufferForPlaybackAfterRebufferMs={5000}
             muted={mute} // Use the passed mute prop
             repeat={true}
-            preload={true}
+            preload='auto'
             bitrate={videoQuality === 'high' ? 1500000 : 500000}
             onLoadStart={() => setBuffering(true)}
             onLoad={onLoad}

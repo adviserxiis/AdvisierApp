@@ -9,6 +9,8 @@ import mobileAds from 'react-native-google-mobile-ads';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeviceInfo from 'react-native-device-info';
+import CodePush from 'react-native-code-push';
+import { navigationRef } from './src/navigator/RootNavigator';
 
 const App = () => {
   
@@ -108,6 +110,26 @@ const App = () => {
     }
   };
 
+  const navigateToScreen = (screen) => {
+    if (screen === 'Reel') {
+      navigationRef.current?.navigate('MainHome');  // Navigate to your screen
+    } else if (screen === 'Post') {
+      navigationRef.current?.navigate('PostScreen');  // Update with your screen name
+    }
+  };
+
+  const checkInitialNotification = async () => {
+    const initialNotification = await messaging().getInitialNotification();
+
+    if (initialNotification) {
+      const { screen } = initialNotification.data;
+      console.log(screen);
+      if (screen) {
+        navigateToScreen(screen);  // Handle navigation when the app is opened from a notification
+      }
+    }
+  };
+
   useEffect(() => {
     requestNotificationPermission();
     requestUserPermission();
@@ -126,17 +148,20 @@ const App = () => {
     });
 
     const unsubscribeNotifee = notifee.onForegroundEvent(async ({ type, detail }) => {
-      if (type === EventType.PRESS && detail.pressAction.id === 'open_play_store') {
-        handleNotificationPress();
+      if (type === EventType.PRESS && detail.pressAction.id) {
+        console.log("Details",detail);
+        navigateToScreen(detail.pressAction.id);
       }
     });
 
     // Handle background events
     notifee.onBackgroundEvent(async ({ type, detail }) => {
-      if (type === EventType.PRESS && detail.pressAction.id === 'open_play_store') {
-        handleNotificationPress();
+      if (type === EventType.PRESS && detail.pressAction.id) {
+        navigateToScreen(detail.pressAction.id);
       }
     });
+
+    checkInitialNotification(); 
 
     return () => {
       unsubscribe();
@@ -146,11 +171,17 @@ const App = () => {
 
   return (
     <Provider store={store}>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Navigator />
       </NavigationContainer>
     </Provider>
   );
 };
 
-export default App;
+let codePushOptions = {
+  deploymentKey: 'Lnp8myMJX1vFKxWp_G5RFcj8aOfGmJv_MKJfM',
+  checkFrequency: CodePush.CheckFrequency.ON_APP_START
+};
+
+
+export default CodePush(codePushOptions)(App);

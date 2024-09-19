@@ -22,7 +22,6 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               LinearGradientPackage()
-              CodePush("YGmct7OTy2z5WhxybNAlm-6HTTWJJDPWRacka", this@MainApplication, BuildConfig.DEBUG)
             }
 
         override fun getJSBundleFile(): String {

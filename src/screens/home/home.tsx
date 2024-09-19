@@ -12,8 +12,12 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  Animated,
+  Easing,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Icon1 from 'react-native-vector-icons/Feather';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -38,7 +42,7 @@ const Home = () => {
   const user = useSelector(state => state.user);
   const [visiblePostIndex, setVisiblePostIndex] = useState(null);
   const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
-
+  const [refreshing, setRefreshing] = useState(false);
   const onViewableItemsChanged = useRef(({viewableItems}) => {
     if (viewableItems.length > 0) {
       setVisiblePostIndex(viewableItems[0].index); // Set index of visible post
@@ -47,6 +51,62 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
 
   const [profilePhoto, setProfilePhoto] = useState(null);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const animationValue = useRef(new Animated.Value(0)).current;
+  const rotateValue = useRef(new Animated.Value(0)).current;
+
+  const toggleFAB = () => {
+    if (isExpanded) {
+      // Collapse animation
+      Animated.parallel([
+        Animated.timing(animationValue, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateValue, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setIsExpanded(false);
+      });
+    } else {
+      // Expand animation
+      setIsExpanded(true);
+      Animated.parallel([
+        Animated.timing(animationValue, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateValue, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  };
+
+  const slidePostOption = animationValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [50, 0], // Moves vertically (slide in/out)
+  });
+
+  const slideReelsOption = animationValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [100, 0], // Moves vertically (slide in/out)
+  });
+
+  const rotateIcon = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg'], // Rotate the plus icon into an X
+  });
 
   useEffect(() => {
     const getProfilePhoto = async () => {
@@ -87,8 +147,8 @@ const Home = () => {
           }
           resizeMode="contain"
           style={{
-            height: 45,
-            width: 45,
+            height: 40,
+            width: 40,
             marginRight: 16,
             borderRadius: 30,
           }}
@@ -165,197 +225,48 @@ const Home = () => {
     }
   };
 
-  const handlePost = async () => {
-    setLoading(true); // Start loading
-
-    let mediaType = null;
-    let mediaUri = null;
-
-    if (selectedImage) {
-      mediaType = 'image';
-      mediaUri = selectedImage;
-    } else if (selectedVideo) {
-      mediaType = 'video';
-      mediaUri = selectedVideo;
-    }
-
+  const getPost = async () => {
+    console.log('Hi');
     try {
-      if (!selectedImage && !selectedVideo) {
-        const response = await fetch(
-          'https://adviserxiis-backend-three.vercel.app/post/createtextpost',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              adviserid: user.userid,
-              message: postText,
-            }),
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/post/getallposts',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        );
-
-        const jsonResponse = await response.json();
-        console.log('Post Data', jsonResponse);
-      } else if (selectedImage && !selectedVideo) {
-        const formData = new FormData();
-        formData.append('image', {
-          uri:
-            Platform.OS === 'android'
-              ? `file://${selectedImage}`
-              : selectedImage,
-          name: 'image.jpg',
-          type: 'image/jpeg',
-        });
-        formData.append('adviserid', user.userid);
-        if (postText) {
-          formData.append('description', postText);
-        }
-
-        const response = await fetch(
-          'https://adviserxiis-backend-three.vercel.app/post/createimagepost',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            body: formData,
-          },
-        );
-
-        if (!response.ok) {
-          const textResponse = await response.text(); // Get the raw HTML/error message
-          console.log('Error Response:', textResponse);
-          throw new Error('Failed to upload image post.');
-        }
-
-        const jsonResponse = await response.json();
-        console.log('Post with image', jsonResponse);
-      } else if (!selectedImage && selectedVideo) {
-        const fileUri = selectedVideo;
-        const fileName = fileUri.substring(fileUri.lastIndexOf('/') + 1);
-
-        const uploadToBunny = async () => {
-          const apiKey = 'de112415-60af-446e-b3f795dec87a-222e-4dfb'; // Replace with your Bunny.net API key
-          const storageZoneName = 'luink-ai'; // Replace with your storage zone name
-          const storageUrl = `https://storage.bunnycdn.com/${storageZoneName}/${fileName}`;
-          const accessUrl = `https://myluinkai.b-cdn.net/${fileName}`;
-
-          const response = await fetch(storageUrl, {
-            method: 'PUT', // Bunny.net requires PUT for uploads
-            headers: {
-              AccessKey: apiKey,
-              'Content-Type': 'application/octet-stream',
-            },
-            body: await fetch(fileUri).then(res => res.blob()),
-          });
-
-          if (response.ok) {
-            const videoURL = accessUrl;
-            console.log('Video URL', videoURL);
-
-            const postResponse = await fetch(
-              'https://adviserxiis-backend-three.vercel.app/post/createvideopost',
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  adviserid: user.userid,
-                  videoURL: videoURL,
-                  duration: duration,
-                  description: postText,
-                }),
-              },
-            );
-
-            const jsonResponse = await postResponse.json();
-            console.log('Video post response', jsonResponse);
-          } else {
-            throw new Error('Failed to upload video to Bunny.net.');
-          }
-        };
-
-        await uploadToBunny();
-      }
-      // if (postResponse.ok) {
-      //   // Alert.alert('Success', 'Your post has been saved.');
-      //   // await new Promise(resolve => setTimeout(resolve, 1000));
-      //   // await updateProgress();
-      //   // await notifyAllUsers();
-      //   // setVideo(null);
-      //   // setDescription('');
-      //   // setLocation('');
-      //   // mixpanel.identify(user.userid); // Identifies the user by unique ID
-      //   // mixpanel.getPeople().set({
-      //   //   $name: name,
-      //   // });
-      //   // mixpanel.setLoggingEnabled(true);
-      //   // mixpanel.track('Post Creation');
-      //   // Alert.alert('Success', 'Post saved successfully!');
-
-      //   // navigation.goBack();
-      //   // Optionally, reset the form after saving
-      // } else {
-      //   throw new Error(
-      //     jsonResponse.error || 'Failed to save post. Please try again.',
-      //   );
-      // }
-
-      await notifyAllUsers();
-      setSelectedImage(null); // Clear selected image
-      setSelectedVideo(null); // Clear selected video
-      setPostText(''); // Clear post text
-    } catch (error: any) {
-      console.log('Error:', error.message || error);
-      Alert.alert(
-        'Error',
-        'There was an error saving your post. Please try again.',
+        },
       );
-    } finally {
-      setLoading(false); // End loading
+      const jsonResponse = await response.json();
+      // console.log('Post Details', jsonResponse.length);
+      setPosts(jsonResponse);
+    } catch (error) {
+      console.error('Error fetching video list:', error);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      const getPost = async () => {
-        try {
-          const response = await fetch(
-            'https://adviserxiis-backend-three.vercel.app/post/getallposts',
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            },
-          );
-          const jsonResponse = await response.json();
-          // console.log('Post Details', jsonResponse.length);
-          setPosts(jsonResponse);
-        } catch (error) {
-          console.error('Error fetching video list:', error);
-        }
-      };
-
       getPost();
-
-      return () => {
-        // any cleanup can go here
-      };
     }, []),
   );
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await getPost();
+    setRefreshing(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle='light-content' backgroundColor='#17191A'/>
       {/* <ScrollView showsVerticalScrollIndicator={false}> */}
-      {loading && (
+      {/* {loading && (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="white" />
       </View>
-    )}
-      <KeyboardAvoidingView
+    )} */}
+      {/* <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.inputContainer}>
           <Image
@@ -368,7 +279,7 @@ const Home = () => {
             style={styles.profileImage}
           />
           <View style={styles.textInputContainer}>
-            <TextInput
+            {/* <TextInput
               placeholder="Type Something? "
               placeholderTextColor="#838383"
               multiline={true}
@@ -381,8 +292,8 @@ const Home = () => {
               onContentSizeChange={
                 event => setInputHeight(event.nativeEvent.contentSize.height) // Update the height based on content
               }
-            />
-            {selectedImage && (
+            /> */}
+      {/* {selectedImage && (
               <View style={styles.mediaContainer}>
                 <Image
                   source={{uri: selectedImage}}
@@ -395,8 +306,8 @@ const Home = () => {
                   <Icon name="close-circle-outline" color="#333333" size={24} />
                 </TouchableOpacity>
               </View>
-            )}
-            {selectedVideo && (
+            )} */}
+      {/* {selectedVideo && (
               <View style={styles.videoContainer}>
                 <Video
                   source={{uri: selectedVideo}}
@@ -411,25 +322,27 @@ const Home = () => {
                   <Icon name="close-circle-outline" color="white" size={24} />
                 </TouchableOpacity>
               </View>
-            )}
+            )} *
             <View style={styles.actionContainer}>
               <View style={styles.iconRow}>
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={openImagePicker}>
+                  // onPress={openImagePicker}
+                  >
                   <Icon name="image-outline" color="white" size={18} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={openVideoPicker}>
+                  // onPress={openVideoPicker}
+                  >
                   <Icon name="videocam-outline" color="white" size={18} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton}>
+                {/* <TouchableOpacity style={styles.iconButton}>
                   <Icon name="happy-outline" color="white" size={18} />
-                </TouchableOpacity>
+                </TouchableOpacity> *
               </View>
 
-              <TouchableOpacity style={styles.postButton} onPress={handlePost}>
+              <TouchableOpacity style={styles.postButton} onPress={()=>navigation.navigate('PostScreen')}>
                 <Text style={styles.postButtonText}>Post</Text>
               </TouchableOpacity>
             </View>
@@ -443,16 +356,93 @@ const Home = () => {
             backgroundColor: '#333333',
           }}
         />
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingView> */}
+      <View style={{ position: 'absolute', bottom: 20, right: 10, zIndex: 999, justifyContent:'flex-end',alignContent:'flex-end', }}>
+        {isExpanded && (
+          <Animated.View
+            style={{
+              transform: [{translateY: slidePostOption}],
+              opacity: animationValue,
+              marginBottom: 10,
+              alignItems: 'center',
+            }}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsExpanded(false);
+                navigation.navigate('PostScreen');
+              }}
+              style={{
+                padding: 10,
+                backgroundColor: '#388DEB',
+                borderRadius: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                width:'100%'
+              }}>
+              <Icon1 name="image" size={20} color="white" />
+              <Text style={{color: 'white', marginLeft: 10}}>Post</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+        {isExpanded && (
+          <Animated.View
+            style={{
+              transform: [{translateY: slideReelsOption}],
+              opacity: animationValue,
+              marginBottom: 10,
+              alignItems: 'center',
+            }}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsExpanded(false);
+                navigation.navigate('CreatePost');
+              }}
+              style={{
+                padding: 10,
+                backgroundColor: '#388DEB',
+                borderRadius: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                width: '100%',
+              }}>
+              <Icon1 name="video" size={20} color="white" />
+              <Text style={{color: 'white', marginLeft: 10}}>Reels</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+        <TouchableOpacity
+        onPress={toggleFAB}
+        style={{
+          backgroundColor: '#388DEB',
+          borderRadius: 30,
+          alignItems: 'center',
+          justifyContent: 'center',
+          height:60,
+          width:60,
+          marginLeft:34,
+        }}>
+        <Animated.View style={{ transform: [{ rotate: rotateIcon }] }}>
+          <Icon1 name="plus" size={24} color="white" />
+        </Animated.View>
+      </TouchableOpacity>
+      </View>
+
+      {/* Reels Option */}
       <FlatList
         data={posts}
         showsVerticalScrollIndicator={false}
         renderItem={({item, index}) => (
-          <PostItems post={item} isVisible={visiblePostIndex === index} />
+          <PostItems
+            post={item}
+            isVisible={visiblePostIndex === index}
+            getpost={getPost}
+          />
         )}
         keyExtractor={(item, index) => index.toString()}
         onViewableItemsChanged={onViewableItemsChanged.current}
         viewabilityConfig={viewabilityConfig}
+        refreshing={refreshing} // Add refreshing prop
+        onRefresh={onRefresh}
       />
       {/* </ScrollView> */}
     </SafeAreaView>
@@ -469,9 +459,9 @@ const styles = StyleSheet.create({
   loadingContainer: {
     ...StyleSheet.absoluteFillObject, // Make the loading container fill the screen
     justifyContent: 'center', // Center vertically
-    alignItems: 'center',    // Center horizontally
+    alignItems: 'center', // Center horizontally
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Optional: Add a semi-transparent background
-    zIndex:999,
+    zIndex: 999,
   },
   headerLeftContainer: {
     flexDirection: 'row',
@@ -497,8 +487,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   profileImage: {
-    height: 50,
-    width: 50,
+    height: 40,
+    width: 40,
     borderRadius: 30,
   },
   textInputContainer: {

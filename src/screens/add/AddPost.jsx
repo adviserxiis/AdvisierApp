@@ -46,6 +46,7 @@ const AddPost = () => {
   const [loading, setLoading] = useState(false);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(new Animated.Value(0));
+  const [hashtags,setHashTags] = useState('');
   // console.log(user.userid);
 
   const requestPermissions = async () => {
@@ -176,12 +177,14 @@ const AddPost = () => {
           body: JSON.stringify({
             title: 'Watch Reel',
             body: `${profileData.name} Uploaded a new reel!`,
+            screen: 'Reel'
           }),
         },
       );
 
       const jsonresponse = await response.json();
       console.log('Notificed', jsonresponse);
+      // navigation.navigate('Reel')
 
       if (!response.ok) {
         throw new Error('Failed to notify users.');
@@ -201,6 +204,11 @@ const AddPost = () => {
     if (!description) {
       // Check if description is empty or contains only whitespace
       Alert.alert('No caption', 'Please add a caption before saving.');
+      return;
+    }
+
+    if (!hashtags) {
+      Alert.alert('Hashtags are mandatory');
       return;
     }
     setLoading(true);
@@ -260,6 +268,7 @@ const AddPost = () => {
                 location: location,
                 description: description,
                 duration: duration,
+                luitags:hashtags,
               }),
             },
           );
@@ -273,6 +282,7 @@ const AddPost = () => {
             setVideo(null);
             setDescription('');
             setLocation('');
+            setHashTags('');
             mixpanel.identify(user.userid); // Identifies the user by unique ID
             // mixpanel.getPeople().set({
             //   $name: name,
@@ -281,7 +291,7 @@ const AddPost = () => {
             mixpanel.track('Post Creation');
             Alert.alert('Success', 'Post saved successfully!');
 
-            // navigation.goBack();
+            // navigation.navigate('Reel');
             // Optionally, reset the form after saving
           } else {
             throw new Error(
@@ -491,6 +501,20 @@ const AddPost = () => {
               fontFamily: 'Poppins-Regular',
             }}
           />
+            <TextInput
+              value={hashtags}
+              onChangeText={setHashTags}
+              placeholder="Add #luitags (#hashtags)"
+              placeholderTextColor="#838383"
+              style={{
+                height: 49,
+                width: '100%',
+                borderBottomColor: 'gray',
+                borderBottomWidth: 1,
+                color: 'white',
+                fontFamily: 'Poppins-Regular',
+              }}
+            />
         </View>
 
         <View
