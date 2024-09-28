@@ -324,6 +324,7 @@ const UpdateProfile = () => {
       height: 90,
       cropping: true,
       mediaType: 'photo',
+      compressImageQuality:1,
     })
       .then(image => {
         setProfileImage(image.path);

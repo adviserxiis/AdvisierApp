@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -139,7 +139,7 @@ const Login = () => {
 
       navigation.reset({
         index: 0,
-        routes: [{name: 'Main'}],
+        routes: [{name: 'Tabs'}],
       });
       
     } catch (error: any) {
@@ -258,7 +258,7 @@ const Login = () => {
         if (isExists) {
           navigation.reset({
             index: 0,
-            routes: [{name: 'Main'}],
+            routes: [{name: 'Tabs'}],
           });
         } else {
           navigation.navigate('setProfile');

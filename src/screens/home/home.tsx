@@ -30,6 +30,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import {BlurView} from '@react-native-community/blur';
 import PostItems from './components/PostItems';
+import EventCard from './components/EventCard';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -49,6 +50,7 @@ const Home = () => {
     }
   });
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [profilePhoto, setProfilePhoto] = useState(null);
 
@@ -143,7 +145,7 @@ const Home = () => {
           source={
             profilePhoto
               ? {uri: profilePhoto}
-              : require('../../assets/images/profilei.png')
+              : require('../../assets/images/profiles.png')
           }
           resizeMode="contain"
           style={{
@@ -194,6 +196,8 @@ const Home = () => {
     setSelectedVideo(null); // Clear selected video
   };
 
+  const [Aloading,setALoading] = useState(true);
+
   const notifyAllUsers = async () => {
     const storedProfileData = await AsyncStorage.getItem('user');
     const profileData = JSON.parse(storedProfileData);
@@ -225,6 +229,10 @@ const Home = () => {
     }
   };
 
+  if (loading) {
+    return <ActivityIndicator size="large" color="#white" />;
+  }
+
   const getPost = async () => {
     console.log('Hi');
     try {
@@ -241,6 +249,7 @@ const Home = () => {
       // console.log('Post Details', jsonResponse.length);
       setPosts(jsonResponse);
     } catch (error) {
+      console.log('Hie');
       console.error('Error fetching video list:', error);
     }
   };
@@ -257,9 +266,42 @@ const Home = () => {
     setRefreshing(false);
   };
 
+  const [contestdetail, setContestDetail] = useState(null);
+
+  useEffect(() => {
+    contestdetial();
+  }, []);
+
+  const contestdetial = async () => {
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/contest/getongoingcontest',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const jsonresponse = await response.json();
+      const contestid = jsonresponse?.contestId;
+
+      if (contestid) {
+        await AsyncStorage.setItem('Contest_detail', contestid); // Awaiting the setItem call
+        console.log('Contest ID set in AsyncStorage:', contestid);
+      }
+
+      setContestDetail(jsonresponse);
+      console.log('Event Contest:', jsonresponse);
+    } catch (error) {
+      console.error('Error fetching or setting contest details:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle='light-content' backgroundColor='#17191A'/>
+      <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* <ScrollView showsVerticalScrollIndicator={false}> */}
       {/* {loading && (
       <View style={styles.loadingContainer}>
@@ -357,7 +399,15 @@ const Home = () => {
           }}
         />
       </KeyboardAvoidingView> */}
-      <View style={{ position: 'absolute', bottom: 20, right: 10, zIndex: 999, justifyContent:'flex-end',alignContent:'flex-end', }}>
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 10,
+          zIndex: 999,
+          justifyContent: 'flex-end',
+          alignContent: 'flex-end',
+        }}>
         {isExpanded && (
           <Animated.View
             style={{
@@ -377,7 +427,7 @@ const Home = () => {
                 borderRadius: 20,
                 flexDirection: 'row',
                 alignItems: 'center',
-                width:'100%'
+                width: '100%',
               }}>
               <Icon1 name="image" size={20} color="white" />
               <Text style={{color: 'white', marginLeft: 10}}>Post</Text>
@@ -411,25 +461,28 @@ const Home = () => {
           </Animated.View>
         )}
         <TouchableOpacity
-        onPress={toggleFAB}
-        style={{
-          backgroundColor: '#388DEB',
-          borderRadius: 30,
-          alignItems: 'center',
-          justifyContent: 'center',
-          height:60,
-          width:60,
-          marginLeft:34,
-        }}>
-        <Animated.View style={{ transform: [{ rotate: rotateIcon }] }}>
-          <Icon1 name="plus" size={24} color="white" />
-        </Animated.View>
-      </TouchableOpacity>
+          onPress={toggleFAB}
+          style={{
+            backgroundColor: '#388DEB',
+            borderRadius: 30,
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 60,
+            width: 60,
+            marginLeft: 34,
+          }}>
+          <Animated.View style={{transform: [{rotate: rotateIcon}]}}>
+            <Icon1 name="plus" size={24} color="white" />
+          </Animated.View>
+        </TouchableOpacity>
       </View>
+
+      {/* <EventCard/> */}
 
       {/* Reels Option */}
       <FlatList
         data={posts}
+        // ListHeaderComponent={contestdetail ? <EventCard /> : null}
         showsVerticalScrollIndicator={false}
         renderItem={({item, index}) => (
           <PostItems
@@ -443,6 +496,7 @@ const Home = () => {
         viewabilityConfig={viewabilityConfig}
         refreshing={refreshing} // Add refreshing prop
         onRefresh={onRefresh}
+        // ListFooterComponent={refreshing ? <ActivityIndicator size="small" color="#0000ff" /> : null}
       />
       {/* </ScrollView> */}
     </SafeAreaView>

@@ -1,5 +1,6 @@
 import {
   Alert,
+  Animated,
   Dimensions,
   FlatList,
   Image,
@@ -24,6 +25,7 @@ import {BlurView} from '@react-native-community/blur';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import Pinchable from 'react-native-pinchable';
 
 const PostItems = ({post, isVisible, getpost}) => {
   const user = useSelector(state => state.user);
@@ -38,6 +40,23 @@ const PostItems = ({post, isVisible, getpost}) => {
     currentTime: 0,
     seekableDuration: 0,
   });
+
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const onPinchEvent = Animated.event(
+    [{ nativeEvent: { scale: scale } }],
+    { useNativeDriver: true }
+  );
+
+  const onPinchStateChange = (event) => {
+    if (event.nativeEvent.oldState === 4) {
+      // When the gesture ends, reset the scale if desired
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
 
   const videoRef = useRef([]);
 
@@ -141,7 +160,7 @@ const PostItems = ({post, isVisible, getpost}) => {
         console.error('Backend error:', data.error);
       } else {
         // setComments([...comments, data]); // Uncomment if comments updating works fine.
-
+        console.log("devie",post?.adviser?.data?.device_token)
         fetchComment();
         getpost();
         const NotificationResponse = await fetch(
@@ -434,7 +453,7 @@ const PostItems = ({post, isVisible, getpost}) => {
               source={
                 post?.adviser?.data?.profile_photo
                   ? {uri: post?.adviser?.data?.profile_photo}
-                  : require('../../../assets/images/bane.png')
+                  : require('../../../assets/images/profiles.png')
               }
               style={styles.profilePic}
             />
@@ -452,15 +471,18 @@ const PostItems = ({post, isVisible, getpost}) => {
             </Text>
           </View>
         </View>
-        <Text style={styles.message}>{post?.data?.description}</Text>
+        <Text style={styles.message}>{post?.data?.description ? post?.data?.description : null}</Text>
         <Text
           style={{
             fontSize: 14,
             fontFamily: 'Poppins-Medium',
             color: '#388DEB',
-            textDecorationLine: 'underline',
+            // marginTop:5,
+            // textDecorationLine: 'underline',
           }}>
-          {post?.data?.luitags}
+           {/* Array.isArray(post?.data?.luitags) ? */}
+           {/* {post?.data?.luitags }  */}
+           {Array.isArray(post?.data?.luitags) ? post.data.luitags.join(' ') : post.data.luitags}
         </Text>
         {post?.data?.file_type === 'image' &&
         Array.isArray(post?.data?.post_file) ? (
@@ -470,11 +492,14 @@ const PostItems = ({post, isVisible, getpost}) => {
               data={post?.data?.post_file}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item}) => (
-                <Image
-                  source={{uri: item}}
-                  style={styles.postMediaImage} // Style for the image
-                  resizeMode="contain"
-                />
+                // <Pinchable>
+
+                  <Image
+                    source={{uri: item}}
+                    style={styles.postMediaImage} // Style for the image
+                    resizeMode="contain"
+                  />
+                // </Pinchable>
               )}
               pagingEnabled
               horizontal
@@ -504,11 +529,13 @@ const PostItems = ({post, isVisible, getpost}) => {
         ) : (
           post?.data?.file_type === 'image' && (
             // Handle single image
-            <Image
-              source={{uri: post?.data?.post_file}}
-              style={styles.postMediaImage} // Style for the image
-              resizeMode="contain"
-            />
+            // <Pinchable>
+              <Image
+                source={{uri: post?.data?.post_file}}
+                style={styles.postMediaImage} // Style for the image
+                resizeMode="contain"
+              />
+            // </Pinchable>
           )
         )}
 
@@ -655,124 +682,6 @@ const PostItems = ({post, isVisible, getpost}) => {
           )
         )}
 
-        {/* {post?.data?.file_type === 'long_video' &&
-        Array.isArray(post?.data?.post_file) ? (
-          // Handle array of videos
-          <FlatList
-            data={post?.data?.post_file}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({item}) => (
-              <View key={item?.url} style={{marginBottom: 20}}>
-                <TouchableOpacity
-                  onPress={togglePlayPause}
-                  style={{width: Dimensions.get('window').width-20, height: 200}}>
-                  <Video
-                    source={{uri: item?.video_url}}
-                    style={styles.postMediaVideo}
-                    controls={false}
-                    paused={paused}
-                    onProgress={handleVideoProgress}
-                    ref={videoRef}
-                    onEnd={handleVideoEnd}
-                    resizeMode="contain"
-                  />
-                  {showControls && (
-                    <View style={styles.overlayControls}>
-                      <Icon
-                        name={paused ? 'play' : 'pause'}
-                        size={40}
-                        color="white"
-                      />
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingHorizontal: 15,
-                    marginTop: 20,
-                    width:'70%'
-                  }}>
-                  <Text style={{color: 'white'}}>
-                    {format(progress.currentTime)}
-                  </Text>
-                  <Slider
-                    style={{width: '70%', height: 40}}
-                    minimumValue={0}
-                    maximumValue={progress.seekableDuration}
-                    value={progress.currentTime}
-                    onSlidingComplete={handleSeek}
-                    minimumTrackTintColor="#FFFFFF"
-                    maximumTrackTintColor="#FFFFFF"
-                  />
-                  <Text style={{color: 'white'}}>
-                    {format(progress.seekableDuration)}
-                  </Text>
-                </View>
-              </View>
-            )}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          />
-        ) : (
-          post?.data?.file_type === 'long_video' && (
-            // Handle single video
-            <View>
-              <TouchableOpacity
-                onPress={togglePlayPause}
-                style={{width: '100%', height: 200}}>
-                <Video
-                  source={{uri: post?.data?.post_file}}
-                  style={styles.postMediaVideo}
-                  controls={false}
-                  paused={paused}
-                  onProgress={handleVideoProgress}
-                  ref={videoRef}
-                  onEnd={handleVideoEnd}
-                  resizeMode="contain"
-                />
-                {showControls && (
-                  <View style={styles.overlayControls}>
-                    <Icon
-                      name={paused ? 'play' : 'pause'}
-                      size={40}
-                      color="white"
-                    />
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingHorizontal: 15,
-                  marginTop: 20,
-                }}>
-                <Text style={{color: 'white'}}>
-                  {format(progress.currentTime)}
-                </Text>
-                <Slider
-                  style={{width: '70%', height: 40}}
-                  minimumValue={0}
-                  maximumValue={progress.seekableDuration}
-                  value={progress.currentTime}
-                  onSlidingComplete={handleSeek}
-                  minimumTrackTintColor="#FFFFFF"
-                  maximumTrackTintColor="#FFFFFF"
-                />
-                <Text style={{color: 'white'}}>
-                  {format(progress.seekableDuration)}
-                </Text>
-              </View>
-            </View>
-          )
-        )} */}
-
         <View style={styles.interaction}>
           <View
             style={{
@@ -816,7 +725,7 @@ const PostItems = ({post, isVisible, getpost}) => {
         {/* Modal Content */}
         <KeyboardAvoidingView
           style={{flex: 1}}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.modalContent}>
             {/* Close Button */}
 
@@ -843,7 +752,7 @@ const PostItems = ({post, isVisible, getpost}) => {
                   />
                   <View style={styles.commentTextContainer}>
                     <Text style={styles.commentUsername}>
-                      {item?.adviserDetails?.username}
+                      {item?.adviserDetails?.username} 
                     </Text>
                     <Text style={styles.commentText}>{item?.message}</Text>
                   </View>
@@ -881,6 +790,36 @@ const PostItems = ({post, isVisible, getpost}) => {
         </KeyboardAvoidingView>
       </Modal>
     </View>
+    // <View
+    //   style={{
+    //     paddingHorizontal: 10,
+    //   }}>
+    //   <View
+    //     style={{
+    //       flexDirection: 'row',
+    //       alignItems: 'center',
+    //     }}>
+    //     <Image
+    //       source={
+    //         post?.adviser?.data?.profile_photo
+    //           ? {uri: post?.adviser?.data?.profile_photo}
+    //           : require('../../../assets/images/profiles.png')
+    //       }
+    //       style={styles.profilePic}
+    //     />
+    //     <View>
+    //       <Pressable
+    //         onPress={() => navigation.navigate('PostView', post?.adviser?.id)}>
+    //         <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
+    //       </Pressable>
+    //       <Text style={styles.role}>
+    //         • {post?.adviser?.data?.professional_title} •{' '}
+    //         {timeAgo(post?.data?.dop)}
+    //       </Text>
+    //     </View>
+    //   </View>
+    //   <Text style={styles.message}>{post?.data?.description}</Text>
+    // </View>
   );
 };
 
@@ -889,12 +828,13 @@ export default PostItems;
 const styles = StyleSheet.create({
   postContainer: {
     padding: 15,
+    // paddingBottom: 15,
     borderBottomWidth: 1,
     borderColor: '#333',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   profilePic: {
     width: 40,
@@ -944,11 +884,13 @@ const styles = StyleSheet.create({
   role: {
     color: '#999',
     fontSize: 12,
+    // width:Dimensions.get('window').width-70,
     fontFamily: 'Poppins-Regular',
+    paddingRight: 31,
   },
   message: {
     color: '#fff',
-    marginVertical: 10,
+    marginTop: 10,
     fontFamily: 'Poppins-Regular',
   },
   interaction: {

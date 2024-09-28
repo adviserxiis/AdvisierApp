@@ -23,6 +23,15 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {Mixpanel} from 'mixpanel-react-native';
+
+const trackAutomaticEvents = false;
+const mixpanel = new Mixpanel(
+  'f03fcb4e7e5cdc7d32f57611937c5525',
+  trackAutomaticEvents,
+);
+mixpanel.init();
 
 const PostScreen = () => {
   const [selectedPod, setSelectedPod] = useState('Images');
@@ -32,6 +41,7 @@ const PostScreen = () => {
   const [videoList, setVideoList] = useState([]);
   const user = useSelector(state => state.user);
   const abortControllerRef = useRef(null);
+  const navigation = useNavigation();
   // const handleInsertLink = () => {
   //   const link = 'https://';
   //   setPostText(postText + `${link}`); // Append link to post text
@@ -43,6 +53,21 @@ const PostScreen = () => {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [name, setName] = useState(null);
   const [hashtags, setHashTags] = useState('');
+  const [tags, setTags] = useState([]);
+
+  const removeTag = index => {
+    const newTags = [...tags];
+    newTags.splice(index, 1);
+    setTags(newTags);
+  };
+
+  // Function to add a tag
+  const addTag = () => {
+    if (hashtags && !tags.includes(hashtags)) {
+      setTags([...tags, hashtags]);
+      setHashTags('');
+    }
+  };
 
   const getProfilePhoto = async () => {
     try {
@@ -134,6 +159,7 @@ const PostScreen = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            // screen:'',
             title: 'New Post',
             body: `${profileData.name} Uploaded a new post!`,
           }),
@@ -152,13 +178,18 @@ const PostScreen = () => {
     }
   };
 
-  const SubmitPost = async () => {
-    if (!abortControllerRef.current) {
-      abortControllerRef.current = new AbortController(); // Initialize AbortController
-    }
+  // console.log(tags);
 
-    if(!hashtags){
-      Alert.alert('Error','Hashtags are mandatory');
+  const SubmitPost = async () => {
+    abortControllerRef.current = new AbortController();
+
+    // if (!abortControllerRef.current) {
+    //   abortControllerRef.current.abort(); // Cancel the upload
+    //   setIsPosting(false); // Initialize AbortController
+    // }
+
+    if (tags.length === 0) {
+      Alert.alert('Error', 'Hashtags are mandatory');
       return;
     }
 
@@ -203,7 +234,7 @@ const PostScreen = () => {
           });
         });
         formData.append('adviserid', user.userid);
-        formData.append('luitags',hashtags);
+        formData.append('luitags', tags);
         if (postText) formData.append('description', postText);
 
         response = await fetch(
@@ -269,7 +300,7 @@ const PostScreen = () => {
               videoURLs: videoURLs,
               durations: durations,
               description: postText,
-              luitags: hashtags,
+              luitags: tags,
             }),
             signal: abortControllerRef.current?.signal,
           },
@@ -285,7 +316,7 @@ const PostScreen = () => {
             body: JSON.stringify({
               adviserid: user.userid,
               message: postText,
-              luitags: hashtags,
+              luitags: tags,
             }),
             signal: abortControllerRef.current?.signal,
           },
@@ -308,8 +339,19 @@ const PostScreen = () => {
         setImageList([]);
         setVideoList([]);
         setPostText('');
-        setHashTags('');
-
+        setTags([]);
+        mixpanel.identify(user.userid); // Identifies the user by unique ID
+        // mixpanel.getPeople().set({
+        //   $name: name,
+        // });
+        // mixpanel.setLoggingEnabled(true);
+        mixpanel.track('Post Creation');
+        Alert.alert('Success', 'Post saved successfully!', [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Home'),
+          },
+        ]);
         // Notify users (if necessary)
       }
     } catch (error: any) {
@@ -496,7 +538,7 @@ const PostScreen = () => {
               padding: 15,
               backgroundColor: '#17191A',
               borderRadius: 10,
-              flexDirection: 'colunm',
+              flexDirection: 'column',
               alignItems: 'flex-start',
               width: '90%',
               gap: 10,
@@ -535,7 +577,7 @@ const PostScreen = () => {
               <Text
                 style={{
                   color: 'white',
-                }}>
+                }} numberOfLines={2}>
                 {postText}
               </Text>
             </View>
@@ -571,261 +613,177 @@ const PostScreen = () => {
           </View>
         </View>
       )}
-      <View style={styles.contentContainer}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          <View style={styles.profileContainer}>
-            {/* <Image
+      <ScrollView contentContainerStyle={{flexGrow: 1}}>
+        <View style={styles.contentContainer}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+            <View style={styles.profileContainer}>
+              {/* <Image
             source={require('../../../assets/images/profilei.png')}
             resizeMode="contain"
             style={styles.profileImage}
           /> */}
-            <Image
-              source={
-                profilePhoto
-                  ? {uri: profilePhoto}
-                  : require('../../../assets/images/profilei.png')
-              }
-              resizeMode="contain"
-              style={styles.profileImage}
-            />
-            <View style={styles.profileTextContainer}>
-              <Text style={styles.profileName}>{name}</Text>
+              <Image
+                source={
+                  profilePhoto
+                    ? {uri: profilePhoto}
+                    : require('../../../assets/images/profiles.png')
+                }
+                resizeMode="contain"
+                style={styles.profileImage}
+              />
+              <View style={styles.profileTextContainer}>
+                <Text style={styles.profileName}>{name}</Text>
+              </View>
             </View>
+
+            <TouchableOpacity
+              onPress={togglePicker}
+              style={{
+                flexDirection: 'row',
+                marginTop: 10,
+                borderColor: '#333',
+                borderWidth: 2,
+                width: '40%',
+                height: 30,
+                padding: 4,
+                justifyContent: 'space-between',
+                borderRadius: 10,
+                alignContent: 'center',
+              }}>
+              {/* <Icon3 name="grid-outline" size={18} color="purple" /> */}
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  paddingLeft: 10,
+                }}>
+                {selectedPod ? selectedPod : 'Images'}
+              </Text>
+              <TouchableOpacity
+                onPress={openPicker}
+                style={{
+                  marginTop: 3,
+                  marginRight: 5,
+                }}>
+                <Animated.View style={caretRotationStyle}>
+                  <Icon name="caretdown" size={10} color="white" />
+                </Animated.View>
+              </TouchableOpacity>
+            </TouchableOpacity>
+            {/* </View> */}
           </View>
+          {show && (
+            <Animated.View
+              style={{
+                height: 100,
+                overflow: 'hidden',
+                position: 'absolute', // Make the dropdown float
+                top: 65, // Adjust this to place the dropdown correctly
+                right: 16, // Match with your layout, adjust if necessary
+                width: '40%', // Ensure dropdown has the correct width
+                backgroundColor: '#333', // Add a background color if necessary
+                zIndex: 100, // Ensures it's on top of other elements
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: '#333',
+              }}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {options.map(option => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => hidePicker(option)}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        padding: 5,
+                        marginVertical: 5,
+                        fontFamily: 'Poppins-Regular',
+                        color: 'white',
+                      }}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          )}
 
-          <TouchableOpacity
-            onPress={togglePicker}
-            style={{
-              flexDirection: 'row',
-              marginTop: 10,
-              borderColor: '#333',
-              borderWidth: 2,
-              width: '40%',
-              height: 30,
-              padding: 4,
-              justifyContent: 'space-between',
-              borderRadius: 10,
-              alignContent: 'center',
-            }}>
-            {/* <Icon3 name="grid-outline" size={18} color="purple" /> */}
-            <Text
-              style={{
-                fontSize: 12,
-                fontFamily: 'Poppins-Regular',
-                color: 'white',
-                paddingLeft: 10,
-              }}>
-              {selectedPod ? selectedPod : 'Images'}
-            </Text>
-            <TouchableOpacity
-              onPress={openPicker}
-              style={{
-                marginTop: 3,
-                marginRight: 5,
-              }}>
-              <Animated.View style={caretRotationStyle}>
-                <Icon name="caretdown" size={10} color="white" />
-              </Animated.View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-          {/* </View> */}
-        </View>
-        {show && (
-          <Animated.View
-            style={{
-              height: 100,
-              overflow: 'hidden',
-              position: 'absolute', // Make the dropdown float
-              top: 65, // Adjust this to place the dropdown correctly
-              right: 16, // Match with your layout, adjust if necessary
-              width: '40%', // Ensure dropdown has the correct width
-              backgroundColor: '#333', // Add a background color if necessary
-              zIndex: 100, // Ensures it's on top of other elements
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: '#333',
-            }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {options.map(option => (
-                <TouchableOpacity
-                  key={option}
-                  onPress={() => hidePicker(option)}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      padding: 5,
-                      marginVertical: 5,
-                      fontFamily: 'Poppins-Regular',
-                      color: 'white',
-                    }}>
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        )}
-        {/* Profile Section */}
-        {/* <View
-          style={{
-            flexDirection: 'row',
-            gap: 10,
-          }}>
-          <TouchableOpacity
-            onPress={togglePicker1}
-            style={{
-              flexDirection: 'row',
-              marginTop: 10,
-              borderColor: '#333',
-              borderWidth: 2,
-              width: '50%',
-              padding: 10,
-              justifyContent: 'space-between',
-              borderRadius: 10,
-              alignContent: 'center',
-            }}>
-            <Icon3 name="grid-outline" size={18} color="purple" />
-            <Text
-              style={{
-                fontSize: 12,
-                fontFamily: 'Poppins-Regular',
-                color:'white'
-              }}>
-              {selectedPod2 ? selectedPod2 : 'Images'}
-            </Text>
-            <TouchableOpacity
-              onPress={openPicker1}
-              style={{
-                marginTop: 5,
-                marginRight: 5,
-              }}>
-              <Animated.View style={caretRotationStyle1}>
-                <Icon name="caretdown" size={10} color="white" />
-              </Animated.View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </View>
-        {show && (
-          <Animated.View
-            style={{
-              height: dropdownHeight,
-              overflow: 'hidden',
-              position: 'absolute', // Make the dropdown float
-              top: 145, // Adjust this to place the dropdown correctly
-              left: 16, // Match with your layout, adjust if necessary
-              width: '50%', // Ensure dropdown has the correct width
-              backgroundColor: '#333', // Add a background color if necessary
-              zIndex: 100, // Ensures it's on top of other elements
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: '#333',
-            }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {categories.map(option => (
-                <TouchableOpacity
-                  key={option}
-                  onPress={() => hidePicker(option)}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      padding: 5,
-                      marginVertical: 5,
-                      fontFamily: 'Poppins-Regular',
-                      color: 'white',
-                    }}>
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        )}
-        {show1 && (
-          <Animated.View
-            style={{
-              height: dropdownHeight,
-              overflow: 'hidden',
-              position: 'absolute', 
-              right:6,
-              top: 145, // Adjust this to place the dropdown correctly
-              width: '50%', // Ensure dropdown has the correct width
-              backgroundColor: '#333', // Add a background color if necessary
-              zIndex: 100, // Ensures it's on top of other elements
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: '#333',
-            }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {options.map(option => (
-                <TouchableOpacity
-                  key={option}
-                  onPress={() => hidePicker1(option)}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      padding: 5,
-                      marginVertical: 5,
-                      fontFamily: 'Poppins-Regular',
-                      color: 'white',
-                    }}>
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        )} */}
-
-        {/* Post Text Input */}
-        <TextInput
-          style={[
-            styles.textInput,
-            // hasLink(postText) ? { color: 'blue' } : { color: 'black' },
-          ]}
-          placeholder="Enter your post here"
-          placeholderTextColor="#888"
-          multiline
-          maxLength={1000}
-          value={postText}
-          onChangeText={setPostText}
-        />
-
-        {imageList.length > 0 && (
-          <FlatList
-          data={imageList}
-          keyExtractor={item => item.uri}
-          renderItem={renderImageItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.mediaList}
+          {/* Post Text Input */}
+          <TextInput
+            style={[
+              styles.textInput,
+              // hasLink(postText) ? { color: 'blue' } : { color: 'black' },
+            ]}
+            placeholder="Enter your post here"
+            placeholderTextColor="#888"
+            multiline
+            maxLength={1000}
+            value={postText}
+            onChangeText={setPostText}
           />
-        )}
 
-        {videoList.length > 0 && (
-          <FlatList
-          data={videoList}
-          keyExtractor={item => item.uri}
-          renderItem={renderVideoItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.mediaList}
-          />
+          {imageList.length > 0 && (
+            <FlatList
+              data={imageList}
+              keyExtractor={item => item.uri}
+              renderItem={renderImageItem}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.mediaList}
+            />
+          )}
+
+          {videoList.length > 0 && (
+            <FlatList
+              data={videoList}
+              keyExtractor={item => item.uri}
+              renderItem={renderVideoItem}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.mediaList}
+            />
+          )}
+          <Text style={styles.charCount}>{postText.length}/1000</Text>
+        </View>
+        {/* <FlatList
+        data={tags}
+        horizontal
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item, index }) => (
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{item}</Text>
+            <TouchableOpacity onPress={() => removeTag(index)}>
+              <Text style={styles.removeTag}>✕</Text>
+            </TouchableOpacity>
+          </View>
         )}
-        <Text style={styles.charCount}>{postText.length}/1000</Text>
-      </View>
+        contentContainerStyle={styles.tagList}
+      /> */}
+        <View style={styles.tagContainer}>
+          {tags.map((item, index) => (
+            <View style={styles.tag} key={index}>
+              <Text style={styles.tagText}>{item}</Text>
+              <TouchableOpacity onPress={() => removeTag(index)}>
+                <Icon name="close" size={16} color="gray" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
         <TextInput
           value={hashtags}
           onChangeText={setHashTags}
           placeholder="Add #luitags (#hashtags)"
           placeholderTextColor="#838383"
+          onSubmitEditing={addTag}
           style={{
             height: 49,
-            paddingHorizontal:16,
+            paddingHorizontal: 16,
             width: '100%',
             borderBottomColor: 'gray',
             borderBottomWidth: 1,
@@ -834,10 +792,10 @@ const PostScreen = () => {
           }}
         />
 
-      {/* Footer Icons and Post Button */}
-      <View style={styles.footer}>
-        <View style={styles.iconContainer}>
-          {/* <TouchableOpacity
+        {/* Footer Icons and Post Button */}
+        <View style={styles.footer}>
+          <View style={styles.iconContainer}>
+            {/* <TouchableOpacity
           // onPress={handleInsertLink}
           >
             <Icon5
@@ -847,22 +805,23 @@ const PostScreen = () => {
               style={styles.icon}
             />
           </TouchableOpacity> */}
-          <TouchableOpacity onPress={handleSelectMedia}>
-            <Icon3
-              name="image-outline"
-              color="#388DEB"
-              size={24}
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          {/* <Icon4 name="analytics" size={24} color="#353638" style={styles.icon} /> */}
-        </View>
+            <TouchableOpacity onPress={handleSelectMedia}>
+              <Icon3
+                name="image-outline"
+                color="#388DEB"
+                size={24}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            {/* <Icon4 name="analytics" size={24} color="#353638" style={styles.icon} /> */}
+          </View>
 
-        {/* Post Button */}
-        <TouchableOpacity style={styles.postButton} onPress={SubmitPost}>
-          <Text style={styles.postButtonText}>Post</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Post Button */}
+          <TouchableOpacity style={styles.postButton} onPress={SubmitPost}>
+            <Text style={styles.postButtonText}>Post</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -991,5 +950,32 @@ const styles = StyleSheet.create({
   postButtonText: {
     color: '#fff',
     fontFamily: 'Poppins-Regular',
+  },
+  tagList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tag: {
+    flexDirection: 'row',
+    backgroundColor: '#17191A',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: 'white',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  tagText: {
+    color: 'white',
+    marginRight: 5,
+  },
+  removeTag: {
+    color: 'gray',
   },
 });

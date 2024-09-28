@@ -17,6 +17,9 @@ import reel from '../screens/reels/Reel';
 import Home from '../screens/home/home';
 import PostScreen from '../screens/home/screen/PostScreen';
 import PostView from '../screens/home/screen/PostView';
+import LeadershipBoard from '../screens/home/screen/LeadershipBoard';
+import ContestReelUpload from '../screens/home/screen/ContestReelUpload';
+import ContestReelView from '../screens/home/screen/ContestReelView';
 // import Login from '../screens/auth/Login';
 
 //Home Stack
@@ -36,12 +39,23 @@ function HomeStackScreen() {
           // headerShadowVisible:false
         }}
       />
-      <HomeStack.Screen name='PostView' component={PostView} options={{
-        headerShown:false,
-      }}/>
+      <HomeStack.Screen
+        name="PostView"
+        component={PostView}
+        options={{
+          headerShown: false,
+        }}
+      />
       <HomeStack.Screen
         name="singleReel"
         component={SingleReel}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <HomeStack.Screen 
+        name='ContestReelView'
+        component={ContestReelView}
         options={{
           headerShown: false,
         }}
@@ -268,12 +282,35 @@ function MyStack() {
             fontFamily: 'Poppins-Medium',
             fontSize: 18,
             marginTop: 8,
-            color:'white'
+            color: 'white',
           },
           headerStyle: {
             backgroundColor: '#17191A', // Set the header background to black
           },
           headerTintColor: 'white',
+        }}
+      />
+      <Stack.Screen
+        name="LeadershipBoard"
+        component={LeadershipBoard}
+        options={{
+          headerShown: true,
+          title: '',
+          headerStyle: {
+            backgroundColor: '#17191A',
+          },
+          // headerShadowVisible:false
+        }}
+      />
+      <Stack.Screen name="ContestReelUpload" component={ContestReelUpload}  
+        options={{
+          headerShown:true,
+          title:'',
+          headerStyle: {
+            backgroundColor: '#17191A',
+          },
+          headerShadowVisible:false,
+          headerTintColor:'white'
         }}
       />
     </Stack.Navigator>

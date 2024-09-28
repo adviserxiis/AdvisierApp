@@ -12,7 +12,8 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Mixpanel } from 'mixpanel-react-native';
 import { useSelector } from 'react-redux';
 import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
-
+import { debounce } from 'lodash';
+import { useFocusEffect } from '@react-navigation/native';
 const trackAutomaticEvents = false;
 const mixpanel = new Mixpanel(
   'f03fcb4e7e5cdc7d32f57611937c5525',
@@ -21,6 +22,7 @@ const mixpanel = new Mixpanel(
 mixpanel.init();
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-1658613370450501/1720983301'; // Replace with actual ad unit ID
+// const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-3940256099942544/6300978111'; // Replace with actual ad unit ID
 
 const Reel = () => {
   const [list, setList] = useState([]);
@@ -47,6 +49,7 @@ const Reel = () => {
       );
       const jsonResponse = await response.json();
       setList(jsonResponse);
+      // console.log(jsonResponse);
     } catch (error) {
       console.error('Error fetching video list:', error);
     }
@@ -55,6 +58,16 @@ const Reel = () => {
   useEffect(() => {
     getVideoList();
   }, []);
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchData = async () => {
+  //       await getVideoList();
+  //     };
+  
+  //     fetchData();
+  //   }, [])
+  // );
 
   useEffect(() => {
     const interstitial = InterstitialAd.createForAdRequest(adUnitId, {
@@ -68,6 +81,7 @@ const Reel = () => {
     const unsubscribeFailed = interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
       console.error('Ad failed to load:', error);
       setAdLoaded(false);
+      interstitial.load();
     });
 
     const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
@@ -89,6 +103,8 @@ const Reel = () => {
     const timer = setInterval(() => {
       if (ad && adLoaded) {
         ad.show(); // Ensure this method exists or replace with correct method
+      }else{
+        console.log("No ad to show, showing fallback content instead.");
       }
     }, 15 * 60 * 1000); // 15 minutes in milliseconds
 
@@ -97,11 +113,14 @@ const Reel = () => {
     };
   }, [ad, adLoaded]);
 
-  const handleViewableItemsChanged = useCallback(({ viewableItems }) => {
-    if (viewableItems.length > 0 && viewableItems[0].isViewable) {
-      setCurrentIndex(viewableItems[0].index);
-    }
-  }, []);
+  const handleViewableItemsChanged = useCallback(
+    debounce(({ viewableItems }) => {
+      if (viewableItems.length > 0 && viewableItems[0].isViewable) {
+        setCurrentIndex(viewableItems[0].index);
+      }
+    }, 200),
+    [],
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -155,7 +174,7 @@ const Reel = () => {
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={10}
-        windowSize={5}
+        windowSize={10}
         removeClippedSubviews
         pagingEnabled
         decelerationRate='fast'

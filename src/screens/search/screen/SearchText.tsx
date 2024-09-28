@@ -94,7 +94,7 @@ const SearchText = () => {
       )}
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userDescription}>{item.description}</Text>
+        <Text style={styles.userDescription} numberOfLines={2}>{item.description}</Text>
       </View>
       {/* <TouchableOpacity style={styles.closeButton} onPress={() => handleClose(item.id)}>
         <Icon name="x" size={20} color="#B0B3B8" />

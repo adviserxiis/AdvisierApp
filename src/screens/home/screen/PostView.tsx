@@ -198,7 +198,7 @@ const PostView = () => {
             },
             body: JSON.stringify({
               deviceToken:details?.device_token,
-              title:'Following User Update',
+              title:'Following Update',
               body:`${userObject?.name} started following you!!`
             }),
           },
@@ -341,25 +341,26 @@ const PostView = () => {
     }
   };
 
-  useEffect(() => {
-    const getPostList = async () => {
-      try {
-        const response = await fetch(
-          `https://adviserxiis-backend-three.vercel.app/post/gethomepostsofadviser/${advsid}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+  const getPostList = async () => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/post/gethomepostsofadviser/${advsid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        );
-        const jsonResponse = await response.json();
-        console.log("SJisis", jsonResponse);
-        setPosts(jsonResponse);
-      } catch (error) {
-        console.error('Error fetching video list:', error);
-      }
-    };
+        },
+      );
+      const jsonResponse = await response.json();
+      console.log("SJisis", jsonResponse);
+      setPosts(jsonResponse);
+    } catch (error) {
+      console.error('Error fetching video list:', error);
+    }
+  };
+
+  useEffect(() => {
     getPostList();
   }, []);
 
@@ -408,14 +409,14 @@ const PostView = () => {
           source={
             details?.profile_photo
               ? {uri: details.profile_photo}
-              : require('../../../assets/images/bane.png')
+              : require('../../../assets/images/profiles.png')
           }
           style={styles.profileImage}
         />
         <View style={styles.profileDetails}>
           <View style={styles.profileTextContainer}>
             <Text style={styles.profileName}>{details?.username}</Text>
-            <Text style={styles.profileRole}>
+            <Text style={styles.profileRole} numberOfLines={2}>
               {details?.professional_title}
             </Text>
           </View>
@@ -636,7 +637,7 @@ const PostView = () => {
           data={posts}
           showsVerticalScrollIndicator={false}
           renderItem={({item, index}) => (
-            <PostItems post={item} isVisible={visiblePostIndex === index} />
+            <PostItems post={item} isVisible={visiblePostIndex === index} getpost={getPostList} />
           )}
           keyExtractor={item => item.id}
           onViewableItemsChanged={onViewableItemsChanged.current}

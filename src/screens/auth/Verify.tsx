@@ -10,6 +10,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {TextInput} from 'react-native-gesture-handler';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Verify = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -47,12 +48,17 @@ const Verify = () => {
     return () => clearInterval(countdown);
   }, [resendDisabled, timer]);
 
-  const handleResendCode = async() => {
+  const handleResendCode = async () => {
     setTimer(50);
     setResendDisabled(true);
     setResendMessage('');
-
+    // const emailid = await AsyncStorage.getItem('user1');
+    // console.log(emailid);
     try {
+      const userData = await AsyncStorage.getItem('user1');
+
+      console.log('Email ID:', userData);
+
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/sendchangepasswordotp',
         {
@@ -61,20 +67,22 @@ const Verify = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: user.email,
+            email: userData,
           }),
         },
       );
 
       const jsonResponse = await response.json();
-      console.log("sjs",jsonResponse);
+      console.log('sjs', jsonResponse);
       if (response.status === 200) {
         setResendMessage('A new OTP has been sent to your email.');
-        setTimeout(()=>{
+        setTimeout(() => {
           setResendMessage('');
-        },3000)
+        }, 3000);
       } else {
-        setResendMessage(jsonResponse.error || 'Failed to resend OTP. Please try again.');
+        setResendMessage(
+          jsonResponse.error || 'Failed to resend OTP. Please try again.',
+        );
       }
     } catch (error) {
       console.error('Error during OTP resend:', error);
@@ -82,8 +90,114 @@ const Verify = () => {
     }
   };
 
-  const checkOTP = async () => {
+  // const checkOTP = async () => {
 
+  //   if (otp.some(digit => digit === '')) {
+  //     setErrorMessage('Please enter the complete OTP.');
+  //     setTimeout(() => {
+  //       setErrorMessage('');
+  //     }, 3000);
+  //     return;
+  //   }
+
+  //   setErrorMessage('');
+  //   const user1 = AsyncStorage.getItem('user',userid);
+  //   console.log('OTP:', otp.join(''));
+  //   console.log('User ID:', user1);
+  //   try {
+  //     const response = await fetch(
+  //       'https://adviserxiis-backend-three.vercel.app/creator/verifychangepasswordotp',
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({
+  //           otp: otp.join(''),
+  //           userid: user1
+  //         }),
+  //       },
+  //     );
+  //     const jsonResponse = await response.json();
+  //     console.log("hai",jsonResponse);
+  //     if (response.status === 200) {
+  //       navigation.navigate('CreatePassword');
+  //     } else {
+  //       setErrorMessage(jsonResponse.error || 'Invalid OTP. Please try again.');
+  //       setTimeout(() => {
+  //         setErrorMessage('');
+  //       }, 3000);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error during OTP verification:', error);
+  //     setErrorMessage('An unexpected error occurred. Please try again.');
+  //   }
+  // };
+
+  // const checkOTP = async () => {
+  //   // Check if OTP input is complete
+  //   if (otp.some(digit => digit === '')) {
+  //     setErrorMessage('Please enter the complete OTP.');
+  //     setTimeout(() => {
+  //       setErrorMessage('');
+  //     }, 3000);
+  //     return;
+  //   }
+
+  //   setErrorMessage('');
+
+  //   try {
+  //     // Retrieve the user data from AsyncStorage
+  //     const userData = await AsyncStorage.getItem('user');
+
+  //     // Parse the user data (ensure it's parsed correctly)
+  //     const parsedUserData = userData ? JSON.parse(userData) : null;
+
+  //     // Check if we have a valid user object
+  //     if (!parsedUserData || !parsedUserData.userid) {
+  //       setErrorMessage('User ID not found.');
+  //       return;
+  //     }
+
+  //     const userId = parsedUserData.userid; // Extract the user ID
+
+  //     console.log('OTP:', otp.join(''));
+  //     console.log('User ID:', userId);
+
+  //     // Send OTP verification request
+  //     const response = await fetch(
+  //       'https://adviserxiis-backend-three.vercel.app/creator/verifychangepasswordotp',
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({
+  //           otp: otp.join(''),
+  //           userid: userId, // Use the parsed user ID
+  //         }),
+  //       },
+  //     );
+
+  //     const jsonResponse = await response.json();
+  //     console.log('Response:', jsonResponse);
+
+  //     // Check if OTP verification was successful
+  //     if (response.status === 200) {
+  //       navigation.navigate('CreatePassword');
+  //     } else {
+  //       setErrorMessage(jsonResponse.error || 'Invalid OTP. Please try again.');
+  //       setTimeout(() => {
+  //         setErrorMessage('');
+  //       }, 3000);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error during OTP verification:', error);
+  //     setErrorMessage('An unexpected error occurred. Please try again.');
+  //   }
+  // };
+
+  const checkOTP = async () => {
     if (otp.some(digit => digit === '')) {
       setErrorMessage('Please enter the complete OTP.');
       setTimeout(() => {
@@ -91,12 +205,24 @@ const Verify = () => {
       }, 3000);
       return;
     }
-
+  
     setErrorMessage('');
-
-    console.log('OTP:', otp.join(''));
-    console.log('User ID:', user.userid);
+  
     try {
+      // Get user data from AsyncStorage
+      const userData1 = await AsyncStorage.getItem('user');
+      // const parsedUserData = userData ? JSON.parse(userData) : null;
+  
+      // if (!parsedUserData || !parsedUserData.userid) {
+      //   console.error('User ID not found in AsyncStorage');
+      //   setErrorMessage('User data not found. Please try again.');
+      //   return;
+      // }
+  
+      console.log('OTP:', otp.join(''));
+      console.log('User ID:', userData1);
+  
+      // Make the API request
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/verifychangepasswordotp',
         {
@@ -106,16 +232,21 @@ const Verify = () => {
           },
           body: JSON.stringify({
             otp: otp.join(''),
-            userid: user.userid,
+            userid: userData1,
           }),
-        },
+        }
       );
+  
+      // Parse the response
       const jsonResponse = await response.json();
-      console.log("hai",jsonResponse);
+      console.log('Parsed Response:', jsonResponse);
+  
       if (response.status === 200) {
         navigation.navigate('CreatePassword');
       } else {
-        setErrorMessage(jsonResponse.error || 'Invalid OTP. Please try again.');
+        setErrorMessage(
+          jsonResponse.error || 'Invalid OTP. Please try again.'
+        );
         setTimeout(() => {
           setErrorMessage('');
         }, 3000);
@@ -125,6 +256,7 @@ const Verify = () => {
       setErrorMessage('An unexpected error occurred. Please try again.');
     }
   };
+  
 
   return (
     <View
@@ -227,9 +359,6 @@ const Verify = () => {
           Continue
         </Text>
       </Pressable>
-
-      
-
     </View>
   );
 };

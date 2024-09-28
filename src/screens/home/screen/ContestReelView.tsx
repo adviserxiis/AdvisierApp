@@ -24,14 +24,14 @@ import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { Ionicons, FontAwesome } from '@expo/vector-icons'; // Use react-native-vector-icons if not using Expo
 
-const SingleReel = () => {
+const ContestReelView = () => {
   const route = useRoute();
-  const {video, creator} = route.params;
-  // console.log('sjd', video);
+  const {video} = route.params;
+  //   console.log('sjd', video);
   const user = useSelector(state => state.user);
-  // console.log('jshb', creator);
-  const [likeCount, setLikeCount] = useState((video?.data?.likes || []).length);
-  const [like, setLike] = useState(video?.data?.likes?.includes(user.userid));
+  //   console.log('jshb', creator);
+  const [likeCount, setLikeCount] = useState((video?.likes || []).length);
+  const [like, setLike] = useState(video?.likes?.includes(user.userid));
   const [paused, setPaused] = useState(false);
   const [mute, setMute] = useState(false);
   const [buffering, setBuffering] = useState(false);
@@ -78,10 +78,10 @@ const SingleReel = () => {
 
   const likeHandler = useCallback(async () => {
     if (like) {
-      await removeLike(video?.id);
+      await removeLike(video?.postid);
       setLikeCount(prevCount => prevCount - 1);
     } else {
-      await AddLiked(video?.id);
+      await AddLiked(video?.postid);
       setLikeCount(prevCount => prevCount + 1);
     }
     console.log('Video like toggled:', video?.id);
@@ -89,7 +89,6 @@ const SingleReel = () => {
 
   const AddLiked = async videoid => {
     console.log(videoid);
-
     const userObjectString = await AsyncStorage.getItem('user');
     let userObject = null;
 
@@ -131,7 +130,7 @@ const SingleReel = () => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              deviceToken: creator?.device_token,
+              deviceToken: video?.device_token,
               title: 'Reel Like Update',
               body: `${userObject.name} liked Your Reel`,
             }),
@@ -179,7 +178,7 @@ const SingleReel = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          postid: video?.id,
+          postid: video?.postid,
         }),
       },
     );
@@ -187,7 +186,7 @@ const SingleReel = () => {
     console.log('share post id ', jsonresponse);
 
     const shareOptions = {
-      message: `Check out ${creator?.username}new reels on this amazing Luink.ai!`,
+      message: `Check out ${video?.name}new reels on this amazing Luink.ai!`,
       url: 'https://play.google.com/store/apps/details?id=com.advisiorapp', // Replace with your actual URL
     };
 
@@ -306,9 +305,7 @@ const SingleReel = () => {
         </View>
         <View style={styles.viewCount}>
           <Feather name="eye" size={18} color="white" />
-          <Text style={styles.viewCountText}>
-            {video?.data?.views?.length || 0}
-          </Text>
+          <Text style={styles.viewCountText}>{video?.views?.length || 0}</Text>
         </View>
       </View>
       <View style={styles.overlay}>
@@ -321,8 +318,8 @@ const SingleReel = () => {
             <Image
               // source={{uri: `${video?.adviser?.data?.profile_photo}`}}
               source={
-                creator?.profile_photo
-                  ? {uri: creator?.profile_photo}
+                video?.profile_photo
+                  ? {uri: video?.profile_photo}
                   : require('../../../assets/images/profiles.png')
               }
               style={styles.profilePic}
@@ -330,54 +327,17 @@ const SingleReel = () => {
           </TouchableOpacity>
           <View style={{flexDirection: 'column', width: '73%'}}>
             <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
-              // onPress={() =>
-              //   navigation.navigate('ViewProfile', video?.adviser?.id)
-              // }
+            // onPress={() =>
+            //   navigation.navigate('ViewProfile', video?.adviser?.id)
+            // }
             >
-              <Text style={styles.userName}>{creator?.username}</Text>
-              <Text>
-                {video?.data?.file_type === 'contest_video' ? (
-                  <TouchableOpacity
-                    style={{
-                      overflow: 'hidden',
-                      borderRadius: 20,
-                    }}>
-                    <LinearGradient
-                      colors={['#AC2BFF', '#6532FFFF']}
-                      start={{x: 0, y: 0}}
-                      end={{x: 1, y: 1}}
-                      style={{
-                        paddingVertical: 3,
-                        paddingHorizontal: 10,
-                        borderRadius: 20, // Smooth corners
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}>
-                      <Text
-                        style={{
-                          color: 'white',
-                          fontSize: 10,
-                          fontFamily: 'Poppins-Medium',
-                        }}>
-                        In Challenge
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ) : (
-                  ''
-                )}
-              </Text>
+              <Text style={styles.userName}>{video?.name}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
               <Text
                 style={styles.description}
                 numberOfLines={isExpanded ? undefined : 1}>
-                {video?.data?.description}
+                {video?.description}
               </Text>
             </TouchableOpacity>
           </View>
@@ -408,17 +368,17 @@ const SingleReel = () => {
             <Text style={styles.actionText}>{likeCount}</Text>
           </TouchableOpacity>
           {/* <TouchableOpacity style={styles.actionButton}>
-                <Feather name="message-circle" size={24} color="#FFFFFF" />
-                <Text style={styles.actionText}>190</Text>
-              </TouchableOpacity> */}
+                  <Feather name="message-circle" size={24} color="#FFFFFF" />
+                  <Text style={styles.actionText}>190</Text>
+                </TouchableOpacity> */}
           <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
             <Icon3 name="share" size={24} color="#FFFFFF" />
             {/* <Text style={styles.actionText}>0</Text> */}
           </TouchableOpacity>
           {/* <TouchableOpacity style={styles.actionButton}>
-                <Feather name="bookmark" size={24} color="#FFFFFF" />
-                <Text style={styles.actionText}>743</Text>
-              </TouchableOpacity> */}
+                  <Feather name="bookmark" size={24} color="#FFFFFF" />
+                  <Text style={styles.actionText}>743</Text>
+                </TouchableOpacity> */}
         </View>
       </View>
       <TouchableOpacity
@@ -441,7 +401,7 @@ const SingleReel = () => {
       <TouchableWithoutFeedback onPress={handlePlayPause}>
         <Video
           ref={videoPlayerRef}
-          source={{uri: video?.data?.post_file}}
+          source={{uri: video?.post_file}}
           style={[styles.video, {height: screenHeight}]}
           resizeMode={getResizeMode()}
           controls={false}
@@ -485,9 +445,7 @@ const SingleReel = () => {
         </View>
         <View style={styles.viewCount}>
           <Feather name="eye" size={18} color="white" />
-          <Text style={styles.viewCountText}>
-            {video?.data?.views?.length || 0}
-          </Text>
+          <Text style={styles.viewCountText}>{video?.views?.length || 0}</Text>
         </View>
       </View>
       <View style={styles.overlay}>
@@ -500,8 +458,8 @@ const SingleReel = () => {
             <Image
               // source={{uri: `${video?.adviser?.data?.profile_photo}`}}
               source={
-                creator?.profile_photo
-                  ? {uri: creator?.profile_photo}
+                video?.profile_photo
+                  ? {uri: video?.profile_photo}
                   : require('../../../assets/images/profiles.png')
               }
               style={styles.profilePic}
@@ -518,45 +476,41 @@ const SingleReel = () => {
               //   navigation.navigate('ViewProfile', video?.adviser?.id)
               // }
             >
-              <Text style={styles.userName}>{creator?.username}</Text>
-              {/* <Text>
-                {video?.data?.file_type === 'contest_video' ? (
-                  <TouchableOpacity
+              <Text style={styles.userName}>{video?.name}</Text>
+              <Text>
+                <TouchableOpacity
+                  style={{
+                    overflow: 'hidden',
+                    borderRadius: 20,
+                  }}>
+                  <LinearGradient
+                    colors={['#AC2BFF', '#6532FFFF']}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}
                     style={{
-                      overflow: 'hidden',
-                      borderRadius: 20,
+                      paddingVertical: 3,
+                      paddingHorizontal: 10,
+                      borderRadius: 20, // Smooth corners
+                      justifyContent: 'center',
+                      alignItems: 'center',
                     }}>
-                    <LinearGradient
-                      colors={['#AC2BFF', '#6532FFFF']}
-                      start={{x: 0, y: 0}}
-                      end={{x: 1, y: 1}}
+                    <Text
                       style={{
-                        paddingVertical: 3,
-                        paddingHorizontal: 10,
-                        borderRadius: 20, // Smooth corners
-                        justifyContent: 'center',
-                        alignItems: 'center',
+                        color: 'white',
+                        fontSize: 10,
+                        fontFamily: 'Poppins-Medium',
                       }}>
-                      <Text
-                        style={{
-                          color: 'white',
-                          fontSize: 10,
-                          fontFamily: 'Poppins-Medium',
-                        }}>
-                        In Challenge
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ) : (
-                  ''
-                )}
-              </Text> */}
+                      In Challenge
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
               <Text
                 style={styles.description}
                 numberOfLines={isExpanded ? undefined : 1}>
-                {video?.data?.description}
+                {video?.description}
               </Text>
             </TouchableOpacity>
           </View>
@@ -587,17 +541,17 @@ const SingleReel = () => {
             <Text style={styles.actionText}>{likeCount}</Text>
           </TouchableOpacity>
           {/* <TouchableOpacity style={styles.actionButton}>
-                <Feather name="message-circle" size={24} color="#FFFFFF" />
-                <Text style={styles.actionText}>190</Text>
-              </TouchableOpacity> */}
+                  <Feather name="message-circle" size={24} color="#FFFFFF" />
+                  <Text style={styles.actionText}>190</Text>
+                </TouchableOpacity> */}
           <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
             <Icon3 name="share" size={24} color="#FFFFFF" />
             {/* <Text style={styles.actionText}>0</Text> */}
           </TouchableOpacity>
           {/* <TouchableOpacity style={styles.actionButton}>
-                <Feather name="bookmark" size={24} color="#FFFFFF" />
-                <Text style={styles.actionText}>743</Text>
-              </TouchableOpacity> */}
+                  <Feather name="bookmark" size={24} color="#FFFFFF" />
+                  <Text style={styles.actionText}>743</Text>
+                </TouchableOpacity> */}
         </View>
       </View>
       <TouchableOpacity
@@ -616,7 +570,7 @@ const SingleReel = () => {
   );
 };
 
-export default SingleReel;
+export default ContestReelView;
 
 const styles = StyleSheet.create({
   container: {

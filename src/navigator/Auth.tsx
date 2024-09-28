@@ -51,7 +51,7 @@ const Auth = () => {
         headerShown: false,
       }}/>
       <Stack.Screen
-      name='OTP'
+      name='Otp'
       component={Verify}
       options={{
         headerShown: false,

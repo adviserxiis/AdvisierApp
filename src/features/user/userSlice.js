@@ -10,7 +10,10 @@ const initialState = {
 
 const userSlice = createSlice({
   name: 'user',
-  initialState,
+  initialState:
+  {
+    userInfo:null,
+  },
   reducers: {
     setUser(state, action) {
       console.log('payload', action);
@@ -19,12 +22,14 @@ const userSlice = createSlice({
       state.password = password || state.password;
       state.token = token || state.token;
       state.userid = userid || state.userid;
+      state.userInfo = action.payload;
     },
     clearUser(state) {
       state.email = '';
       state.password = '';
       state.token = '';
       state.userid= '';
+      state.userInfo = null;
     },
   },
 });

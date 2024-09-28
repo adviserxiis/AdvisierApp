@@ -27,6 +27,7 @@ import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
 import {
+  CommonActions,
   useFocusEffect,
   useNavigation,
   useRoute,
@@ -36,7 +37,6 @@ import {ScrollView} from 'react-native-virtualized-view';
 const {width} = Dimensions.get('window');
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import DeletePost from './screen/DeletePost';
 import Card from './components/Card';
 import {BlurView} from '@react-native-community/blur';
 import PostItem from './components/Postitem';
@@ -143,33 +143,37 @@ const Profile = () => {
           onPress: async () => {
             try {
               // Ensure Google Sign-In is properly configured
+              
               await GoogleSignin.hasPlayServices(); // Check if Google Play services are available
               const currentUser = auth().currentUser;
               if (currentUser) {
                 const providerId = currentUser.providerData[0].providerId;
-
+                
                 // If the user logged in with Google
                 if (providerId === 'google.com') {
                   await GoogleSignin.revokeAccess(); // Optional, revokes all Google permissions
                   await GoogleSignin.signOut();
                 }
-
+                
                 // Sign out from Firebase (common for both email/password and Google)
                 await auth().signOut();
               }
 
-              // Clear local data (if any)
-              clearData();
+              console.log("Logput")
 
+              await AsyncStorage.removeItem('user');
+              // Clear local data (if any)
+              // clearData();
               // Clear user data in Redux
               dispatch(clearUser());
 
-              // navigation.replace('Login');
-              // Reset navigation and navigate to the Login screen
-              // navigation.reset({
-              //   index: 0,
-              //   routes: [{ name: 'Login' }],
-              // });
+              // navigation.dispatch(
+              //   CommonActions.reset({
+              //     index: 0,
+              //     routes: [{ name: 'Login' }], // Use the correct route name here
+              //   })
+              // );
+              
             } catch (error) {
               console.error('Error during logout:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -195,12 +199,12 @@ const Profile = () => {
         const profileData = JSON.parse(storedProfileData);
         setProfile(prev => ({
           ...prev,
-          name: profileData.name || userInfo.user.name,
+          name: profileData.name || userInfo?.user?.name,
           title: profileData.professional_title || '',
           description: profileData.discription || '',
           interests: profileData.interests || [],
           links: profileData.social_links || [],
-          profileImage: profileData.profile_photo || userInfo.user.photo,
+          profileImage: profileData.profile_photo || userInfo?.user.photo || null,
           bannerImage: profileData.profile_background || null,
         }));
       } else {
@@ -598,14 +602,14 @@ const Profile = () => {
           source={
             details?.profile_photo
               ? {uri: details?.profile_photo}
-              : require('../../assets/images/bane.png')
+              : require('../../assets/images/profiles.png')
           }
           style={styles.profileImage}
         />
         <View style={styles.profileDetails}>
           <View style={styles.profileTextContainer}>
             <Text style={styles.profileName}>{details?.username}</Text>
-            <Text style={styles.profileRole}>
+            <Text style={styles.profileRole} numberOfLines={2}>
               {details?.professional_title}
             </Text>
           </View>
@@ -877,7 +881,7 @@ const Profile = () => {
 
       {modalPopUp && (
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={modalPopUp}
           onRequestClose={() => {

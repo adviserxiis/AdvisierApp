@@ -83,7 +83,7 @@ const Register = () => {
       // }
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Main' }],
+        routes: [{ name: 'Tabs' }],
       });
     } catch (error: any) {
       switch (error.code) {
@@ -190,6 +190,9 @@ const Register = () => {
       console.log('Hello', jsonresponse);
       if (jsonresponse.success) {
         // Alert.alert('Success', 'Registration successful');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
         navigation.navigate('Login');
       } else {
         Alert.alert('Error', jsonresponse.message || 'Email Address already exists!');

@@ -1,8 +1,10 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
+  Image,
+  Modal,
   PermissionsAndroid,
   Platform,
   Pressable,
@@ -23,6 +25,7 @@ import {useSelector} from 'react-redux';
 import storage from '@react-native-firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Mixpanel} from 'mixpanel-react-native';
+import Share from 'react-native-share';
 
 const trackAutomaticEvents = false;
 const mixpanel = new Mixpanel(
@@ -32,7 +35,7 @@ const mixpanel = new Mixpanel(
 mixpanel.init();
 
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-const AddPost = () => {
+const ContestReelUpload = () => {
   const navigation = useNavigation();
   // const route = useRoute();
   // const { videoUri } = route.params;
@@ -179,9 +182,32 @@ const AddPost = () => {
   //   }
   // };
 
+  const shareProfile = async () => {
+    const storedProfileData = await AsyncStorage.getItem('user');
+    const profileData = JSON.parse(storedProfileData);
+    console.log('Profile Data', profileData.name);
+    const shareOptions = {
+      message: `Check out ${profileData?.name} profile on this amazing Luink.ai!`,
+      url: 'https://play.google.com/store/apps/details?id=com.advisiorapp', // Replace with your actual URL
+    };
+
+    try {
+      setModalPopUp(false);
+      navigation.navigate('Reel');
+      const result = await Share.open(shareOptions);
+      if (result) {
+        console.log('Shared successfully:', result);
+      }
+    } catch (error:any) {
+      if (error.message) {
+        // Alert.alert('Error', error.message);
+      } else if (error.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    }
+  };
 
   const notifyAllUsers = async () => {
-
     const storedProfileData = await AsyncStorage.getItem('user');
     const profileData = JSON.parse(storedProfileData);
     console.log('Profile Data', profileData.name);
@@ -214,7 +240,30 @@ const AddPost = () => {
     }
   };
 
+  const [modalPopUp, setModalPopUp] = useState(false);
+
+  const [contestId, setContestId] = useState(null);
+
+  useEffect(() => {
+    const getContestId = async () => {
+      try {
+        const value = await AsyncStorage.getItem('Contest_detail');
+        if (value !== null) {
+          // Value exists in AsyncStorage
+          setContestId(value);
+          console.log('Retrieved contestId:', value);
+        }
+      } catch (error) {
+        console.error('Error retrieving contestId from AsyncStorage:', error);
+      }
+    };
+
+    getContestId(); // Fetch contestId on screen load
+  }, []);
+
   const savePost = async () => {
+    console.log('Contest Video Uploaded');
+
     if (!video) {
       Alert.alert('No video selected', 'Please select a video before saving.');
       return;
@@ -274,7 +323,7 @@ const AddPost = () => {
           console.log('Video URL', videoURL);
           // Continue to save the post metadata
           const postResponse = await fetch(
-            'https://adviserxiis-backend-three.vercel.app/post/createpost',
+            'https://adviserxiis-backend-three.vercel.app/contest/uploadcontestreel',
             {
               method: 'POST',
               headers: {
@@ -283,7 +332,8 @@ const AddPost = () => {
               body: JSON.stringify({
                 adviserid: user.userid,
                 videoURL: videoURL,
-                fileType: 'video',
+                // fileType: 'video',
+                contestid: contestId,
                 location: location,
                 description: description,
                 duration: duration,
@@ -302,18 +352,22 @@ const AddPost = () => {
             setDescription('');
             setLocation('');
             setTags([]);
+            setHashTags('');
             mixpanel.identify(user.userid); // Identifies the user by unique ID
             // mixpanel.getPeople().set({
             //   $name: name,
             // });
             // mixpanel.setLoggingEnabled(true);
             mixpanel.track('Post Creation');
-            Alert.alert('Success', 'Reels saved successfully!',[
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Reel'),
-              }
-            ]);
+            // Alert.alert('Success', 'Reels saved successfully!',[
+            //   {
+            //     text: 'OK',
+            //     onPress: () => navigation.navigate('Reel'),
+            //   }
+            // ]);
+            setTimeout(() => {
+              setModalPopUp(true);
+            }, 500);
 
             // navigation.navigate('Reel');
             // Optionally, reset the form after saving
@@ -325,7 +379,7 @@ const AddPost = () => {
         } else {
           throw new Error('Failed to upload video to Bunny.net.');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log('Error:', error.message || error);
         Alert.alert(
           'Error',
@@ -390,7 +444,8 @@ const AddPost = () => {
                     color: 'white',
                     fontSize: 16,
                     fontFamily: 'Poppins-Medium',
-                  }} numberOfLines={2}>
+                  }}
+                  numberOfLines={2}>
                   {description}
                 </Text>
                 <Text
@@ -411,12 +466,12 @@ const AddPost = () => {
           </View>
         </View>
       )}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         {/* <TouchableOpacity onPress={() => navigation.canGoBack() && navigation.goBack()}>
           <Icon name='close-a' size={14} color='white' />
-        </TouchableOpacity> */}
+        </TouchableOpacity> *
         <Text style={styles.title}>Create Reels</Text>
-      </View>
+      </View> */}
       <ScrollView showsVerticalScrollIndicator={false}>
         {!video && (
           <TouchableOpacity
@@ -476,6 +531,7 @@ const AddPost = () => {
           style={{
             flexDirection: 'column',
             gap: 20,
+            marginHorizontal: 16,
           }}>
           <TextInput
             numberOfLines={3}
@@ -559,7 +615,8 @@ const AddPost = () => {
             alignItems: 'center',
             gap: 10,
             marginTop: 20,
-            marginBottom:30,
+            marginBottom: 30,
+            marginHorizontal: 16,
           }}>
           {/* <Pressable style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Save Draft</Text>
@@ -569,6 +626,47 @@ const AddPost = () => {
           </Pressable>
         </View>
       </ScrollView>
+      {modalPopUp && (
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalPopUp}
+          onRequestClose={() => {
+            setModalPopUp(!modalPopUp);
+          }}>
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              {/* Icon */}
+              <View style={styles.iconContainer}>
+                <Image
+                  source={require('../../../assets/images/contestimg.png')}
+                  style={{
+                    width: 80,
+                    objectFit: 'contain',
+                    height: 80,
+                  }}
+                />
+              </View>
+
+              {/* Notification Text */}
+
+              <Text style={styles.boldText}>Your Reel is Uploaded!</Text>
+
+              <Text style={styles.subText}>
+                Congrats, your reel is now live in the challenge. Share it with
+                others to get more votes!
+              </Text>
+
+              {/* Button */}
+              <TouchableOpacity
+                style={styles.button}
+                onPress={shareProfile}>
+                <Text style={styles.buttonText}>Share Reel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -577,7 +675,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#17191A',
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
   },
   overlayContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -679,6 +777,59 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 10,
+    marginHorizontal: 16,
+  },
+  iconContainer: {
+    // marginBottom: 10,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: 300,
+    backgroundColor: '#333',
+    borderRadius: 20,
+    padding: 25,
+    flexDirection: 'column',
+    gap: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  subText: {
+    fontSize: 16,
+    color: 'white',
+    textAlign: 'center',
+    // marginBottom: 20,
+    fontFamily: 'Poppins-Regular',
+  },
+  boldText: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 17,
+    color: 'white',
+    textAlign: 'center',
+    // marginBottom: 10,
+    // marginTop:20,
+  },
+  button: {
+    backgroundColor: '#0069B4',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
   },
   selectButtonText: {
     color: 'white',
@@ -726,4 +877,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPost;
+export default ContestReelUpload;

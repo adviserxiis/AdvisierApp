@@ -462,7 +462,7 @@ const PostItem = ({post, isVisible, getPostlist}) => {
             source={
               post?.adviser?.data?.profile_photo
                 ? {uri: post?.adviser?.data?.profile_photo}
-                : require('../../../assets/images/bane.png')
+                : require('../../../assets/images/profiles.png')
             }
             style={{
               width: 40,
@@ -495,9 +495,10 @@ const PostItem = ({post, isVisible, getPostlist}) => {
             fontSize: 14,
             fontFamily: 'Poppins-Medium',
             color: '#388DEB',
-            textDecorationLine:'underline'
+            marginTop:5,
+            // textDecorationLine: 'underline',
           }}>
-          {post?.data?.luitags}
+          {Array.isArray(post?.data?.luitags) ? post?.data?.luitags.join(' ') : post?.data?.luitags }
         </Text>
         {post?.data?.file_type === 'image' &&
         Array.isArray(post?.data?.post_file) ? (
@@ -823,7 +824,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   profilePic: {
     width: Dimensions.get('window').width - 30, // Full width of the container
@@ -860,11 +861,12 @@ const styles = StyleSheet.create({
   role: {
     color: '#999',
     fontSize: 12,
+    paddingRight: 31,
     fontFamily: 'Poppins-Regular',
   },
   message: {
     color: '#fff',
-    marginVertical: 10,
+    marginTop: 10,
     fontFamily: 'Poppins-Regular',
   },
   interaction: {

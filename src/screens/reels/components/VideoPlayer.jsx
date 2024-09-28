@@ -28,9 +28,11 @@ import Share from 'react-native-share';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BottomSheetModal} from '@gorhom/bottom-sheet';
+import CommentModal from './CommentModal';
+import LinearGradient from 'react-native-linear-gradient';
 
 const {width: screenWidth} = Dimensions.get('window');
-
 
 const VideoPlayer = ({
   video,
@@ -38,7 +40,7 @@ const VideoPlayer = ({
   index,
   currentIndex,
   mute,
-  setMute
+  setMute,
 }) => {
   const videoSrc = video.data.post_file;
   const [paused, setPaused] = useState(true);
@@ -59,6 +61,11 @@ const VideoPlayer = ({
   const screenHeight = Dimensions.get('window').height - BottomTabHeight;
   const [aspectRatio, setAspectRatio] = useState(1);
 
+  const commentModalRef = useRef(null); // No TypeScript type annotation in JS
+
+  const handlePresentCommentModal = () => {
+    commentModalRef.current?.present(); // Present the modal
+  };
   const getResizeMode = () => (aspectRatio > 1 ? 'contain' : 'cover');
 
   useEffect(() => {
@@ -132,10 +139,9 @@ const VideoPlayer = ({
   };
 
   const onLayout = useCallback(event => {
-    const { width } = event.nativeEvent.layout;
+    const {width} = event.nativeEvent.layout;
     setProgressBarWidth(width);
   }, []);
-
 
   useFocusEffect(
     useCallback(() => {
@@ -210,7 +216,7 @@ const VideoPlayer = ({
           }),
         },
       );
-
+      console.log("device token",video)
       const jsonResponse = await response.json();
       console.log('Add like response:', jsonResponse);
 
@@ -227,7 +233,7 @@ const VideoPlayer = ({
             },
             body: JSON.stringify({
               deviceToken: video?.adviser?.data?.device_token,
-              title: 'Post Liked Update',
+              title: 'Reel Like Update',
               body: `${userObject.name} liked Your Reel`,
             }),
           },
@@ -319,7 +325,7 @@ const VideoPlayer = ({
     // console.log('View Update Response', jsonresponse);
   }, [video?.id, user.userid]);
 
-  const onLoad = (data) => {
+  const onLoad = data => {
     setVideoDuration(data.duration);
     // Calculate aspect ratio: width / height
     const ratio = data.naturalSize.width / data.naturalSize.height;
@@ -353,7 +359,8 @@ const VideoPlayer = ({
             bufferForPlaybackAfterRebufferMs={5000}
             muted={mute} // Use the passed mute prop
             repeat={true}
-            preload='auto'
+            autoplay
+            preload="auto"
             bitrate={videoQuality === 'high' ? 1500000 : 500000}
             onLoadStart={() => setBuffering(true)}
             onLoad={onLoad}
@@ -414,11 +421,58 @@ const VideoPlayer = ({
     handleTouch,
   ]);
 
+  const [isExpanded, setIsExpanded] = useState(false);
+  // const slideAnim = useRef(new Animated.Value(0)).current;
+  // const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  // const toggleExpand = () => {
+  //   if (!isExpanded) {
+  //     // Expand
+  //     Animated.parallel([
+  //       Animated.timing(slideAnim, {
+  //         toValue: 1, // fully expanded
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //       Animated.timing(opacityAnim, {
+  //         toValue: 1, // fully visible
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //     ]).start();
+  //   } else {
+  //     // Collapse
+  //     Animated.parallel([
+  //       Animated.timing(slideAnim, {
+  //         toValue: 0, // collapsed
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //       Animated.timing(opacityAnim, {
+  //         toValue: 0, // hidden
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //     ]).start();
+  //   }
+  //   setIsExpanded(!isExpanded);
+  // };
+
+  // const slideUp = slideAnim.interpolate({
+  //   inputRange: [0, 1],
+  //   outputRange: [100, 0], // adjust the first value for how much it should move up
+  // });
+
+  // const containerHeight = slideAnim.interpolate({
+  //   inputRange: [0, 1],
+  //   outputRange: [0, 150], // adjust for the expanded height of profile section
+  // });
+
   return (
     <SafeAreaView
       style={isFullScreen ? styles.fullScreenContainer : styles.container}>
       <StatusBar hidden={isFullScreen} />
-
+      <CommentModal ref={commentModalRef} />
       {renderVideo}
 
       {!isFullScreen && !error && (
@@ -452,23 +506,61 @@ const VideoPlayer = ({
                   source={
                     video?.adviser?.data?.profile_photo
                       ? {uri: video?.adviser?.data?.profile_photo}
-                      : require('../../../assets/images/bane.png')
+                      : require('../../../assets/images/profiles.png')
                   }
                   style={styles.profilePic}
                 />
               </TouchableOpacity>
               <View style={{flexDirection: 'column', width: '73%'}}>
                 <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
                   onPress={() =>
                     navigation.navigate('ViewProfile', video?.adviser?.id)
                   }>
                   <Text style={styles.userName}>
                     {video?.adviser?.data?.username}
                   </Text>
+                  {/* <Text>
+                    {video?.data?.file_type === 'contest_video' ? (
+                      <TouchableOpacity
+                        style={{
+                          overflow: 'hidden',
+                          borderRadius: 20,
+                        }}>
+                        <LinearGradient
+                          colors={['#AC2BFF', '#6532FFFF']}
+                          start={{x: 0, y: 0}}
+                          end={{x: 1, y: 1}}
+                          style={{
+                            paddingVertical: 3,
+                            paddingHorizontal: 10,
+                            borderRadius: 20, // Smooth corners
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}>
+                          <Text style={{
+                            color: 'white',
+                            fontSize: 10,
+                            fontFamily: 'Poppins-Medium', 
+                          }}>In Challenge</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    ) : (
+                      ''
+                    )}
+                  </Text> */}
                 </TouchableOpacity>
-                <Text style={styles.description}>
-                  {video?.data?.description}
-                </Text>
+                <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
+                  <Text
+                    style={styles.description}
+                    numberOfLines={isExpanded ? undefined : 1}>
+                    {video?.data?.description}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
             <View style={styles.actions}>
@@ -496,10 +588,11 @@ const VideoPlayer = ({
                 />
                 <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity style={styles.actionButton}>
-                <Feather name="message-circle" size={24} color="#FFFFFF" />
+              {/* <TouchableOpacity style={styles.actionButton} onPress={handlePresentCommentModal}>
+                <Ionic name="chatbubble-outline" size={24} color="white" />
                 <Text style={styles.actionText}>190</Text>
               </TouchableOpacity> */}
+
               <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
                 <Icon3 name="share" size={24} color="#FFFFFF" />
                 {/* <Text style={styles.actionText}>0</Text> */}
@@ -606,7 +699,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    zIndex:1000,
+    zIndex: 1000,
   },
   progressBar: {
     height: '100%',

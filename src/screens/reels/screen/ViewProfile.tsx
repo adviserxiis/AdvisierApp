@@ -196,7 +196,7 @@ const ViewProfile = () => {
             },
             body: JSON.stringify({
               deviceToken:details?.device_token,
-              title:'Following User Update',
+              title:'Following Update',
               body:`${userObject?.name} started following you!!`
             }),
           },
@@ -406,14 +406,14 @@ const ViewProfile = () => {
           source={
             details?.profile_photo
               ? {uri: details.profile_photo}
-              : require('../../../assets/images/bane.png')
+              : require('../../../assets/images/profiles.png')
           }
           style={styles.profileImage}
         />
         <View style={styles.profileDetails}>
           <View style={styles.profileTextContainer}>
             <Text style={styles.profileName}>{details?.username}</Text>
-            <Text style={styles.profileRole}>
+            <Text style={styles.profileRole} numberOfLines={2}>
               {details?.professional_title}
             </Text>
           </View>

@@ -10,31 +10,33 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
-import { storeData } from '../../utils/store';
-import { setUser } from '../../features/user/userSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {storeData} from '../../utils/store';
+import {setUser} from '../../features/user/userSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Confirm = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
-  const [errors, setErrors] = useState({}); 
-  const user = useSelector((state)=>state.user);
+  const [errors, setErrors] = useState({});
+  const user = useSelector(state => state.user);
   const dispatch = useDispatch();
+
   const submitHandle = async() => {
     const newErrors = {};
-
+  
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
       newErrors.email = 'Email is required';
     } else if (!emailRegex.test(email)) {
       newErrors.email = 'Invalid Email format';
     }
-
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-
+  
     try {
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/sendchangepasswordotp',
@@ -51,12 +53,17 @@ const Confirm = () => {
       );
       const jsonresponse = await response.json();
       console.log(jsonresponse);
-
+      console.log(jsonresponse.userid);
+  
       if (response.status === 200) {
-        storeData('user', jsonresponse.userid);
-        dispatch(setUser({email, userid: jsonresponse.userid}));
-        // navigation.navigate('setProfile');
-        navigation.navigate('OTP')
+        // dispatch(setUser({ email, userid: jsonresponse.userid }));  // Dispatch to update user in Redux
+        await storeData('user', jsonresponse.userid);
+        AsyncStorage.setItem('user', jsonresponse.userid);
+        AsyncStorage.setItem('user1', email);
+        // AsyncStorage.setItem('user', email);
+        // console.log(navigation.getState().routes);
+        // console.log(navigation);  // Ensure navigation is defined
+        navigation.navigate('Otp');  // Ensure case matches
       } else {
         setErrors('Login failed. Please check your credentials.');
       }
@@ -64,8 +71,8 @@ const Confirm = () => {
       console.error('Login Error:', error);
       setErrors('Failed to login. Please try again.');
     }
-
   };
+
   return (
     <View
       style={{
@@ -131,7 +138,8 @@ const Confirm = () => {
           backgroundColor: '#388DEB',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 10,marginVertical:20,
+          borderRadius: 10,
+          marginVertical: 20,
         }}>
         <Text
           style={{
@@ -153,6 +161,6 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
-    marginTop:-10
+    marginTop: -10,
   },
 });
