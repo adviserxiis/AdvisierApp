@@ -17,6 +17,7 @@ import {
   TouchableWithoutFeedback,
   Linking,
   RefreshControl,
+  Button,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -40,6 +41,10 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import Card from './components/Card';
 import {BlurView} from '@react-native-community/blur';
 import PostItem from './components/Postitem';
+import ServicesCard from './components/ServicesCard';
+import BookingCard from './components/BookingCard';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import SetAvailablity from './components/SetAvailablity';
 // import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
 // const adUnitId = __DEV__
@@ -49,6 +54,55 @@ import PostItem from './components/Postitem';
 const reelItemWidth = width / 3; // Subtracting a small value for padding/gaps
 const reelItemHeight = reelItemWidth * 1.7;
 
+// const services = [
+//   {
+//     id: '1',
+//     title: 'UI UX Career Counseling',
+//     description:
+//       'I will provide you personal guidance on how to become UI/UX designer. What all tools you need to learn, and make projects to land on your first job as UI/UX designer...',
+//     price: '₹499',
+//     duration: '30m',
+//   },
+//   {
+//     id: '2',
+//     title: 'UI UX Career Counseling',
+//     description:
+//       'I will provide you personal guidance on how to become UI/UX designer. What all tools you need to learn, and make projects to land on your first job as UI/UX designer...',
+//     price: '₹499',
+//     duration: '30m',
+//   },
+// ];
+
+const bookings = [
+  {
+    id: '1',
+    title: 'UI UX Career Counseling',
+    date: '21-09-24',
+    by: 'Ritik',
+    price: '499',
+    time: '03:00pm',
+    from: '03:30pm',
+  },
+  {
+    id: '2',
+    title: 'UI UX Career Counseling',
+    date: '21-09-24',
+    by: 'Ritik',
+    price: '499',
+    time: '03:00pm',
+    from: '03:30pm',
+  },
+  {
+    id: '3',
+    title: 'UI UX Career Counseling',
+    date: '21-09-24',
+    by: 'Ritik',
+    price: '499',
+    time: '03:00pm',
+    from: '03:30pm',
+  },
+];
+
 const Profile = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
@@ -56,6 +110,7 @@ const Profile = () => {
   const [reels, setReels] = useState([]);
   const user = useSelector(state => state.user);
   const [posts, setPosts] = useState([]);
+  const [services, setServices] = useState([]);
   // const [currentPlaying, setCurrentPlaying] = useState(null);
   // const [viewableItems, setViewableItems] = useState([]);
   const [totalViews, setTotalViews] = useState(0);
@@ -143,23 +198,23 @@ const Profile = () => {
           onPress: async () => {
             try {
               // Ensure Google Sign-In is properly configured
-              
+
               await GoogleSignin.hasPlayServices(); // Check if Google Play services are available
               const currentUser = auth().currentUser;
               if (currentUser) {
                 const providerId = currentUser.providerData[0].providerId;
-                
+
                 // If the user logged in with Google
                 if (providerId === 'google.com') {
                   await GoogleSignin.revokeAccess(); // Optional, revokes all Google permissions
                   await GoogleSignin.signOut();
                 }
-                
+
                 // Sign out from Firebase (common for both email/password and Google)
                 await auth().signOut();
               }
 
-              console.log("Logput")
+              console.log('Logput');
 
               await AsyncStorage.removeItem('user');
               // Clear local data (if any)
@@ -173,7 +228,6 @@ const Profile = () => {
               //     routes: [{ name: 'Login' }], // Use the correct route name here
               //   })
               // );
-              
             } catch (error) {
               console.error('Error during logout:', error);
               Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -204,7 +258,8 @@ const Profile = () => {
           description: profileData.discription || '',
           interests: profileData.interests || [],
           links: profileData.social_links || [],
-          profileImage: profileData.profile_photo || userInfo?.user.photo || null,
+          profileImage:
+            profileData.profile_photo || userInfo?.user.photo || null,
           bannerImage: profileData.profile_background || null,
         }));
       } else {
@@ -231,8 +286,8 @@ const Profile = () => {
       const jsonResponse = await response.json();
       setDetails(jsonResponse);
       const modalShown = await AsyncStorage.getItem('modalShown');
-      if(modalShown === null && jsonResponse?.followers?.length < 100){
-        console.log("Modal pop up again")
+      if (modalShown === null && jsonResponse?.followers?.length < 100) {
+        console.log('Modal pop up again');
         setModalPopUp(true);
         await AsyncStorage.setItem('modalShown', 'true');
       }
@@ -244,11 +299,44 @@ const Profile = () => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("His");
+      // console.log('His');
       getuser();
       getReels();
+      getServices();
     }, []),
   );
+
+  const getServices = async () => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/service/getallservicesofadviser/${user.userid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      // Check if the response is ok (status code 200-299)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Services', data);
+
+      // Check if data.services exists before setting state
+      if (data?.services) {
+        setServices(data.services); // Assuming data.services is an array
+      } else {
+        console.error('No services found in the response');
+      }
+    } catch (error) {
+      // Handle any errors that occur during the fetch
+      console.error('Failed to fetch services:', error);
+    }
+  };
 
   // const handleMonthClick = () => {
   //   // Logic to handle month click, e.g., open a dropdown or modal to select different months.
@@ -370,7 +458,11 @@ const Profile = () => {
     <TouchableOpacity
       style={styles.reelItem}
       onPress={() =>
-        navigation.navigate('singleReel', {video: item, creator: details})
+        navigation.navigate('multipleReel', {
+          video: item,
+          creator: details,
+          advsid: user.userid,
+        })
       }>
       <Video
         source={{uri: item.data.post_file}} // Use video source
@@ -463,21 +555,9 @@ const Profile = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true); // Start refreshing
-
-    try {
-      const newDetails = await getuser();
-      const newReels = await getReels();
-
-      console.log('Fetched details:', newDetails);
-      console.log('Fetched reels:', newReels);
-
-      setDetails(newDetails);
-      setReels(newReels);
-    } catch (error) {
-      console.error('Failed to refresh data:', error);
-    } finally {
-      setRefreshing(false); // Stop refreshing
-    }
+    await getuser();
+    await getReels();
+    setRefreshing(false); // Stop refreshing
   }, []);
 
   const getPostList = async () => {
@@ -504,6 +584,64 @@ const Profile = () => {
       getPostList();
     }, []),
   );
+
+  // const [isExpandeds, setIsExpandeds] = useState(false);
+  // const animationValue = useRef(new Animated.Value(0)).current;
+  // const rotateValue = useRef(new Animated.Value(0)).current;
+
+  // const toggleFAB = () => {
+  //   if (isExpanded) {
+  //     // Collapse animation
+  //     Animated.parallel([
+  //       Animated.timing(animationValue, {
+  //         toValue: 0,
+  //         duration: 300,
+  //         useNativeDriver: true,
+  //       }),
+  //       Animated.timing(rotateValue, {
+  //         toValue: 0,
+  //         duration: 300,
+  //         easing: Easing.linear,
+  //         useNativeDriver: true,
+  //       }),
+  //     ]).start(() => {
+  //       setIsExpanded(false);
+  //     });
+  //   } else {
+  //     // Expand animation
+  //     setIsExpanded(true);
+  //     Animated.parallel([
+  //       Animated.timing(animationValue, {
+  //         toValue: 1,
+  //         duration: 300,
+  //         useNativeDriver: true,
+  //       }),
+  //       Animated.timing(rotateValue, {
+  //         toValue: 1,
+  //         duration: 300,
+  //         easing: Easing.linear,
+  //         useNativeDriver: true,
+  //       }),
+  //     ]).start();
+  //   }
+  // };
+
+  // const slidePostOption = animationValue.interpolate({
+  //   inputRange: [0, 1],
+  //   outputRange: [50, 0], // Moves vertically (slide in/out)
+  // });
+
+  // const slideReelsOption = animationValue.interpolate({
+  //   inputRange: [0, 1],
+  //   outputRange: [100, 0], // Moves vertically (slide in/out)
+  // });
+
+  // const rotateIcon = rotateValue.interpolate({
+  //   inputRange: [0, 1],
+  //   outputRange: ['0deg', '45deg'], // Rotate the plus icon into an X
+  // });
+
+
 
   return (
     <ScrollView
@@ -818,6 +956,36 @@ const Profile = () => {
           </Text>
           {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            activeTab === 'services' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('services')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'services' && styles.activeNavText,
+            ]}>
+            SERVICES
+          </Text>
+          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            activeTab === 'booking' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('booking')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'booking' && styles.activeNavText,
+            ]}>
+            BOOKING
+          </Text>
+          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
+        </TouchableOpacity>
       </View>
 
       {activeTab === 'reels' ? (
@@ -834,30 +1002,59 @@ const Profile = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.reelsList}
             columnWrapperStyle={styles.reelColumnWrapper}
-            // onViewableItemsChanged={onViewableItemsChanged}
-            // viewabilityConfig={viewabilityConfig}
           />
         )
-      ) : posts.length === 0 ? (
-        <View style={styles.noPostsContainer}>
-          <Text style={styles.noPostsText}>No posts available</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={posts}
-          showsVerticalScrollIndicator={false}
-          renderItem={({item, index}) => (
-            <PostItem
-              post={item}
-              isVisible={visiblePostIndex === index}
-              getPostlist={getPostList}
-            />
-          )}
-          keyExtractor={item => item.id}
-          onViewableItemsChanged={onViewableItemsChanged.current}
-          viewabilityConfig={viewabilityConfig}
-        />
-      )}
+      ) : activeTab === 'posts' ? (
+        posts.length === 0 ? (
+          <View style={styles.noPostsContainer}>
+            <Text style={styles.noPostsText}>No posts available</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={posts}
+            showsVerticalScrollIndicator={false}
+            renderItem={({item, index}) => (
+              <PostItem
+                post={item}
+                isVisible={visiblePostIndex === index}
+                getPostlist={getPostList}
+              />
+            )}
+            keyExtractor={item => item.id}
+            onViewableItemsChanged={onViewableItemsChanged.current}
+            viewabilityConfig={viewabilityConfig}
+          />
+        )
+      ) : activeTab === 'services' ? (
+        services.length === 0 ? (
+          <View style={styles.noReelsContainer}>
+            <Text style={styles.noReelsText}>No services available</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={services}
+            ListHeaderComponent={<SetAvailablity />}
+            renderItem={({item}) => <ServicesCard service={item} />}
+            keyExtractor={item => item.serviceid}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.servicesList}
+          />
+        )
+      ) : activeTab === 'booking' ? (
+        bookings.length === 0 ? (
+          <View style={styles.noPostsContainer}>
+            <Text style={styles.noPostsText}>No bookings available</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={bookings}
+            renderItem={({item}) => <BookingCard booking={item} />}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.bookingsList}
+          />
+        )
+      ) : null}
 
       {/* <View style={styles.reelsSection}>
         {reels?.length === 0 ? (
@@ -923,6 +1120,8 @@ const Profile = () => {
           </View>
         </Modal>
       )}
+
+      
     </ScrollView>
   );
 };
@@ -993,6 +1192,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
+  },
+  servicesList: {
+    // paddingHorizontal:10,
+    // paddingVertical:5,
   },
   monthView: {
     alignItems: 'center',
@@ -1171,7 +1374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 10,
-    paddingHorizontal: 90,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
@@ -1248,6 +1451,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
   },
+ 
 });
 
 export default Profile;

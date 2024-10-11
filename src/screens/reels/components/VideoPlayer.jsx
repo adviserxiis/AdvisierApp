@@ -31,6 +31,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BottomSheetModal} from '@gorhom/bottom-sheet';
 import CommentModal from './CommentModal';
 import LinearGradient from 'react-native-linear-gradient';
+import {TapGestureHandler} from 'react-native-gesture-handler';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -60,6 +61,7 @@ const VideoPlayer = ({
   const BottomTabHeight = useBottomTabBarHeight();
   const screenHeight = Dimensions.get('window').height - BottomTabHeight;
   const [aspectRatio, setAspectRatio] = useState(1);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const commentModalRef = useRef(null); // No TypeScript type annotation in JS
 
@@ -96,6 +98,99 @@ const VideoPlayer = ({
       setPaused(true);
     }
   }, [isVisible, currentIndex, index]);
+
+  // console.log(video?.adviser?.data);
+
+  const followUser = async () => {
+    const userObjectString = await AsyncStorage.getItem('user');
+    let userObject = null;
+    console.log('Adviser ID:', video?.data?.adviserid);
+    console.log('Adviser ID:', user.userid);
+
+    if (userObjectString) {
+      userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
+      console.log('User', userObject.name);
+    }
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/followcreator',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            adviserid: video?.data?.adviserid,
+            followerid: user.userid,
+          }),
+        },
+      );
+      const jsonresponse = await response.json();
+      console.log('Follow response', jsonresponse);
+
+      if (response.ok) {
+        console.log('higg');
+        setIsFollowing(true);
+        const NotificationResponse = await fetch(
+          'https://adviserxiis-backend-three.vercel.app/notification/sendnotification',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              deviceToken: video?.adviser?.data?.device_token,
+              title: 'Following Update',
+              body: `${userObject?.name} started following you!!`,
+            }),
+          },
+        );
+        const jsonresponse = await NotificationResponse.json();
+        console.log('Follow response', jsonresponse);
+      } else {
+        console.error('Failed to follow:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error in follow request:', error);
+    }
+  };
+
+  const unfollowUser = async () => {
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/unfollowcreator',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            adviserid: video?.data?.adviserid,
+            followerid: user.userid,
+          }),
+        },
+      );
+      const jsonresponse = await response.json();
+      console.log('UnFollow response', jsonresponse);
+
+      if (response.ok) {
+        console.log('higga');
+        setIsFollowing(false);
+      } else {
+        console.error('Failed to unfollow:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error in unfollow request:', error);
+    }
+  };
+
+  const handleFollowToggle = () => {
+    if (isFollowing) {
+      unfollowUser();
+    } else {
+      followUser();
+    }
+  };
 
   // Handle orientation changes
   // useEffect(() => {
@@ -184,7 +279,6 @@ const VideoPlayer = ({
       setLikeCount(prevCount => prevCount - 1);
     } else {
       await AddLiked(video?.id);
-      setLikeCount(prevCount => prevCount + 1);
     }
     console.log('Video like toggled:', video?.id);
   }, [like, video?.id]);
@@ -216,12 +310,14 @@ const VideoPlayer = ({
           }),
         },
       );
-      console.log("device token",video)
+      console.log('device token', video);
       const jsonResponse = await response.json();
       console.log('Add like response:', jsonResponse);
 
       if (response.status === 200) {
         setLike(true);
+        setLikeCount(prevCount => prevCount + 1);
+        // onDoubleTap();
         console.log('Hiesdddhdjasdjabjcjd');
 
         const NotificationResponse = await fetch(
@@ -333,6 +429,33 @@ const VideoPlayer = ({
     setBuffering(false);
   };
 
+  const [doubleTap, setDoubleTap] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+
+  const onDoubleTap = async videoid => {
+    console.log('Bodo');
+    console.log(videoid);
+    // setLike(true);
+    setDoubleTap(true);
+    await AddLiked(videoid);
+    // setLikeCount(prevCount => prevCount + 1);
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setDoubleTap(false));
+
+    // setTimeout(() => {
+    //   setDoubleTap(false);
+    // }, 10000);
+  };
   // Only render the video component if it is visible and there is no error
   const renderVideo = useMemo(() => {
     if (!isVisible || currentIndex !== index) return null;
@@ -366,6 +489,31 @@ const VideoPlayer = ({
             onLoad={onLoad}
             onProgress={handleProgress}
           />
+
+          <TapGestureHandler
+            onActivated={() => onDoubleTap(video?.id)}
+            numberOfTaps={2}>
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              {doubleTap && (
+                <Animated.View
+                  style={[
+                    styles.likeAnimation,
+                    {transform: [{scale: scaleAnim}]},
+                  ]}>
+                  <Icon name="heart" size={120} color="white" />
+                </Animated.View>
+              )}
+            </View>
+          </TapGestureHandler>
           {buffering && !error && (
             <ActivityIndicator
               size="large"
@@ -512,19 +660,20 @@ const VideoPlayer = ({
                 />
               </TouchableOpacity>
               <View style={{flexDirection: 'column', width: '73%'}}>
-                <TouchableOpacity
+                <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 10,
-                  }}
-                  onPress={() =>
-                    navigation.navigate('ViewProfile', video?.adviser?.id)
-                  }>
-                  <Text style={styles.userName}>
-                    {video?.adviser?.data?.username}
-                  </Text>
-                  {/* <Text>
+                  }}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('ViewProfile', video?.adviser?.id)
+                    }>
+                    <Text style={styles.userName}>
+                      {video?.adviser?.data?.username}
+                    </Text>
+                    {/* <Text>
                     {video?.data?.file_type === 'contest_video' ? (
                       <TouchableOpacity
                         style={{
@@ -553,16 +702,43 @@ const VideoPlayer = ({
                       ''
                     )}
                   </Text> */}
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
-                  <Text
-                    style={styles.description}
-                    numberOfLines={isExpanded ? undefined : 1}>
-                    {video?.data?.description}
-                  </Text>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.followButton,
+                      {
+                        backgroundColor: isFollowing
+                          ? 'transparent'
+                          : '#388DEB',
+                        borderColor: isFollowing ? '' : 'transparent',
+                        borderWidth: isFollowing ? 0 : 0,
+                      },
+                    ]}
+                    onPress={handleFollowToggle}>
+                    <Text
+                      style={[
+                        styles.editProfileText,
+                        {
+                          color: isFollowing ? '' : 'white',
+                        },
+                      ]}>
+                      {isFollowing ? '' : 'Follow'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
+            <TouchableOpacity
+              onPress={() => setIsExpanded(!isExpanded)}
+              style={{
+                marginTop: 10,
+              }}>
+              <Text
+                style={styles.description}
+                numberOfLines={isExpanded ? undefined : 1}>
+                {video?.data?.description}
+              </Text>
+            </TouchableOpacity>
             <View style={styles.actions}>
               <TouchableOpacity style={styles.actionButton}>
                 <Ionic
@@ -588,10 +764,12 @@ const VideoPlayer = ({
                 />
                 <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity style={styles.actionButton} onPress={handlePresentCommentModal}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handlePresentCommentModal}>
                 <Ionic name="chatbubble-outline" size={24} color="white" />
                 <Text style={styles.actionText}>190</Text>
-              </TouchableOpacity> */}
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
                 <Icon3 name="share" size={24} color="#FFFFFF" />
@@ -658,6 +836,11 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     padding: 10,
   },
+  likeAnimation: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loadingIndicator: {
     position: 'absolute',
     left: '50%',
@@ -691,6 +874,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  followButton: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editProfileText: {
+    fontSize: 12,
+    color: 'white',
+    textAlign: 'right',
+    fontFamily: 'Poppins-Medium',
   },
   progressBarContainer: {
     position: 'absolute',
@@ -760,7 +956,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontFamily: 'Poppins-Regular',
-    width: '100%',
+    width: '90%',
     opacity: 0.7,
     lineHeight: 18,
   },

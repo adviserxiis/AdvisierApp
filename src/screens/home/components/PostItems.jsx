@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -29,7 +30,7 @@ import Pinchable from 'react-native-pinchable';
 
 const PostItems = ({post, isVisible, getpost}) => {
   const user = useSelector(state => state.user);
-
+  const [isExpanded, setIsExpanded] = useState(false);
   const [like, setLike] = useState(post?.data?.likes?.includes(user.userid));
   const [likeCount, setLikeCount] = useState(
     (post.data.likes || []).length || 0,
@@ -43,12 +44,11 @@ const PostItems = ({post, isVisible, getpost}) => {
 
   const scale = useRef(new Animated.Value(1)).current;
 
-  const onPinchEvent = Animated.event(
-    [{ nativeEvent: { scale: scale } }],
-    { useNativeDriver: true }
-  );
+  const onPinchEvent = Animated.event([{nativeEvent: {scale: scale}}], {
+    useNativeDriver: true,
+  });
 
-  const onPinchStateChange = (event) => {
+  const onPinchStateChange = event => {
     if (event.nativeEvent.oldState === 4) {
       // When the gesture ends, reset the scale if desired
       Animated.spring(scale, {
@@ -160,7 +160,7 @@ const PostItems = ({post, isVisible, getpost}) => {
         console.error('Backend error:', data.error);
       } else {
         // setComments([...comments, data]); // Uncomment if comments updating works fine.
-        console.log("devie",post?.adviser?.data?.device_token)
+        console.log('devie', post?.adviser?.data?.device_token);
         fetchComment();
         getpost();
         const NotificationResponse = await fetch(
@@ -443,6 +443,31 @@ const PostItems = ({post, isVisible, getpost}) => {
     }
   };
 
+  const toggleDescription = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const parseTextWithLinks = text => {
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlPattern);
+
+    return parts.map((part, index) => {
+      if (urlPattern.test(part)) {
+        // If the part is a URL, render it as a clickable link with a different color
+        return (
+          <Text
+            key={index}
+            style={styles.link}
+            onPress={() => Linking.openURL(part)}>
+            {part}
+          </Text>
+        );
+      } else {
+        // Otherwise, render it as regular text
+        return <Text key={index}>{part}</Text>;
+      }
+    });
+  };
   return (
     <View>
       <View style={styles.postContainer}>
@@ -471,7 +496,14 @@ const PostItems = ({post, isVisible, getpost}) => {
             </Text>
           </View>
         </View>
-        <Text style={styles.message}>{post?.data?.description ? post?.data?.description : null}</Text>
+        <Pressable onPress={toggleDescription}>
+          <Text style={styles.message} numberOfLines={isExpanded ? undefined : 2}>
+            {/* {post?.data?.description ? post?.data?.description : null} */}
+            {post?.data?.description
+              ? parseTextWithLinks(post?.data?.description)
+              : post?.data?.description}
+          </Text>
+        </Pressable>
         <Text
           style={{
             fontSize: 14,
@@ -480,9 +512,11 @@ const PostItems = ({post, isVisible, getpost}) => {
             // marginTop:5,
             // textDecorationLine: 'underline',
           }}>
-           {/* Array.isArray(post?.data?.luitags) ? */}
-           {/* {post?.data?.luitags }  */}
-           {Array.isArray(post?.data?.luitags) ? post.data.luitags.join(' ') : post.data.luitags}
+          {/* Array.isArray(post?.data?.luitags) ? */}
+          {/* {post?.data?.luitags }  */}
+          {Array.isArray(post?.data?.luitags)
+            ? post.data.luitags.join(' ')
+            : post.data.luitags}
         </Text>
         {post?.data?.file_type === 'image' &&
         Array.isArray(post?.data?.post_file) ? (
@@ -494,11 +528,11 @@ const PostItems = ({post, isVisible, getpost}) => {
               renderItem={({item}) => (
                 // <Pinchable>
 
-                  <Image
-                    source={{uri: item}}
-                    style={styles.postMediaImage} // Style for the image
-                    resizeMode="contain"
-                  />
+                <Image
+                  source={{uri: item}}
+                  style={styles.postMediaImage} // Style for the image
+                  resizeMode="contain"
+                />
                 // </Pinchable>
               )}
               pagingEnabled
@@ -530,11 +564,11 @@ const PostItems = ({post, isVisible, getpost}) => {
           post?.data?.file_type === 'image' && (
             // Handle single image
             // <Pinchable>
-              <Image
-                source={{uri: post?.data?.post_file}}
-                style={styles.postMediaImage} // Style for the image
-                resizeMode="contain"
-              />
+            <Image
+              source={{uri: post?.data?.post_file}}
+              style={styles.postMediaImage} // Style for the image
+              resizeMode="contain"
+            />
             // </Pinchable>
           )
         )}
@@ -742,18 +776,31 @@ const PostItems = ({post, isVisible, getpost}) => {
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item, index}) => (
                 <View style={styles.commentContainer}>
-                  <Image
-                    source={
-                      item?.adviserDetails?.profile_photo
-                        ? {uri: item?.adviserDetails?.profile_photo}
-                        : require('../../../assets/images/bane.png')
-                    }
-                    style={styles.commentProfilePic}
-                  />
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('PostView', item?.adviserDetails?.id)
+                    }>
+                    <Image
+                      source={
+                        item?.adviserDetails?.profile_photo
+                          ? {uri: item?.adviserDetails?.profile_photo}
+                          : require('../../../assets/images/bane.png')
+                      }
+                      style={styles.commentProfilePic}
+                    />
+                  </TouchableOpacity>
                   <View style={styles.commentTextContainer}>
-                    <Text style={styles.commentUsername}>
-                      {item?.adviserDetails?.username} 
-                    </Text>
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate(
+                          'PostView',
+                          item?.adviserDetails?.id,
+                        )
+                      }>
+                      <Text style={styles.commentUsername}>
+                        {item?.adviserDetails?.username}
+                      </Text>
+                    </Pressable>
                     <Text style={styles.commentText}>{item?.message}</Text>
                   </View>
                   {item?.adviserDetails?.id === user.userid && (
@@ -977,5 +1024,9 @@ const styles = StyleSheet.create({
   commentText: {
     fontFamily: 'Poppins-Regular',
     color: '#838383',
+  },
+  link: {
+    color: '#388DEB', // Set the link color
+    textDecorationLine: 'underline',
   },
 });

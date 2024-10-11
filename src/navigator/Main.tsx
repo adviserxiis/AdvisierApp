@@ -1,12 +1,13 @@
 // App.js
 import * as React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text, View} from 'react-native';
+import {Text, TouchableOpacity, View} from 'react-native';
 import User from '../screens/user/user';
 import Profile from '../screens/profile/profile';
 import Icon from 'react-native-vector-icons/Feather';
+import Icon1 from 'react-native-vector-icons/FontAwesome5';
 import Search from '../screens/search/Search';
 import AddPost from '../screens/add/AddPost';
 import UpdateProfile from '../screens/profile/screen/UpdateProfile';
@@ -20,8 +21,16 @@ import PostView from '../screens/home/screen/PostView';
 import LeadershipBoard from '../screens/home/screen/LeadershipBoard';
 import ContestReelUpload from '../screens/home/screen/ContestReelUpload';
 import ContestReelView from '../screens/home/screen/ContestReelView';
+import MultipleReel from '../screens/reels/screen/MultipleReel';
+import ServicesPost from '../screens/home/screen/ServicesPost';
+import PreviewScreen from '../screens/profile/screen/PreviewScreen';
+import EditServices from '../screens/profile/screen/EditServices';
+import KnowMore from '../screens/home/screen/KnowMore';
 // import Login from '../screens/auth/Login';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import CallScreen from '../screens/profile/screen/CallScreen';
 
+const Tabs = createMaterialTopTabNavigator();
 //Home Stack
 const HomeStack = createStackNavigator();
 function HomeStackScreen() {
@@ -47,14 +56,14 @@ function HomeStackScreen() {
         }}
       />
       <HomeStack.Screen
-        name="singleReel"
-        component={SingleReel}
+        name="multipleReel"
+        component={MultipleReel}
         options={{
           headerShown: false,
         }}
       />
-      <HomeStack.Screen 
-        name='ContestReelView'
+      <HomeStack.Screen
+        name="ContestReelView"
         component={ContestReelView}
         options={{
           headerShown: false,
@@ -84,8 +93,8 @@ function ReelStackScreen() {
         }}
       />
       <ReelStack.Screen
-        name="singleReel"
-        component={SingleReel}
+        name="multipleReel"
+        component={MultipleReel}
         options={{
           headerShown: false,
         }}
@@ -144,8 +153,8 @@ function SearchStackScreen() {
         }}
       />
       <SearchStack.Screen
-        name="singleReel"
-        component={SingleReel}
+        name="multipleReel"
+        component={MultipleReel}
         options={{
           headerShown: false,
         }}
@@ -153,6 +162,7 @@ function SearchStackScreen() {
     </SearchStack.Navigator>
   );
 }
+
 
 //Profile Stack
 const ProfileStack = createStackNavigator();
@@ -167,8 +177,8 @@ function ProfileStackScreen() {
         }}
       />
       <ProfileStack.Screen
-        name="singleReel"
-        component={SingleReel}
+        name="multipleReel"
+        component={MultipleReel}
         options={{
           headerShown: false,
         }}
@@ -246,6 +256,8 @@ function MyTabs() {
 // Stack Navigator
 const Stack = createStackNavigator();
 function MyStack() {
+
+  const navigation = useNavigation();
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -302,17 +314,95 @@ function MyStack() {
           // headerShadowVisible:false
         }}
       />
-      <Stack.Screen name="ContestReelUpload" component={ContestReelUpload}  
+      <Stack.Screen
+        name="ContestReelUpload"
+        component={ContestReelUpload}
         options={{
-          headerShown:true,
-          title:'',
+          headerShown: true,
+          title: '',
           headerStyle: {
             backgroundColor: '#17191A',
           },
-          headerShadowVisible:false,
-          headerTintColor:'white'
+          headerShadowVisible: false,
+          headerTintColor: 'white',
         }}
       />
+      <Stack.Screen
+        name="ServicesPost"
+        component={ServicesPost}
+        options={{
+          headerShown: true,
+          title:'Create Service',
+          headerTitleStyle:{
+            fontFamily:'Poppins-Medium'
+          },
+          headerStyle: {
+            backgroundColor: '#17191A',
+          },
+          headerShadowVisible: false,
+          headerTintColor: 'white',
+        }}
+      />
+      <Stack.Screen
+        name="PreviewScreen"
+        component={PreviewScreen}
+        // options={{
+        //   headerShown: true,
+        //   title:'Service',
+        //   headerTitleStyle:{
+        //     fontFamily:'Poppins-Medium'
+        //   },
+        //   headerRight:()=>(
+        //     <TouchableOpacity style={{
+        //       marginRight:16
+        //     }} onPress={()=>{
+        //       navigation.navigate('EditServices');
+        //     }}>
+        //     <Icon1 name='pen' color='white' size={16}/>
+        //     </TouchableOpacity>
+        //   ),
+        //   headerStyle: {
+        //     backgroundColor: '#17191A',
+        //   },
+        //   headerShadowVisible: false,
+        //   headerTintColor: 'white',
+        // }}
+      />
+      <Stack.Screen
+        name="EditServices"
+        component={EditServices}
+        options={{
+          headerShown: true,
+          title:'Edit Service',
+          headerTitleStyle:{
+            fontFamily:'Poppins-Medium'
+          },
+          headerStyle: {
+            backgroundColor: '#17191A',
+          },
+          headerShadowVisible: false,
+          headerTintColor: 'white',
+        }}
+      />
+      <Stack.Screen
+        name="KnowMore"
+        component={KnowMore}
+        options={{
+          headerShown: true,
+          title:'Service',
+          headerTitleStyle:{
+            fontFamily:'Poppins-Medium'
+          },
+          headerStyle: {
+            backgroundColor: '#17191A',
+          },
+          headerShadowVisible: false,
+          headerTintColor: 'white',
+        }}
+      />
+      <Stack.Screen name='CallScreen' options={{
+        headerShown:false
+      }} component={CallScreen}/>
     </Stack.Navigator>
   );
 }

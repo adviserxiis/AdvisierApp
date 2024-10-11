@@ -233,6 +233,23 @@ const AddPost = () => {
     setLoading(true);
     setProgress(0);
 
+    // console.log(duration);
+    if (duration > 30) {
+      Alert.alert(
+        'Video too long',
+        'The video exceeds 30 seconds.',
+        [
+          {
+            text: 'OK',
+          },
+        ],
+      );
+      setLoading(false);
+      return;
+    }
+
+    
+
     const updateProgress = () => {
       return new Promise(resolve => {
         let currentProgress = 0;

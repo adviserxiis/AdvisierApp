@@ -94,7 +94,9 @@ const SearchText = () => {
       )}
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userDescription} numberOfLines={2}>{item.description}</Text>
+        <Text style={styles.userDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
       </View>
       {/* <TouchableOpacity style={styles.closeButton} onPress={() => handleClose(item.id)}>
         <Icon name="x" size={20} color="#B0B3B8" />
@@ -120,10 +122,17 @@ const SearchText = () => {
             height: 40,
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginTop:12,
-            marginBottom:10,
+            marginTop: 12,
+            marginBottom: 10,
           }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                console.warn('No screen to go back to');
+              }
+            }}>
             <Icon name="arrow-left" size={20} color="white" />
           </TouchableOpacity>
           <View style={styles.searchContainer}>

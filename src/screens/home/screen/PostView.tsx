@@ -24,7 +24,9 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
-import PostItems from '../../home/components/PostItems';
+// import PostItems from '../../home/components/PostItems';
+import PostItems from './../components/PostItems';
+import CreatroServices from '../../reels/components/CreatroService';
 
 const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/4940380881';
 // const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-3940256099942544/9214589741';
@@ -63,6 +65,44 @@ const PostView = () => {
       setVisiblePostIndex(viewableItems[0].index); // Set index of visible post
     }
   });
+
+  const [services, setServices] = useState([]);
+
+  const getServices = async () => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/service/getallservicesofadviser/${advsid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+  
+      // Check if the response is ok (status code 200-299)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log('Services', data);
+  
+      // Check if data.services exists before setting state
+      if (data?.services) {
+        setServices(data.services); // Assuming data.services is an array
+      } else {
+        console.error('No services found in the response');
+      }
+    } catch (error) {
+      // Handle any errors that occur during the fetch
+      console.error('Failed to fetch services:', error);
+    }
+  };
+
+  useEffect(()=>{
+    getServices();
+  },[])
   
 
   const toggleDescription = () => {
@@ -265,7 +305,7 @@ const PostView = () => {
     <TouchableOpacity
       style={styles.reelItem}
       onPress={() =>
-        navigation.navigate('singleReel', {video: item, creator: details})
+        navigation.navigate('multipleReel', {video: item, creator: details, advsid: advsid})
       }>
       <Video
         source={{uri: item.data.post_file}} // Use video source
@@ -608,6 +648,21 @@ const PostView = () => {
           <Text style={[styles.navText, activeTab === 'reels' && styles.activeNavText]}>REELS</Text>
           {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            activeTab === 'services' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('services')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'services' && styles.activeNavText,
+            ]}>
+            SERVICES
+          </Text>
+          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
+        </TouchableOpacity>
       </View>
 
       {activeTab === 'reels' ? (
@@ -624,27 +679,46 @@ const PostView = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.reelsList}
             columnWrapperStyle={styles.reelColumnWrapper}
-            // onViewableItemsChanged={onViewableItemsChanged}
-            // viewabilityConfig={viewabilityConfig}
           />
         )
-      ) : ( posts.length === 0 ? (
-        <View style={styles.noPostsContainer}>
-          <Text style={styles.noPostsText}>No posts available</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={posts}
-          showsVerticalScrollIndicator={false}
-          renderItem={({item, index}) => (
-            <PostItems post={item} isVisible={visiblePostIndex === index} getpost={getPostList} />
-          )}
-          keyExtractor={item => item.id}
-          onViewableItemsChanged={onViewableItemsChanged.current}
-          viewabilityConfig={viewabilityConfig}
-        />
-      )
-      )}
+      ) : activeTab === 'posts' ? (
+        posts.length === 0 ? (
+          <View style={styles.noPostsContainer}>
+            <Text style={styles.noPostsText}>No posts available</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={posts}
+            showsVerticalScrollIndicator={false}
+            renderItem={({item, index}) => (
+              <PostItems
+                post={item}
+                isVisible={visiblePostIndex === index}
+                getpost={getPostList}
+              />
+            )}
+            keyExtractor={item => item.id}
+            onViewableItemsChanged={onViewableItemsChanged.current}
+            viewabilityConfig={viewabilityConfig}
+          />
+        )
+      ) : activeTab === 'services' ? (
+        services.length === 0 ? (
+          <View style={styles.noReelsContainer}>
+            <Text style={styles.noReelsText}>No services available</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={services}
+            renderItem={({item}) => (
+              <CreatroServices service={item}/>
+            )}
+            keyExtractor={item => item.serviceid}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.servicesList}
+          />
+        )
+      ) : null}
 
       {/* <View style={styles.reelsSection}>
         {reels.length === 0 ? (
@@ -826,7 +900,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 10,
-    paddingHorizontal:90,
+    paddingHorizontal:20,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },

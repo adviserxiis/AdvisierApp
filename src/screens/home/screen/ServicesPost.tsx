@@ -1,0 +1,647 @@
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+// import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useSelector} from 'react-redux';
+import Icon from 'react-native-vector-icons/Feather';
+import DatePicker from 'react-native-date-picker';
+const ServicesPost = () => {
+  const [servicename, setServiceName] = useState('');
+  const [description, setDescription] = useState('');
+  const [duration, setDuration] = useState('');
+  const [price, setPrice] = useState('');
+  const [descriptionHeight, setDescriptionHeight] = useState(44);
+  const user = useSelector(state => state.user);
+  const [loading, setLoading] = useState(false);
+
+  const [isServiceFocused, setIsServiceFocused] = useState(false);
+  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
+  const [isDurationFocused, setIsDurationFocused] = useState(false);
+  const [isPriceFocused, setIsPriceFocused] = useState(false);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    if (!servicename || !description || !duration || !price) {
+      Alert.alert('Error', 'Please fill all the fields');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/service/createservice',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            service_name: servicename,
+            about_service: description,
+            duration: duration,
+            price: price,
+            adviserid: user.userid,
+          }),
+        },
+      );
+
+      const data = await response.json();
+      console.log(data);
+
+      if (response.ok) {
+        Alert.alert('Success', 'Service created successfully!');
+        // Optionally clear fields after successful submission
+        setServiceName('');
+        setDescription('');
+        setDuration('');
+        setPrice('');
+      } else {
+        Alert.alert(
+          'Error',
+          data.message || 'Something went wrong, please try again.',
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error, please try again later.');
+    } finally {
+      setLoading(false); // End loading
+    }
+  };
+
+  const [AvailableModal, setAvailableModal] = useState(true);
+  const [selectedTime, setSelectedTime] = useState({
+    Monday: {start: new Date(), end: new Date()},
+    Tuesday: {start: new Date(), end: new Date()},
+    Wednesday: {start: new Date(), end: new Date()},
+    Thursday: {start: new Date(), end: new Date()},
+    Friday: {start: new Date(), end: new Date()},
+    Saturday: {start: new Date(), end: new Date()},
+    Sunday: {start: new Date(), end: new Date()},
+  });
+
+  useEffect(() => {
+    setAvailableModal(true);
+  }, []);
+
+  const [currentDay, setCurrentDay] = useState('');
+  const [isStart, setIsStart] = useState(true);
+  const [showPicker, setShowPicker] = useState(false);
+  const [checkedbox, setCheckedBox] = useState(false);
+
+  const handleTimeConfirm = selectedDate => {
+    setSelectedTime({
+      ...selectedTime,
+      [currentDay]: {
+        ...selectedTime[currentDay],
+        [isStart ? 'start' : 'end']: selectedDate,
+      },
+    });
+    setShowPicker(false); // Close the picker after selecting the time
+  };
+
+  const openTimePicker = (day, isStartTime) => {
+    setCurrentDay(day);
+    setIsStart(isStartTime);
+    setShowPicker(true);
+  };
+
+  const handleAvailable = async () => {
+    const availableTimes = Object.keys(selectedTime)
+      .filter(day => checkedbox[day]) // Only get days where the checkbox is true
+      .map(day => {
+        const { start: startTime, end: endTime } = selectedTime[day];
+  
+        // Check if end time is less than start time
+        if (endTime < startTime) {
+          Alert.alert(
+            'Error',
+            `End time cannot be less than start time for ${day}.`,
+          );
+          return null; // Skip this day
+        }
+  
+        // Format startTime and endTime in "AM/PM" format and convert to uppercase
+        const formattedStartTime = startTime
+          .toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true // Force AM/PM format
+          })
+          .toUpperCase(); // Convert to uppercase
+  
+        const formattedEndTime = endTime
+          .toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true // Force AM/PM format
+          })
+          .toUpperCase(); // Convert to uppercase
+  
+        return {
+          day,
+          startTime: formattedStartTime, // Send in "AM/PM" uppercase format
+          endTime: formattedEndTime, // Send in "AM/PM" uppercase format
+        };
+      })
+      .filter(Boolean); // Filter out null values
+  
+    if (availableTimes.length === 0) {
+      Alert.alert('Warning', 'No valid availability times to submit.');
+      return; // Exit if there are no valid times
+    }
+  
+    try {
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/creator/saveavailability',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            availability: availableTimes.map(({ day, startTime, endTime }) => ({
+              day,
+              startTime,
+              endTime,
+            })),
+            adviserid: user.userid,
+          }),
+        },
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Unknown error');
+      }
+  
+      console.log('Success:', data);
+      if (response.ok) {
+        setAvailableModal(false);
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      Alert.alert('Error', error.message);
+    }
+  
+    console.log('Available times:', availableTimes);
+  };
+  
+  
+  
+
+  return (
+    <View style={styles.container}>
+      {loading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}>
+          <ActivityIndicator size={'large'} color={'white'} />
+        </View>
+      )}
+      <View
+        style={{
+          flexDirection: 'column',
+          gap: 20,
+          marginTop: 20,
+        }}>
+        <View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            {(isServiceFocused || servicename) && (
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  opacity: 0.5,
+                  // textAlign: 'left',
+                  position: 'absolute',
+                }}>
+                Service
+              </Text>
+            )}
+          </View>
+          <Text
+            style={{
+              fontSize: 10,
+              fontFamily: 'Poppins-Regular',
+              color: 'white',
+              opacity: 0.5,
+              textAlign: 'right',
+            }}>
+            {servicename.length}/30
+          </Text>
+          <TextInput
+            value={servicename}
+            onChangeText={setServiceName}
+            maxLength={30}
+            placeholder="Services Name"
+            placeholderTextColor="#838383"
+            onFocus={() => setIsServiceFocused(true)}
+            onBlur={() => setIsServiceFocused(false)}
+            style={{
+              height: 44,
+              backgroundColor: '#3A3B3C',
+              color: 'white',
+              paddingLeft: 15,
+              borderRadius: 10,
+            }}
+          />
+        </View>
+        <View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            {(isDescriptionFocused || description) && (
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  opacity: 0.5,
+                  // textAlign: 'left',
+                  position: 'absolute',
+                }}>
+                Description
+              </Text>
+            )}
+          </View>
+          <Text
+            style={{
+              fontSize: 10,
+              fontFamily: 'Poppins-Regular',
+              color: 'white',
+              opacity: 0.5,
+              textAlign: 'right',
+            }}>
+            {description.length}/1000
+          </Text>
+
+          <TextInput
+            placeholder="Description"
+            value={description}
+            onChangeText={setDescription}
+            onFocus={() => setIsDescriptionFocused(true)}
+            onBlur={() => setIsDescriptionFocused(false)}
+            maxLength={1000}
+            placeholderTextColor="#838383"
+            multiline={true}
+            onContentSizeChange={event =>
+              setDescriptionHeight(event.nativeEvent.contentSize.height)
+            }
+            style={{
+              height: Math.max(44, descriptionHeight),
+              backgroundColor: '#3A3B3C',
+              color: 'white',
+              paddingLeft: 15,
+              marginBottom: 10,
+              borderRadius: 10,
+            }}
+          />
+        </View>
+        <View
+          style={{
+            marginTop: 5,
+          }}>
+          {(isDurationFocused || duration) && (
+            <Text
+              style={{
+                fontSize: 10,
+                fontFamily: 'Poppins-Regular',
+                color: 'white',
+                opacity: 0.5,
+                // textAlign: 'left',
+                position: 'absolute',
+                top: -15,
+              }}>
+              Duration
+            </Text>
+          )}
+          <TextInput
+            placeholder="Duration is Minutes"
+            value={duration}
+            onChangeText={setDuration}
+            keyboardType="numeric"
+            onFocus={() => setIsDurationFocused(true)}
+            onBlur={() => setIsDurationFocused(false)}
+            placeholderTextColor="#838383"
+            style={{
+              height: 44,
+              backgroundColor: '#3A3B3C',
+              color: 'white',
+              paddingLeft: 15,
+              marginBottom: 10,
+              borderRadius: 10,
+            }}
+          />
+        </View>
+        <View
+          style={{
+            marginTop: 5,
+          }}>
+          {(isPriceFocused || price) && (
+            <Text
+              style={{
+                fontSize: 10,
+                fontFamily: 'Poppins-Regular',
+                color: 'white',
+                opacity: 0.5,
+                // textAlign: 'left',
+                position: 'absolute',
+                top: -15,
+              }}>
+              Price
+            </Text>
+          )}
+          <TextInput
+            placeholder="Price"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+            onFocus={() => setIsPriceFocused(true)}
+            onBlur={() => setIsPriceFocused(false)}
+            placeholderTextColor="#838383"
+            style={{
+              height: 44,
+              backgroundColor: '#3A3B3C',
+              color: 'white',
+              paddingLeft: 15,
+              borderRadius: 10,
+            }}
+          />
+        </View>
+      </View>
+      {AvailableModal && (
+        <Modal visible={AvailableModal} transparent={true} animationType="fade">
+          <View style={styles.modalContainer1}>
+            <View style={styles.modalContent1}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  marginBottom: 20,
+                  fontFamily: 'Poppins-Medium',
+                  color: 'white',
+                }}>
+                Set Availability
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-around',
+                  alignContent: 'center',
+                  marginBottom: 10,
+                }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Poppins-Regular',
+                  }}>
+                  Days
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Poppins-Regular',
+                  }}>
+                  Start
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Poppins-Regular',
+                  }}>
+                  End
+                </Text>
+              </View>
+
+              {Object.keys(selectedTime).map(day => (
+                <View key={day} style={styles.dayRow1}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}>
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => {
+                        setCheckedBox(prev => ({
+                          ...prev,
+                          [day]: !prev[day], // Toggle only the clicked day
+                        }));
+                      }}>
+                      <View
+                        style={[
+                          styles.checkbox,
+                          checkedbox[day] && styles.checkboxChecked,
+                        ]}>
+                        {checkedbox[day] && (
+                          <Icon name="check" size={14} color="white" />
+                        )}
+                      </View>
+                      <Text style={styles.dayText1}>{day}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* <Icon1 name="check" size={16} color="white" /> */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      gap: 10,
+                    }}>
+                    <TouchableOpacity onPress={() => openTimePicker(day, true)}>
+                      <Text style={styles.timeText1}>
+                        {selectedTime[day].start.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => openTimePicker(day, false)}>
+                      <Text style={styles.timeText1}>
+                        {selectedTime[day].end.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: 10,
+                  marginTop: 5,
+                }}>
+                <TouchableOpacity
+                  onPress={() => setAvailableModal(false)}
+                  style={{
+                    padding: 10,
+                  }}>
+                  <Text
+                    style={{
+                      color: '#0069B4',
+                      fontFamily: 'Poppins-Medium',
+                    }}>
+                    CANCEL
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleAvailable}
+                  style={{
+                    padding: 10,
+                  }}>
+                  <Text
+                    style={{
+                      color: '#0069B4',
+                      fontFamily: 'Poppins-Medium',
+                    }}>
+                    SAVE
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      {showPicker && (
+        <DatePicker
+          modal
+          open={showPicker}
+          date={
+            isStart
+              ? selectedTime[currentDay].start
+              : selectedTime[currentDay].end
+          }
+          mode="time"
+          onConfirm={date => handleTimeConfirm(date)}
+          onCancel={() => setShowPicker(false)}
+        />
+      )}
+
+      <TouchableOpacity style={styles.createButton} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Create</Text>
+      </TouchableOpacity>
+      {/* </View> */}
+    </View>
+  );
+};
+
+export default ServicesPost;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#17191A',
+    paddingHorizontal: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+  },
+  createButton: {
+    backgroundColor: '#0069B4',
+    borderRadius: 10,
+    marginTop: 30,
+    paddingVertical: 12,
+    // paddingHorizontal: 55,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // flex: 1,
+    width: '100%',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+  },
+  modalContainer1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent1: {
+    backgroundColor: '#3c3c3c',
+    padding: 15,
+    borderRadius: 10,
+    width: '90%',
+  },
+  heading1: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  dayRow1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  dayText1: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Medium',
+    color: 'white',
+  },
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderColor: '#EDEDED',
+    borderWidth: 1,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  checkboxChecked: {
+    backgroundColor: '#388DEB',
+    // borderColor: 'white',
+    borderWidth: 0,
+  },
+  timeText1: {
+    fontSize: 15,
+    color: 'white',
+    borderWidth: 1,
+    // padding: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderColor: 'white',
+    borderRadius: 10,
+  },
+  buttonContainer1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+});

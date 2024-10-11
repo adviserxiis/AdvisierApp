@@ -20,97 +20,97 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 export type Ref = BottomSheetModal;
 
-const commentsData = [
-  {
-    id: '1',
-    username: 'ayush_r_1979',
-    time: '2h',
-    comment: '❤️😢',
-    profilePic: 'https://example.com/user1.jpg',
-  },
-  {
-    id: '2',
-    username: 'haarrii_10',
-    time: '18h',
-    comment: '❤️❤️ 🙌',
-    profilePic: 'https://example.com/user2.jpg',
-  },
-  {
-    id: '3',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '4',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '5',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '6',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '7',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '8',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '9',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '10',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '11',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  {
-    id: '12',
-    username: 'vk_photography_vijaykamble',
-    time: '21h',
-    comment: '❤️😍',
-    profilePic: 'https://example.com/user3.jpg',
-  },
-  // More comments...
-];
+// const commentsData = [
+//   {
+//     id: '1',
+//     username: 'ayush_r_1979',
+//     time: '2h',
+//     comment: '❤️😢',
+//     profilePic: 'https://lh3.googleusercontent.com/a/AEdFTp4V-B6AHugmI4geeR6vk_XvsugEYDWLiZyGc4fd=s96-c',
+//   },
+//   {
+//     id: '2',
+//     username: 'haarrii_10',
+//     time: '18h',
+//     comment: '❤️❤️ 🙌',
+//     profilePic: 'https://example.com/user2.jpg',
+//   },
+//   {
+//     id: '3',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '4',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '5',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '6',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '7',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '8',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '9',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '10',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '11',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   {
+//     id: '12',
+//     username: 'vk_photography_vijaykamble',
+//     time: '21h',
+//     comment: '❤️😍',
+//     profilePic: 'https://example.com/user3.jpg',
+//   },
+//   // More comments...
+// ];
 
 const CommentModal = forwardRef<Ref>((props, ref) => {
-  const [comment, setComment] = useState('');
-  const {comments = commentsData} = props;
+  const [commentList, setCommentList] = useState([]); // Store the list of comments
+  const [commentText, setCommentText] = useState(''); // Handle comment input
   const snapPoints = useMemo(() => ['100%'], []); // Adjust the height for comments
   const {dismiss} = useBottomSheetModal();
   const {bottom} = useSafeAreaInsets();
@@ -127,6 +127,22 @@ const CommentModal = forwardRef<Ref>((props, ref) => {
     ),
     [dismiss],
   );
+
+  const handleComment = () => {
+    if (commentText.trim() === '') return; // Don't add empty comments
+
+    const newComment = {
+      id: Date.now(), // Generate a unique ID (use better logic if needed)
+      username: 'Abhijeet Visheakarme', // Replace with actual user data
+      profilePic: 'https://lh3.googleusercontent.com/a/AEdFTp4V-B6AHugmI4geeR6vk_XvsugEYDWLiZyGc4fd=s96-c', // Replace with actual profile pic
+      time: '2m ago', // Replace with logic to get actual time
+      comment: commentText,
+    };
+
+    // Add the new comment to the comment list
+    setCommentList(prevComments => [...prevComments, newComment]);
+    setCommentText(''); // Clear input after submission
+  };
 
   const renderComment = item => (
     <View style={styles.commentContainer} key={item.id}>
@@ -172,24 +188,25 @@ const CommentModal = forwardRef<Ref>((props, ref) => {
             <BottomSheetScrollView
               contentContainerStyle={styles.commentsSection}
               showsVerticalScrollIndicator={false}>
-              {comments.map(renderComment)}
+              {commentList.map(renderComment)}
             </BottomSheetScrollView>
           </View>
 
           {/* Fixed Input at the Bottom */}
-          <View style={[styles.inputContainer, {paddingBottom: bottom}]}>
+          <View style={styles.inputContainer}>
             <Image
               source={require('../../../assets/images/profiles.png')}
               style={styles.inputProfilePic}
             />
             <TextInput
+             autoFocus
               style={styles.input}
               placeholder="Add a comment..."
               placeholderTextColor="#999"
-              value={comment}
-              onChangeText={setComment}
+              value={commentText}
+              onChangeText={setCommentText}
             />
-            <TouchableOpacity style={styles.sendButton}>
+            <TouchableOpacity style={styles.sendButton} onPress={handleComment}>
               <Icon name="send" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -208,7 +225,7 @@ const styles = StyleSheet.create({
   },
   containerHeadline: {
     fontSize: 16,
-    padding: 10,
+    padding: 5,
     color: 'white',
     textAlign: 'center',
     fontFamily: 'Poppins-Medium',
@@ -219,8 +236,8 @@ const styles = StyleSheet.create({
   },
   commentContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 15,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   profilePic: {
     width: 40,
@@ -252,14 +269,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 10,
-    backgroundColor: '#1C1C1C',
+    // flex:1,
+    paddingVertical: 15,
+    backgroundColor: '#17191A',
     borderTopWidth: 1,
     borderTopColor: '#333',
-    // position: 'absolute', // Keep it fixed at the bottom
-    // bottom: 0,
-    // left: 0,
-    // right: 0,
+    position: 'absolute', // Keep it fixed at the bottom
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex:999
   },
   inputProfilePic: {
     width: 35,

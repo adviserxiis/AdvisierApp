@@ -414,7 +414,7 @@ const Home = () => {
               transform: [{translateY: slidePostOption}],
               opacity: animationValue,
               marginBottom: 10,
-              alignItems: 'center',
+              alignItems: 'flex-end',
             }}>
             <TouchableOpacity
               onPress={() => {
@@ -427,7 +427,7 @@ const Home = () => {
                 borderRadius: 20,
                 flexDirection: 'row',
                 alignItems: 'center',
-                width: '100%',
+                // width: '100%',
               }}>
               <Icon1 name="image" size={20} color="white" />
               <Text style={{color: 'white', marginLeft: 10}}>Post</Text>
@@ -440,7 +440,7 @@ const Home = () => {
               transform: [{translateY: slideReelsOption}],
               opacity: animationValue,
               marginBottom: 10,
-              alignItems: 'center',
+              alignItems: 'flex-end',
             }}>
             <TouchableOpacity
               onPress={() => {
@@ -453,10 +453,36 @@ const Home = () => {
                 borderRadius: 20,
                 flexDirection: 'row',
                 alignItems: 'center',
-                width: '100%',
+                // width: '100%',
               }}>
               <Icon1 name="video" size={20} color="white" />
               <Text style={{color: 'white', marginLeft: 10}}>Reels</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+        {isExpanded && (
+          <Animated.View
+            style={{
+              transform: [{translateY: slideReelsOption}],
+              opacity: animationValue,
+              marginBottom: 10,
+              alignItems: 'flex-end',
+            }}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsExpanded(false);
+                navigation.navigate('ServicesPost');
+              }}
+              style={{
+                padding: 10,
+                backgroundColor: '#388DEB',
+                borderRadius: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                // width: '100%',
+              }}>
+              <Icon1 name="globe" size={20} color="white" />
+              <Text style={{color: 'white', marginLeft: 10}}>Services</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -469,7 +495,7 @@ const Home = () => {
             justifyContent: 'center',
             height: 60,
             width: 60,
-            marginLeft: 34,
+            marginLeft: 44,
           }}>
           <Animated.View style={{transform: [{rotate: rotateIcon}]}}>
             <Icon1 name="plus" size={24} color="white" />

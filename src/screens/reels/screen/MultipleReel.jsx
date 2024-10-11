@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
 import {
   View,
   StatusBar,
@@ -7,24 +7,32 @@ import {
   Dimensions,
   RefreshControl,
 } from 'react-native';
-import VideoPlayer from './components/VideoPlayer';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Mixpanel } from 'mixpanel-react-native';
-import { useSelector } from 'react-redux';
-import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
-import { debounce } from 'lodash';
-import { useFocusEffect } from '@react-navigation/native';
+import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
+import {Mixpanel} from 'mixpanel-react-native';
+import {useSelector} from 'react-redux';
+import {
+  InterstitialAd,
+  AdEventType,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+import {debounce} from 'lodash';
+import {useFocusEffect, useRoute} from '@react-navigation/native';
+import SingleReel from './SingleReel';
 const trackAutomaticEvents = false;
 const mixpanel = new Mixpanel(
   'f03fcb4e7e5cdc7d32f57611937c5525',
   trackAutomaticEvents,
 );
 mixpanel.init();
-const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
-const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-1658613370450501/1720983301'; // Replace with actual ad unit ID
+const {height: screenHeight, width: screenWidth} = Dimensions.get('window');
+const adUnitId = __DEV__
+  ? TestIds.INTERSTITIAL
+  : 'ca-app-pub-1658613370450501/1720983301'; // Replace with actual ad unit ID
 // const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-3940256099942544/6300978111'; // Replace with actual ad unit ID
 
-const Reel = () => {
+const MultipleReel = () => {
+  const route = useRoute();
+  const {video, creator, advsid} = route.params;
   const [list, setList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mute, setMute] = useState(false);
@@ -33,13 +41,17 @@ const Reel = () => {
   const [ad, setAd] = useState(null);
   const flatListRef = useRef(null);
   const BottomTabHeight = useBottomTabBarHeight();
-  const screenHeightAdjusted = Dimensions.get('window').height - BottomTabHeight;
-  const user = useSelector((state) => state.user);
+  const screenHeightAdjusted =
+    Dimensions.get('window').height - BottomTabHeight;
+  const user = useSelector(state => state.user);
+  console.log("Mutliple",creator);
 
   const getVideoList = async () => {
+    console.log("Advsie", advsid);
     try {
+    
       const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/post/getallpostswithadviserdetails',
+        `https://adviserxiis-backend-three.vercel.app/post/getpostsofadviser/${advsid}`,
         {
           method: 'GET',
           headers: {
@@ -64,7 +76,7 @@ const Reel = () => {
   //     const fetchData = async () => {
   //       await getVideoList();
   //     };
-  
+
   //     fetchData();
   //   }, [])
   // );
@@ -74,20 +86,29 @@ const Reel = () => {
       requestNonPersonalizedAdsOnly: true,
     });
 
-    const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-      setAdLoaded(true);
-    });
+    const unsubscribeLoaded = interstitial.addAdEventListener(
+      AdEventType.LOADED,
+      () => {
+        setAdLoaded(true);
+      },
+    );
 
-    const unsubscribeFailed = interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error('Ad failed to load:', error);
-      setAdLoaded(false);
-      interstitial.load();
-    });
+    const unsubscribeFailed = interstitial.addAdEventListener(
+      AdEventType.ERROR,
+      error => {
+        console.error('Ad failed to load:', error);
+        setAdLoaded(false);
+        interstitial.load();
+      },
+    );
 
-    const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
-      setAdLoaded(false);
-      setAd(null);
-    });
+    const unsubscribeClosed = interstitial.addAdEventListener(
+      AdEventType.CLOSED,
+      () => {
+        setAdLoaded(false);
+        setAd(null);
+      },
+    );
 
     interstitial.load();
     setAd(interstitial);
@@ -103,8 +124,8 @@ const Reel = () => {
     const timer = setInterval(() => {
       if (ad && adLoaded) {
         ad.show(); // Ensure this method exists or replace with correct method
-      }else{
-        console.log("No ad to show, showing fallback content instead.");
+      } else {
+        console.log('No ad to show, showing fallback content instead.');
       }
     }, 15 * 60 * 1000); // 15 minutes in milliseconds
 
@@ -114,7 +135,7 @@ const Reel = () => {
   }, [ad, adLoaded]);
 
   const handleViewableItemsChanged = useCallback(
-    debounce(({ viewableItems }) => {
+    debounce(({viewableItems}) => {
       if (viewableItems.length > 0 && viewableItems[0].isViewable) {
         setCurrentIndex(viewableItems[0].index);
       }
@@ -146,9 +167,10 @@ const Reel = () => {
   );
 
   const renderItem = useCallback(
-    ({ item, index }) => (
+    ({item, index}) => (
       <MemoizedVideoPlayer
         video={item}
+        creator={creator}
         isVisible={currentIndex === index}
         index={index}
         currentIndex={currentIndex}
@@ -156,7 +178,7 @@ const Reel = () => {
         setMute={setMute}
       />
     ),
-    [currentIndex, mute],
+    [currentIndex, mute, creator],
   );
 
   const memoizedList = useMemo(() => list, [list]);
@@ -177,16 +199,17 @@ const Reel = () => {
         windowSize={10}
         removeClippedSubviews
         pagingEnabled
-        decelerationRate='fast'
+        decelerationRate="fast"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
+        
       />
     </View>
   );
 };
 
-const MemoizedVideoPlayer = React.memo(VideoPlayer);
+const MemoizedVideoPlayer = React.memo(SingleReel);
 
 const styles = StyleSheet.create({
   container: {
@@ -197,4 +220,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.memo(Reel);
+export default React.memo(MultipleReel);
