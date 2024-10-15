@@ -73,35 +73,35 @@ const reelItemHeight = reelItemWidth * 1.7;
 //   },
 // ];
 
-const bookings = [
-  {
-    id: '1',
-    title: 'UI UX Career Counseling',
-    date: '21-09-24',
-    by: 'Ritik',
-    price: '499',
-    time: '03:00pm',
-    from: '03:30pm',
-  },
-  {
-    id: '2',
-    title: 'UI UX Career Counseling',
-    date: '21-09-24',
-    by: 'Ritik',
-    price: '499',
-    time: '03:00pm',
-    from: '03:30pm',
-  },
-  {
-    id: '3',
-    title: 'UI UX Career Counseling',
-    date: '21-09-24',
-    by: 'Ritik',
-    price: '499',
-    time: '03:00pm',
-    from: '03:30pm',
-  },
-];
+// const bookings = [
+//   {
+//     id: '1',
+//     title: 'UI UX Career Counseling',
+//     date: '21-09-24',
+//     by: 'Ritik',
+//     price: '499',
+//     time: '03:00pm',
+//     from: '03:30pm',
+//   },
+//   {
+//     id: '2',
+//     title: 'UI UX Career Counseling',
+//     date: '21-09-24',
+//     by: 'Ritik',
+//     price: '499',
+//     time: '03:00pm',
+//     from: '03:30pm',
+//   },
+//   {
+//     id: '3',
+//     title: 'UI UX Career Counseling',
+//     date: '21-09-24',
+//     by: 'Ritik',
+//     price: '499',
+//     time: '03:00pm',
+//     from: '03:30pm',
+//   },
+// ];
 
 const Profile = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -399,6 +399,33 @@ const Profile = () => {
     return jsonresponse;
   };
 
+  const [bookings,setBookings] = useState([]);
+
+  const getBooking = async()=>{
+    const response = await fetch(
+      `https://adviserxiis-backend-three.vercel.app/service/getbookingsofuser/${user.userid}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    const jsonresponse = await response.json();
+    console.log('Booking Details', jsonresponse.bookings);
+    setBookings(jsonresponse?.bookings);
+  }
+
+  // useEffect(()=>{
+  //   getBooking();
+  // },[]);
+
+  useFocusEffect(
+    useCallback(() => {
+      getBooking();
+    }, []),
+  );
+
   const deletePost = postid => {
     Alert.alert(
       'Delete Reel',
@@ -557,6 +584,8 @@ const Profile = () => {
     setRefreshing(true); // Start refreshing
     await getuser();
     await getReels();
+    await getBooking();
+    await getServices();
     setRefreshing(false); // Stop refreshing
   }, []);
 
@@ -1049,9 +1078,10 @@ const Profile = () => {
           <FlatList
             data={bookings}
             renderItem={({item}) => <BookingCard booking={item} />}
-            keyExtractor={item => item.id}
+            keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()} 
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.bookingsList}
+            
           />
         )
       ) : null}
@@ -1233,7 +1263,7 @@ const styles = StyleSheet.create({
     marginTop: 70,
   },
   profileTextContainer: {
-    maxWidth: 130,
+    maxWidth: 140,
   },
   profileName: {
     fontSize: 18,

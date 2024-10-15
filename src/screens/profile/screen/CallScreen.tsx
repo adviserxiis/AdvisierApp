@@ -1,29 +1,41 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import React from 'react';
 import {
   ZegoUIKitPrebuiltCall,
   ONE_ON_ONE_VIDEO_CALL_CONFIG,
 } from '@zegocloud/zego-uikit-prebuilt-call-rn';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 
-const CallScreen = (props: any) => {
+const CallScreen = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const user = useSelector((state: any) => state.user);
+  const {meetingid} = route.params;
+  
+  console.log(user.userid);
+
   return (
-    <View
-      style={{
-        flex: 1,
-      }}>
+    <View style={{flex: 1}}>
       <ZegoUIKitPrebuiltCall
         appID={1262356013}
         appSign={
           '99b777ea4289d9f9e818bd822e2584f1043d8b43615004702a3e34d2255b2610'
         }
-        userID={'1234'} // userID can be something like a phone number or the user id on your own user system.
-        userName={'Abhijeet'}
-        callID={'1220'} // callID can be any unique string.
+        userID={user.userid} // userID can be something like a phone number or the user id on your own user system.
+        userName={user?.userInfo?.name}
+        callID={meetingid} // callID can be any unique string.
         config={{
-          // You can also use ONE_ON_ONE_VOICE_CALL_CONFIG/GROUP_VIDEO_CALL_CONFIG/GROUP_VOICE_CALL_CONFIG to make more types of calls.
           ...ONE_ON_ONE_VIDEO_CALL_CONFIG,
+          turnOnCameraWhenJoin: false, // Camera will be off when joining the call
+          avatar: {
+            // Provide the user avatar or fallback to a local image
+            userID: user.userid,
+            userAvatar:
+              user?.userInfo?.profile_photo || require('../../../assets/images/profilei.png'),
+          },
           onCallEnd: () => {
-            props.navigation.navigate('profile');
+            navigation.navigate('profile');
           },
         }}
       />

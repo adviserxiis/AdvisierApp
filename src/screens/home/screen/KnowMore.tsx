@@ -102,13 +102,13 @@ const KnowMore = () => {
     console.log(user?.userid);
     console.log(service?.adviserid);
 
-    // Validate scheduleDate and scheduleTime
+    // Check if scheduleDate and scheduleTime are selected
     if (!scheduleDate || !scheduleTime) {
       Alert.alert('Error', 'Please select a date and time before proceeding.');
-      return; // Stop further execution if date/time not selected
+      return;
     }
 
-    setShowModal(false);
+    setShowModal(false); // Close modal
 
     try {
       // Step 1: Create an order by calling the backend API
@@ -150,24 +150,35 @@ const KnowMore = () => {
           const paymentID = data.razorpay_payment_id;
           console.log('Payment', paymentID);
 
-          // Step 4: After successful payment, call your second API (saving the payment info)
+          // Step 4: After successful payment, initialize ZegoExpressEngine
           try {
-            ZegoExpressEngine.createEngineWithProfile({
-              appID: 1262356013, // Replace with your ZEGOCLOUD app ID
-              appSign:
-                '99b777ea4289d9f9e818bd822e2584f1043d8b43615004702a3e34d2255b2610', // Replace with your ZEGOCLOUD app Sign
-              scenario: 0, // Live streaming scenario
-            });
+            // Create the engine only if it doesn't already exist
+            // const zegoEngine = ZegoExpressEngine.instance();
+
+            // if (!zegoEngine) {
+            //   await ZegoExpressEngine.createEngineWithProfile({
+            //     appID: 1262356013, // Replace with your ZEGOCLOUD app ID
+            //     appSign: '99b777ea4289d9f9e818bd822e2584f1043d8b43615004702a3e34d2255b2610', // Replace with your ZEGOCLOUD app Sign
+            //     scenario: 0, // Live streaming scenario
+            //     // enablePlatformView: enablePlatformView,
+            //   });
+            //   console.log('ZegoExpressEngine created successfully');
+            // }
+
+            // Ensure the engine instance is available
+            // const engine = ZegoExpressEngine.instance();
 
             // Now create or join a room to get the `meetingid`
-            const meetingid = 'room_' + new Date().getTime(); // A custom way to generate a room ID
-            await ZegoExpressEngine.instance().loginRoom(meetingid, {
-              userID: user?.userid,
-              userName: user?.userInfo?.name,
-            });
+            const meetingid = `room_${Date.now()}`; // Generate a room ID
+            // await engine.loginRoom(meetingid, {
+            //   userID: user?.userid,
+            //   userName: user?.userInfo?.name,
+            // });
+            // const meetingid = UUID.v4();
 
-            console.log('Meeting ID generated:', meetingid);
+            console.log('Successfully logged into the room:', meetingid);
 
+            // Step 5: After successful room creation, save the payment info
             const paymentResponse = await fetch(
               'https://adviserxiis-backend-three.vercel.app/service/bookorder',
               {
@@ -186,17 +197,62 @@ const KnowMore = () => {
                 }),
               },
             );
+
             const paymentData = await paymentResponse.json();
             console.log('Payment saved:', paymentData);
+
+            // const payload = {
+            //   userid: user.userid,
+            //   adviserid: service?.adviserid,
+            //   serviceid: service?.serviceid,
+            //   paymentid: paymentID,
+            // };
+
+            // Sending confirmation email
+            try {
+              const emailResponse = await fetch(
+                'https://adviserxiis-backend-three.vercel.app/sendconfirmationemail',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    userid: user.userid,
+                    adviserid: service?.adviserid,
+                    serviceid: service?.serviceid,
+                    paymentid: paymentID,
+                  }),
+                },
+              );
+
+              const textResponse = await emailResponse.text(); // Get the response as text
+              console.log('Raw response:', textResponse); // Log the raw response
+
+              // Check if the response is valid JSON
+              let emailData;
+              try {
+                emailData = JSON.parse(textResponse);
+                console.log('Email sent:', emailData);
+              } catch (jsonError) {
+                console.error('Error parsing JSON:', jsonError);
+                // Additional handling for non-JSON responses
+                console.error('Response is not JSON:', textResponse);
+              }
+            } catch (error) {
+              console.error('Error in sending emails', error);
+            }
           } catch (error) {
-            console.error('Error saving payment info:', error);
+            console.error('Error initializing ZegoExpressEngine:', error);
+            // Alert.alert('Error', 'Failed to initialize video engine.');
           }
         })
         .catch((error: any) => {
           // Failure handler
           Alert.alert('Payment Failed');
+          // console.error("Payment failed:", error);
         });
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert('Error', `Error creating order: ${error.message}`);
     }
   };

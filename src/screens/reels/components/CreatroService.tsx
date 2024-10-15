@@ -12,7 +12,9 @@ import {FlatList} from 'react-native-gesture-handler';
 import RazorpayCheckout from 'react-native-razorpay';
 import {RAZERPAY_KEY_ID} from '@env';
 import {useSelector} from 'react-redux';
-import  ZegoExpressEngine  from 'zego-express-engine-reactnative';
+import ZegoExpressEngine from 'zego-express-engine-reactnative';
+// import UUID from 'react-native-uuid';
+import {v4 as uuidv4} from 'uuid';
 const data = [
   {
     id: '1',
@@ -65,8 +67,8 @@ const CreatroServices = ({service}) => {
   // console.log(RAZERPAY_KEY_ID);
   // console.log(user?.userInfo?.name);
 
-  const [scheduleDate,setScheduleDate] = useState('');
-  const [scheduleTime,setScheduleTime] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
 
   function convertMinutesToHours(minutes) {
     if (minutes < 60) {
@@ -104,8 +106,6 @@ const CreatroServices = ({service}) => {
     getAvailable();
   }, []);
 
-
-
   const fetchSlots = async (date, timing, item) => {
     setScheduleDate(date);
     const response = await fetch(
@@ -133,22 +133,23 @@ const CreatroServices = ({service}) => {
     // console.log(scheduleTime);
   };
 
+  console.log(user?.userid);
+
   const handlePayment = async () => {
-    console.log("Schedule Date:", scheduleDate);
-    console.log("Schedule Time:", scheduleTime);
+    console.log('Schedule Date:', scheduleDate);
+    console.log('Schedule Time:', scheduleTime);
     console.log(service?.serviceid);
     console.log(user?.userid);
     console.log(service?.adviserid);
 
-    
     // Check if scheduleDate and scheduleTime are selected
     if (!scheduleDate || !scheduleTime) {
       Alert.alert('Error', 'Please select a date and time before proceeding.');
       return;
     }
-  
+
     setShowModal(false); // Close modal
-  
+
     try {
       // Step 1: Create an order by calling the backend API
       const response = await fetch(
@@ -163,9 +164,9 @@ const CreatroServices = ({service}) => {
           }),
         },
       );
-  
+
       const orderData = await response.json();
-  
+
       // Step 2: Razorpay Checkout Options
       const options = {
         key: RAZERPAY_KEY_ID, // Replace with your Razorpay key_id
@@ -176,10 +177,10 @@ const CreatroServices = ({service}) => {
         order_id: orderData.id, // Razorpay order ID
         theme: {color: '#17191A'},
       };
-  
+
       // Step 3: Trigger Razorpay Checkout
       RazorpayCheckout.open(options)
-        .then(async (data) => { // Mark the function as async inside .then
+        .then(async data => {
           // Success handler
           Alert.alert(
             'Payment Successful',
@@ -187,51 +188,106 @@ const CreatroServices = ({service}) => {
           );
 
           const paymentID = data.razorpay_payment_id;
-          console.log("Payemnt",paymentID);
-  
-          // Step 4: After successful payment, call your second API (saving the payment info)
+          console.log('Payment', paymentID);
+
+          // Step 4: After successful payment, initialize ZegoExpressEngine
           try {
+            // Create the engine only if it doesn't already exist
+            // const zegoEngine = ZegoExpressEngine.instance();
 
-            ZegoExpressEngine.createEngineWithProfile({
-              appID: 1262356013, // Replace with your ZEGOCLOUD app ID
-              appSign: '99b777ea4289d9f9e818bd822e2584f1043d8b43615004702a3e34d2255b2610', // Replace with your ZEGOCLOUD app Sign
-              scenario: 0, // Live streaming scenario
-            });
-        
+            // if (!zegoEngine) {
+            //   await ZegoExpressEngine.createEngineWithProfile({
+            //     appID: 1262356013, // Replace with your ZEGOCLOUD app ID
+            //     appSign: '99b777ea4289d9f9e818bd822e2584f1043d8b43615004702a3e34d2255b2610', // Replace with your ZEGOCLOUD app Sign
+            //     scenario: 0, // Live streaming scenario
+            //     // enablePlatformView: enablePlatformView,
+            //   });
+            //   console.log('ZegoExpressEngine created successfully');
+            // }
+
+            // Ensure the engine instance is available
+            // const engine = ZegoExpressEngine.instance();
+
             // Now create or join a room to get the `meetingid`
-            const meetingid = "room_" + new Date().getTime(); // A custom way to generate a room ID (you can replace this)
-            await ZegoExpressEngine.instance().loginRoom(meetingid, {userID: user?.userid, userName: user?.userInfo?.name});
-        
-            console.log("Meeting ID generated:", meetingid);
+            const meetingid = `room_${Date.now()}`; // Generate a room ID
+            // await engine.loginRoom(meetingid, {
+            //   userID: user?.userid,
+            //   userName: user?.userInfo?.name,
+            // });
+            // const meetingid = UUID.v4();
 
-            
-          
+            console.log('Successfully logged into the room:', meetingid);
+
+            // Step 5: After successful room creation, save the payment info
             const paymentResponse = await fetch(
-              'https://adviserxiis-backend-three.vercel.app/service/bookorder', 
+              'https://adviserxiis-backend-three.vercel.app/service/bookorder',
               {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  serviceid:service?.serviceid,
-                  userid:user?.userid,
-                  adviserid:service?.adviserid,
-                  scheduled_date:scheduleDate,
-                  scheduled_time:scheduleTime,
+                  serviceid: service?.serviceid,
+                  userid: user?.userid,
+                  adviserid: service?.adviserid,
+                  scheduled_date: scheduleDate,
+                  scheduled_time: scheduleTime,
                   meetingid: meetingid,
                   paymentId: paymentID,
                 }),
               },
             );
+
             const paymentData = await paymentResponse.json();
-            console.log("Payment saved:", paymentData);
-  
+            console.log('Payment saved:', paymentData);
+
+            // const payload = {
+            //   userid: user.userid,
+            //   adviserid: service?.adviserid,
+            //   serviceid: service?.serviceid,
+            //   paymentid: paymentID,
+            // };
+
+            // Sending confirmation email
+            try {
+              const emailResponse = await fetch(
+                'https://adviserxiis-backend-three.vercel.app/sendconfirmationemail',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    userid: user.userid,
+                    adviserid: service?.adviserid,
+                    serviceid: service?.serviceid,
+                    paymentid: paymentID,
+                  }),
+                },
+              );
+
+              const textResponse = await emailResponse.text(); // Get the response as text
+              console.log('Raw response:', textResponse); // Log the raw response
+
+              // Check if the response is valid JSON
+              let emailData;
+              try {
+                emailData = JSON.parse(textResponse);
+                console.log('Email sent:', emailData);
+              } catch (jsonError) {
+                console.error('Error parsing JSON:', jsonError);
+                // Additional handling for non-JSON responses
+                console.error('Response is not JSON:', textResponse);
+              }
+            } catch (error) {
+              console.error('Error in sending emails', error);
+            }
           } catch (error) {
-            console.error("Error saving payment info:", error);
+            console.error('Error initializing ZegoExpressEngine:', error);
+            // Alert.alert('Error', 'Failed to initialize video engine.');
           }
         })
-        .catch((error:any) => {
+        .catch((error: any) => {
           // Failure handler
           Alert.alert('Payment Failed');
           // console.error("Payment failed:", error);
@@ -240,7 +296,6 @@ const CreatroServices = ({service}) => {
       Alert.alert('Error', `Error creating order: ${error.message}`);
     }
   };
-  
 
   return (
     <View style={styles.card}>

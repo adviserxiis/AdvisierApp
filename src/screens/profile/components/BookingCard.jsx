@@ -1,9 +1,34 @@
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import moment from 'moment';
 
 const BookingCard = ({booking}) => {
   const navigation=useNavigation();
+
+  function formatDate(dateString) {
+    const date = new Date(dateString); // Convert string to Date object
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based, so we add 1
+    const day = String(date.getDate()).padStart(2, '0'); // Pad with 0 if single digit
+    
+    return `${year}-${month}-${day}`; // Format YYYY-MM-DD
+  }
+
+  const isJoinButtonActive = () => {
+    const currentDateTime = moment(); // Current date and time
+    const bookingDateTime = moment(
+      `${booking?.scheduled_date} ${booking?.scheduled_time}`,
+      'YYYY-MM-DD HH:mm'
+    ); // Scheduled date and time
+
+    return currentDateTime.isAfter(bookingDateTime); // Check if current time is after the scheduled time
+  };
+
+  const user = useSelector((state)=>state.user);
+  console.log(user);
   return (
     <View
       style={{
@@ -28,7 +53,7 @@ const BookingCard = ({booking}) => {
             color: 'white',
             fontFamily: 'Poppins-Medium',
           }}>
-          {booking.title}
+          {booking?.serviceDetails?.service_name}
         </Text>
         <Text
           style={{
@@ -37,7 +62,7 @@ const BookingCard = ({booking}) => {
             lineHeight: 28,
             fontFamily: 'Poppins-Medium',
           }}>
-          ₹{booking?.price}
+          ₹{booking?.serviceDetails?.price}
         </Text>
       </View>
       <Text
@@ -51,7 +76,7 @@ const BookingCard = ({booking}) => {
           style={{
             fontFamily: 'Poppins-Regular',
           }}>
-          {booking?.date}
+          {formatDate(booking?.purchased_date)}
         </Text>
       </Text>
 
@@ -67,7 +92,7 @@ const BookingCard = ({booking}) => {
             fontFamily: 'Poppins-Regular',
           }}>
           {' '}
-          {booking?.by}
+          {booking?.scheduled_date}
         </Text>
       </Text>
       <Text
@@ -82,7 +107,7 @@ const BookingCard = ({booking}) => {
             fontFamily: 'Poppins-Regular',
           }}>
           {' '}
-          {booking?.time} - {booking?.from}
+          {booking?.scheduled_time}
         </Text>
       </Text>
       <View
@@ -102,19 +127,19 @@ const BookingCard = ({booking}) => {
               fontFamily: 'Poppins-Medium',
               fontSize: 14,
             }}>
-            Booked By:{' '}
+            Offer By:{' '}
           </Text>
           <Text
             style={{
               fontFamily: 'Poppins-Regular',
             }}>
             {' '}
-            {booking?.by}
+            {booking?.adviserDetails?.name}
           </Text>
         </View>
-        <TouchableOpacity onPress={()=>navigation.navigate('CallScreen')} style={{
+        <TouchableOpacity onPress={()=>navigation.navigate('CallScreen', {meetingid : booking?.meetingid})} disabled={!isJoinButtonActive()} style={{
           paddingVertical:2,
-          backgroundColor:'#0069B4',
+          backgroundColor: isJoinButtonActive() ? '#0069B4' : 'gray',
           paddingHorizontal:29,
           alignItems:'center',
           borderRadius:5,

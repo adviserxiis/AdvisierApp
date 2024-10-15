@@ -4,8 +4,10 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -453,6 +455,37 @@ const PostItem = ({post, isVisible, getPostlist}) => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
+  const [isExpanded, setIsExpanded] = useState(false);
+  const toggleDescription = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const parseTextWithLinks = text => {
+    // Update the URL pattern to match both 'https://' and 'www.'
+    const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+    const parts = text.split(urlPattern);
+  
+    return parts.map((part, index) => {
+      if (urlPattern.test(part)) {
+        // Check if the part starts with 'www.' and prepend 'https://' if necessary
+        const url = part.startsWith('www.') ? `https://${part}` : part;
+  
+        // Render the part as a clickable link
+        return (
+          <Text
+            key={index}
+            style={styles.link}
+            onPress={() => Linking.openURL(url)}>
+            {part}
+          </Text>
+        );
+      } else {
+        // Render regular text
+        return <Text key={index}>{part}</Text>;
+      }
+    });
+  };
+
 
   return (
     <View>
@@ -489,7 +522,15 @@ const PostItem = ({post, isVisible, getPostlist}) => {
             <Icon2 name="trash" size={18} color="white" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.message}>{post?.data?.description}</Text>
+        {/* <Text style={styles.message}>{post?.data?.description}</Text> */}
+        <Pressable onPress={toggleDescription}>
+          <Text style={styles.message} numberOfLines={isExpanded ? undefined : 2}>
+            {/* {post?.data?.description ? post?.data?.description : null} */}
+            {post?.data?.description
+              ? parseTextWithLinks(post?.data?.description)
+              : post?.data?.description}
+          </Text>
+        </Pressable>
         <Text
           style={{
             fontSize: 14,
@@ -833,6 +874,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     backgroundColor: 'black',
     resizeMode: 'contain',
+  },
+  link: {
+    color: '#388DEB', // Set the link color
+    textDecorationLine: 'underline',
   },
   postMediaImage: {
     width: '100%', // Full width of the container

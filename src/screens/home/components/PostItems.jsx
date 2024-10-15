@@ -448,22 +448,26 @@ const PostItems = ({post, isVisible, getpost}) => {
   };
 
   const parseTextWithLinks = text => {
-    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    // Update the URL pattern to match both 'https://' and 'www.'
+    const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
     const parts = text.split(urlPattern);
-
+  
     return parts.map((part, index) => {
       if (urlPattern.test(part)) {
-        // If the part is a URL, render it as a clickable link with a different color
+        // Check if the part starts with 'www.' and prepend 'https://' if necessary
+        const url = part.startsWith('www.') ? `https://${part}` : part;
+  
+        // Render the part as a clickable link
         return (
           <Text
             key={index}
             style={styles.link}
-            onPress={() => Linking.openURL(part)}>
+            onPress={() => Linking.openURL(url)}>
             {part}
           </Text>
         );
       } else {
-        // Otherwise, render it as regular text
+        // Render regular text
         return <Text key={index}>{part}</Text>;
       }
     });

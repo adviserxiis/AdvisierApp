@@ -11,6 +11,7 @@ import {
 import React, {useEffect, useState} from 'react';
 // import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useSelector} from 'react-redux';
+import RNPickerSelect from 'react-native-picker-select';
 import Icon from 'react-native-vector-icons/Feather';
 import DatePicker from 'react-native-date-picker';
 const ServicesPost = () => {
@@ -116,8 +117,8 @@ const ServicesPost = () => {
     const availableTimes = Object.keys(selectedTime)
       .filter(day => checkedbox[day]) // Only get days where the checkbox is true
       .map(day => {
-        const { start: startTime, end: endTime } = selectedTime[day];
-  
+        const {start: startTime, end: endTime} = selectedTime[day];
+
         // Check if end time is less than start time
         if (endTime < startTime) {
           Alert.alert(
@@ -126,24 +127,24 @@ const ServicesPost = () => {
           );
           return null; // Skip this day
         }
-  
+
         // Format startTime and endTime in "AM/PM" format and convert to uppercase
         const formattedStartTime = startTime
-          .toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: true // Force AM/PM format
+          .toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true, // Force AM/PM format
           })
           .toUpperCase(); // Convert to uppercase
-  
+
         const formattedEndTime = endTime
-          .toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: true // Force AM/PM format
+          .toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true, // Force AM/PM format
           })
           .toUpperCase(); // Convert to uppercase
-  
+
         return {
           day,
           startTime: formattedStartTime, // Send in "AM/PM" uppercase format
@@ -151,12 +152,12 @@ const ServicesPost = () => {
         };
       })
       .filter(Boolean); // Filter out null values
-  
+
     if (availableTimes.length === 0) {
       Alert.alert('Warning', 'No valid availability times to submit.');
       return; // Exit if there are no valid times
     }
-  
+
     try {
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/saveavailability',
@@ -166,7 +167,7 @@ const ServicesPost = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            availability: availableTimes.map(({ day, startTime, endTime }) => ({
+            availability: availableTimes.map(({day, startTime, endTime}) => ({
               day,
               startTime,
               endTime,
@@ -175,13 +176,13 @@ const ServicesPost = () => {
           }),
         },
       );
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(data.message || 'Unknown error');
       }
-  
+
       console.log('Success:', data);
       if (response.ok) {
         setAvailableModal(false);
@@ -190,12 +191,9 @@ const ServicesPost = () => {
       console.error('Error:', error.message);
       Alert.alert('Error', error.message);
     }
-  
+
     console.log('Available times:', availableTimes);
   };
-  
-  
-  
 
   return (
     <View style={styles.container}>
@@ -339,7 +337,7 @@ const ServicesPost = () => {
               Duration
             </Text>
           )}
-          <TextInput
+          {/* <TextInput
             placeholder="Duration is Minutes"
             value={duration}
             onChangeText={setDuration}
@@ -355,7 +353,49 @@ const ServicesPost = () => {
               marginBottom: 10,
               borderRadius: 10,
             }}
-          />
+          /> */}
+          <View style={styles.pickerContainer}>
+            <RNPickerSelect
+              onValueChange={value => setDuration(value)}
+              items={[
+                {label: '30 min', value: 30},
+                {label: '60 min', value: 60},
+                {label: '90 min', value: 90},
+                {label: '120 min', value: 120},
+              ]}
+              placeholder={{
+                label: 'Select Duration in Minutes',
+                value: null,
+                color: '#838383',
+              }}
+              style={{
+                inputIOS: {
+                  color: 'white',
+                  // paddingLeft: 50,
+                  marginLeft: 5,
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  borderRadius: 10,
+                },
+                inputAndroid: {
+                  color: 'white',
+                  // paddingLeft: 50,
+                  marginLeft: 5,
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  borderRadius: 10,
+                },
+                placeholder: {
+                  color: '#838383',
+                  fontSize: 10, // Font size for placeholder
+                  fontFamily:'Poppins-Regular'
+                },
+              }}
+              value={duration} // Bind the state value
+              onOpen={() => setIsDurationFocused(true)}
+              onClose={() => setIsDurationFocused(false)}
+            />
+          </View>
         </View>
         <View
           style={{
@@ -613,6 +653,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Poppins-Medium',
     color: 'white',
+  },
+  pickerContainer: {
+    height: 44,
+    backgroundColor: '#3A3B3C',
+    borderRadius: 10,
+    justifyContent: 'center',
+  },
+  picker: {
+    color: 'white',
+    // paddingLeft: 50,
+    marginLeft:5,
+    fontSize:10,
+    fontFamily:'Poppins-Regular',
+    borderRadius: 10,
   },
   checkbox: {
     width: 16,

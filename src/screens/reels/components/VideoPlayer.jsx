@@ -764,12 +764,12 @@ const VideoPlayer = ({
                 />
                 <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.actionButton}
                 onPress={handlePresentCommentModal}>
                 <Ionic name="chatbubble-outline" size={24} color="white" />
                 <Text style={styles.actionText}>190</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
                 <Icon3 name="share" size={24} color="#FFFFFF" />
