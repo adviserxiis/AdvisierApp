@@ -10,3 +10,5 @@
 # Add any project specific keep options here:
 
 -keep class **.zego.**  { *; }
+-keep class io.agora.**{*;}
+-dontwarn io.agora.**

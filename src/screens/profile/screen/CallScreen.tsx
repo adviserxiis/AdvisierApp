@@ -18,9 +18,9 @@ const CallScreen = () => {
   return (
     <View style={{flex: 1}}>
       <ZegoUIKitPrebuiltCall
-        appID={1262356013}
+        appID={1655382353}
         appSign={
-          '99b777ea4289d9f9e818bd822e2584f1043d8b43615004702a3e34d2255b2610'
+          'ffc70774b12c9e84c7aa790db8829bbb1827ad58bb41ef63ca2afbc69f1fa652'
         }
         userID={user.userid} // userID can be something like a phone number or the user id on your own user system.
         userName={user?.userInfo?.name}

@@ -29,6 +29,7 @@ import KnowMore from '../screens/home/screen/KnowMore';
 // import Login from '../screens/auth/Login';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import CallScreen from '../screens/profile/screen/CallScreen';
+import CheckOut from '../screens/reels/screen/CheckOut';
 
 const Tabs = createMaterialTopTabNavigator();
 //Home Stack
@@ -372,16 +373,7 @@ function MyStack() {
         name="EditServices"
         component={EditServices}
         options={{
-          headerShown: true,
-          title:'Edit Service',
-          headerTitleStyle:{
-            fontFamily:'Poppins-Medium'
-          },
-          headerStyle: {
-            backgroundColor: '#17191A',
-          },
-          headerShadowVisible: false,
-          headerTintColor: 'white',
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -403,6 +395,9 @@ function MyStack() {
       <Stack.Screen name='CallScreen' options={{
         headerShown:false
       }} component={CallScreen}/>
+      <Stack.Screen name='CheckOut' options={{
+        headerShown:false
+      }} component={CheckOut}/>
     </Stack.Navigator>
   );
 }

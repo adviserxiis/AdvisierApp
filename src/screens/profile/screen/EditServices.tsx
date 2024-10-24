@@ -1,20 +1,26 @@
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import Icon2 from 'react-native-vector-icons/MaterialIcons';
 import React, {useEffect, useState} from 'react';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+// import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useSelector} from 'react-redux';
+import Icon from 'react-native-vector-icons/Octicons';
+import Icon1 from 'react-native-vector-icons/Ionicons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import RNPickerSelect from 'react-native-picker-select';
 
 const EditServices = () => {
   const route = useRoute();
-  const {service} = route.params;
+  const {service, servicelist} = route.params;
 
   const navigation = useNavigation();
   console.log('SJjsn', service?.serviceid);
@@ -24,7 +30,7 @@ const EditServices = () => {
   const [duration, setDuration] = useState('');
   const [price, setPrice] = useState('');
   const [descriptionHeight, setDescriptionHeight] = useState(44);
-  const user = useSelector(state => state.user);
+  const user = useSelector((state: any) => state.user);
   const [loading, setLoading] = useState(false);
 
   const [isServiceFocused, setIsServiceFocused] = useState(false);
@@ -41,7 +47,122 @@ const EditServices = () => {
       setPrice(service.price || '');
     }
   }, [service]);
-  // const serviceId = service?.serviceid;
+  const serviceId = service?.serviceid;
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const [deleteModal, setDeleteModal] = useState(false);
+
+  const deleteService = async serviceId => {
+    // setDeleteModal(true);
+
+    try {
+      console.log('Deleting Services with ID:', serviceId);
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/service/deleteservice',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            serviceid: serviceId,
+            adviserid: user.userid,
+            // postid: postid,
+          }),
+        },
+      );
+
+      // getPostlist();
+      servicelist;
+      // Fetch updated reels list after deletion
+      const jsonResponse = await response.json();
+      console.log('Services deleted:', jsonResponse);
+      navigation.goBack();
+
+      // Optional: You can show another alert for success
+      // Alert.alert('Success', 'The reel has been deleted.');
+    } catch (error) {
+      console.error('Error deleting reel:', error);
+      Alert.alert('Error', 'Failed to delete the Service. Please try again.');
+    } finally {
+      setDeleteModal(false);
+    }
+  };
+
+  // const deletePost = postid => {
+  //   Alert.alert(
+  //     'Delete Post',
+  //     'Are you sure you want to delete this Post?',
+  //     [
+  //       {
+  //         text: 'Cancel',
+  //         onPress: () => console.log('Delete canceled'),
+  //         style: 'cancel',
+  //       },
+  //       {
+  //         text: 'Delete',
+  //         onPress: async () => {
+  //           try {
+  //             console.log('Deleting reel with ID:', postid);
+  //             const response = await fetch(
+  //               'https://adviserxiis-backend-three.vercel.app/post/deletepost',
+  //               {
+  //                 method: 'POST',
+  //                 headers: {
+  //                   'Content-Type': 'application/json',
+  //                 },
+  //                 body: JSON.stringify({
+  //                   adviserid: user.userid,
+  //                   postid: postid,
+  //                 }),
+  //               },
+  //             );
+
+  //             getPostlist();
+  //             // Fetch updated reels list after deletion
+  //             const jsonResponse = await response.json();
+  //             console.log('Post deleted:', jsonResponse);
+
+  //             // Optional: You can show another alert for success
+  //             // Alert.alert('Success', 'The reel has been deleted.');
+  //           } catch (error) {
+  //             console.error('Error deleting reel:', error);
+  //             Alert.alert(
+  //               'Error',
+  //               'Failed to delete the reel. Please try again.',
+  //             );
+  //           }
+  //         },
+  //         style: 'destructive', // Optional: Makes the delete button red on iOS
+  //       },
+  //     ],
+  //     {cancelable: false},
+  //   );
+  // };
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      title: 'Edit Service',
+      headerTitleStyle: {
+        fontFamily: 'Poppins-Medium',
+      },
+      headerStyle: {
+        backgroundColor: '#17191A',
+      },
+      headerShadowVisible: false,
+      headerTintColor: 'white',
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => setDeleteModal(true)}
+          style={{
+            marginRight: 16,
+          }}>
+          <Icon name="trash" size={20} color="#FF2C2C" />
+        </TouchableOpacity>
+      ),
+    });
+  });
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -291,7 +412,7 @@ const EditServices = () => {
         </View>
         <View
           style={{
-            marginTop: 5,
+            marginTop: 15,
           }}>
           {(isPriceFocused || price) && (
             <Text
@@ -330,6 +451,118 @@ const EditServices = () => {
       <TouchableOpacity style={styles.createButton} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Done</Text>
       </TouchableOpacity>
+
+      {deleteModal && (
+        <Modal visible={deleteModal} transparent={true} animationType="fade">
+          <View style={styles.modalContainer1}>
+            <View style={styles.modalContent1}>
+              <View
+                style={{
+                  // justifyContent: 'center',
+                  gap: 16,
+                  alignItems: 'center',
+                }}>
+                <Image
+                  source={require('../../../assets/images/deleteds.png')}
+                  style={{
+                    width: 80,
+                    objectFit: 'cover',
+                    alignSelf: 'center',
+                    height: 80,
+                  }}
+                />
+                <View
+                  style={{
+                    alignItems: 'flex-start',
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      color: 'white',
+                      fontFamily: 'Poppins-Medium',
+                      // textAlign:'center',
+                    }}>
+                    Permanently Deleting Service?
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: '#FF2C2C',
+                      fontFamily: 'Poppins-Regular',
+                    }}>
+                    This service will be permanently delete and cannot be
+                    restored. Please confirm if you want to proceed.
+                  </Text>
+
+                  <View style={styles.checkboxContainer}>
+                    <TouchableOpacity
+                      style={styles.checkboxWrapper}
+                      onPress={() => setRememberMe(!rememberMe)}>
+                      <View
+                        style={[
+                          styles.checkbox,
+                          rememberMe && styles.checkboxChecked,
+                        ]}>
+                        {rememberMe && (
+                          <Icon2 name="check" size={14} color="white" />
+                        )}
+                      </View>
+                      <Text style={styles.checkboxText}>
+                        I want to delete my service.
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: 8,
+                  marginTop: 5,
+                }}>
+                <TouchableOpacity
+                  onPress={() => setDeleteModal(false)}
+                  // disabled={!rememberMe}
+                  style={{
+                    // padding: 10,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                  }}>
+                  <Text
+                    style={{
+                      color: '#0069B4',
+                      fontFamily: 'Poppins-Medium',
+                      fontSize: 14,
+                    }}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => deleteService(serviceId)}
+                  disabled={!rememberMe}
+                  style={{
+                    // padding: 10,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 15,
+                    backgroundColor: rememberMe ? '#0069B4' : '#A7A7A7',
+                  }}>
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontFamily: 'Poppins-Medium',
+                      fontSize: 14,
+                    }}>
+                    Delete
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -376,5 +609,47 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Poppins-Regular',
     borderRadius: 10,
+  },
+  modalContainer1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent1: {
+    backgroundColor: '#3c3c3c',
+    padding: 20,
+    borderRadius: 10,
+    width: '90%',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  checkboxWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderColor: '#EDEDED',
+    borderWidth: 1,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  checkboxChecked: {
+    backgroundColor: '#388DEB',
+    // borderColor: 'white',
+    borderWidth: 0,
+  },
+  checkboxText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
   },
 });

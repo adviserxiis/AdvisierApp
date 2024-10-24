@@ -519,31 +519,32 @@ const PostScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {isPosting && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-          }}>
+    <>
+      <SafeAreaView style={styles.container}>
+        {isPosting && (
           <View
             style={{
-              padding: 15,
-              backgroundColor: '#17191A',
-              borderRadius: 10,
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              width: '90%',
-              gap: 10,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
             }}>
-            {/* <Video
+            <View
+              style={{
+                padding: 15,
+                backgroundColor: '#17191A',
+                borderRadius: 10,
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '90%',
+                gap: 10,
+              }}>
+              {/* <Video
               source={{uri: video.uri}} // Use your video URI here
               paused={true}
               muted
@@ -553,20 +554,20 @@ const PostScreen = () => {
                 width: 40,
               }}
             /> */}
-            <Text
-              style={{
-                fontSize: 14,
-                fontFamily: 'Poppins-Medium',
-                color: 'white',
-              }}>
-              Uploading your post
-            </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 10,
-              }}>
-              {/* <Image
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: 'Poppins-Medium',
+                  color: 'white',
+                }}>
+                Uploading your post
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                }}>
+                {/* <Image
                 source={{uri: }}
                 resizeMode="cover"
                 style={{
@@ -574,184 +575,185 @@ const PostScreen = () => {
                   height: 40,
                 }}
               /> */}
-              <Text
-                style={{
-                  color: 'white',
-                }} numberOfLines={2}>
-                {postText}
-              </Text>
-            </View>
-            <View style={styles.progressBarContainer}>
+                <Text
+                  style={{
+                    color: 'white',
+                  }}
+                  numberOfLines={2}>
+                  {postText}
+                </Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View
+                  style={[styles.progressBar, {width: `${progress * 100}%`}]}
+                />
+              </View>
               <View
-                style={[styles.progressBar, {width: `${progress * 100}%`}]}
-              />
+                style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 14,
+                    fontFamily: 'Poppins-Medium',
+                  }}>
+                  {`${(progress * 100).toFixed(0)}%`}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (abortControllerRef.current) {
+                      abortControllerRef.current.abort(); // Cancel the upload
+                      setIsPosting(false); // End loading state
+                    }
+                  }}
+                  style={styles.cancelButton}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+          </View>
+        )}
+        <ScrollView contentContainerStyle={{flexGrow: 1}} showsVerticalScrollIndicator={false}>
+          <View style={styles.contentContainer}>
             <View
               style={{
                 flexDirection: 'row',
-                gap: 10,
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontSize: 14,
-                  fontFamily: 'Poppins-Medium',
-                }}>
-                {`${(progress * 100).toFixed(0)}%`}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  if (abortControllerRef.current) {
-                    abortControllerRef.current.abort(); // Cancel the upload
-                    setIsPosting(false); // End loading state
-                  }
-                }}
-                style={styles.cancelButton}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-      <ScrollView contentContainerStyle={{flexGrow: 1}}>
-        <View style={styles.contentContainer}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-            <View style={styles.profileContainer}>
-              {/* <Image
+              <View style={styles.profileContainer}>
+                {/* <Image
             source={require('../../../assets/images/profilei.png')}
             resizeMode="contain"
             style={styles.profileImage}
           /> */}
-              <Image
-                source={
-                  profilePhoto
-                    ? {uri: profilePhoto}
-                    : require('../../../assets/images/profiles.png')
-                }
-                resizeMode="contain"
-                style={styles.profileImage}
-              />
-              <View style={styles.profileTextContainer}>
-                <Text style={styles.profileName}>{name}</Text>
+                <Image
+                  source={
+                    profilePhoto
+                      ? {uri: profilePhoto}
+                      : require('../../../assets/images/profiles.png')
+                  }
+                  resizeMode="contain"
+                  style={styles.profileImage}
+                />
+                <View style={styles.profileTextContainer}>
+                  <Text style={styles.profileName}>{name}</Text>
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity
-              onPress={togglePicker}
-              style={{
-                flexDirection: 'row',
-                marginTop: 10,
-                borderColor: '#333',
-                borderWidth: 2,
-                width: '40%',
-                height: 30,
-                padding: 4,
-                justifyContent: 'space-between',
-                borderRadius: 10,
-                alignContent: 'center',
-              }}>
-              {/* <Icon3 name="grid-outline" size={18} color="purple" /> */}
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontFamily: 'Poppins-Regular',
-                  color: 'white',
-                  paddingLeft: 10,
-                }}>
-                {selectedPod ? selectedPod : 'Images'}
-              </Text>
               <TouchableOpacity
-                onPress={openPicker}
+                onPress={togglePicker}
                 style={{
-                  marginTop: 3,
-                  marginRight: 5,
+                  flexDirection: 'row',
+                  marginTop: 10,
+                  borderColor: '#333',
+                  borderWidth: 2,
+                  width: '40%',
+                  height: 30,
+                  padding: 4,
+                  justifyContent: 'space-between',
+                  borderRadius: 10,
+                  alignContent: 'center',
                 }}>
-                <Animated.View style={caretRotationStyle}>
-                  <Icon name="caretdown" size={10} color="white" />
-                </Animated.View>
+                {/* <Icon3 name="grid-outline" size={18} color="purple" /> */}
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Poppins-Regular',
+                    color: 'white',
+                    paddingLeft: 10,
+                  }}>
+                  {selectedPod ? selectedPod : 'Images'}
+                </Text>
+                <TouchableOpacity
+                  onPress={openPicker}
+                  style={{
+                    marginTop: 3,
+                    marginRight: 5,
+                  }}>
+                  <Animated.View style={caretRotationStyle}>
+                    <Icon name="caretdown" size={10} color="white" />
+                  </Animated.View>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-            {/* </View> */}
+              {/* </View> */}
+            </View>
+            {show && (
+              <Animated.View
+                style={{
+                  height: 100,
+                  overflow: 'hidden',
+                  position: 'absolute', // Make the dropdown float
+                  top: 65, // Adjust this to place the dropdown correctly
+                  right: 16, // Match with your layout, adjust if necessary
+                  width: '40%', // Ensure dropdown has the correct width
+                  backgroundColor: '#333', // Add a background color if necessary
+                  zIndex: 100, // Ensures it's on top of other elements
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: '#333',
+                }}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {options.map(option => (
+                    <TouchableOpacity
+                      key={option}
+                      onPress={() => hidePicker(option)}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          padding: 5,
+                          marginVertical: 5,
+                          fontFamily: 'Poppins-Regular',
+                          color: 'white',
+                        }}>
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </Animated.View>
+            )}
+
+            {/* Post Text Input */}
+            <TextInput
+              style={[
+                styles.textInput,
+                // hasLink(postText) ? { color: 'blue' } : { color: 'black' },
+              ]}
+              placeholder="Enter your post here"
+              placeholderTextColor="#888"
+              multiline
+              maxLength={1000}
+              value={postText}
+              onChangeText={setPostText}
+            />
+
+            {imageList.length > 0 && (
+              <FlatList
+                data={imageList}
+                keyExtractor={item => item.uri}
+                renderItem={renderImageItem}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.mediaList}
+              />
+            )}
+
+            {videoList.length > 0 && (
+              <FlatList
+                data={videoList}
+                keyExtractor={item => item.uri}
+                renderItem={renderVideoItem}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.mediaList}
+              />
+            )}
+            <Text style={styles.charCount}>{postText.length}/1000</Text>
           </View>
-          {show && (
-            <Animated.View
-              style={{
-                height: 100,
-                overflow: 'hidden',
-                position: 'absolute', // Make the dropdown float
-                top: 65, // Adjust this to place the dropdown correctly
-                right: 16, // Match with your layout, adjust if necessary
-                width: '40%', // Ensure dropdown has the correct width
-                backgroundColor: '#333', // Add a background color if necessary
-                zIndex: 100, // Ensures it's on top of other elements
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: '#333',
-              }}>
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {options.map(option => (
-                  <TouchableOpacity
-                    key={option}
-                    onPress={() => hidePicker(option)}>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        padding: 5,
-                        marginVertical: 5,
-                        fontFamily: 'Poppins-Regular',
-                        color: 'white',
-                      }}>
-                      {option}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </Animated.View>
-          )}
-
-          {/* Post Text Input */}
-          <TextInput
-            style={[
-              styles.textInput,
-              // hasLink(postText) ? { color: 'blue' } : { color: 'black' },
-            ]}
-            placeholder="Enter your post here"
-            placeholderTextColor="#888"
-            multiline
-            maxLength={1000}
-            value={postText}
-            onChangeText={setPostText}
-          />
-
-          {imageList.length > 0 && (
-            <FlatList
-              data={imageList}
-              keyExtractor={item => item.uri}
-              renderItem={renderImageItem}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.mediaList}
-            />
-          )}
-
-          {videoList.length > 0 && (
-            <FlatList
-              data={videoList}
-              keyExtractor={item => item.uri}
-              renderItem={renderVideoItem}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.mediaList}
-            />
-          )}
-          <Text style={styles.charCount}>{postText.length}/1000</Text>
-        </View>
-        {/* <FlatList
+          {/* <FlatList
         data={tags}
         horizontal
         keyExtractor={(item, index) => index.toString()}
@@ -765,37 +767,39 @@ const PostScreen = () => {
         )}
         contentContainerStyle={styles.tagList}
       /> */}
-        <View style={styles.tagContainer}>
-          {tags.map((item, index) => (
-            <View style={styles.tag} key={index}>
-              <Text style={styles.tagText}>{item}</Text>
-              <TouchableOpacity onPress={() => removeTag(index)}>
-                <Icon name="close" size={16} color="gray" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-        <TextInput
-          value={hashtags}
-          onChangeText={setHashTags}
-          placeholder="Add #luitags (#hashtags)"
-          placeholderTextColor="#838383"
-          onSubmitEditing={addTag}
-          style={{
-            height: 49,
-            paddingHorizontal: 16,
-            width: '100%',
-            borderBottomColor: 'gray',
-            borderBottomWidth: 1,
-            color: 'white',
-            fontFamily: 'Poppins-Regular',
-          }}
-        />
 
-        {/* Footer Icons and Post Button */}
-        <View style={styles.footer}>
-          <View style={styles.iconContainer}>
-            {/* <TouchableOpacity
+          <View style={styles.tagContainer}>
+            {tags.map((item, index) => (
+              <View style={styles.tag} key={index}>
+                <Text style={styles.tagText}>{item}</Text>
+                <TouchableOpacity onPress={() => removeTag(index)}>
+                  <Icon name="close" size={16} color="gray" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+          <TextInput
+            value={hashtags}
+            onChangeText={setHashTags}
+            placeholder="Add #luitags (#hashtags)"
+            placeholderTextColor="#838383"
+            onSubmitEditing={addTag}
+            style={{
+              height: 49,
+              paddingHorizontal: 16,
+              width: '100%',
+              borderBottomColor: 'gray',
+              borderBottomWidth: 1,
+              color: 'white',
+              fontFamily: 'Poppins-Regular',
+            }}
+          />
+          {/* Footer Icons and Post Button */}
+        </ScrollView>
+      </SafeAreaView>
+      <View style={styles.footer}>
+        <View style={styles.iconContainer}>
+          {/* <TouchableOpacity
           // onPress={handleInsertLink}
           >
             <Icon5
@@ -805,24 +809,23 @@ const PostScreen = () => {
               style={styles.icon}
             />
           </TouchableOpacity> */}
-            <TouchableOpacity onPress={handleSelectMedia}>
-              <Icon3
-                name="image-outline"
-                color="#388DEB"
-                size={24}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-            {/* <Icon4 name="analytics" size={24} color="#353638" style={styles.icon} /> */}
-          </View>
-
-          {/* Post Button */}
-          <TouchableOpacity style={styles.postButton} onPress={SubmitPost}>
-            <Text style={styles.postButtonText}>Post</Text>
+          <TouchableOpacity onPress={handleSelectMedia}>
+            <Icon3
+              name="image-outline"
+              color="#388DEB"
+              size={24}
+              style={styles.icon}
+            />
           </TouchableOpacity>
+          {/* <Icon4 name="analytics" size={24} color="#353638" style={styles.icon} /> */}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Post Button */}
+        <TouchableOpacity style={styles.postButton} onPress={SubmitPost}>
+          <Text style={styles.postButtonText}>Post</Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 };
 

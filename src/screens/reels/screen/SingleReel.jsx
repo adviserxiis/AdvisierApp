@@ -63,7 +63,7 @@ const SingleReel = ({
   const BottomTabHeight = useBottomTabBarHeight();
   const screenHeight = Dimensions.get('window').height - BottomTabHeight;
   const [aspectRatio, setAspectRatio] = useState(1);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(creator?.followers?.includes(user.userid));
 
   const commentModalRef = useRef(null); // No TypeScript type annotation in JS
 
@@ -132,6 +132,9 @@ const SingleReel = ({
     },
     [progress],
   );
+  
+  console.log(creator)
+  
 
   const followUser = async () => {
     const userObjectString = await AsyncStorage.getItem('user');
@@ -169,7 +172,7 @@ const SingleReel = ({
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              deviceToken: video?.adviser?.data?.device_token,
+              deviceToken: creator?.device_token,
               title: 'Following Update',
               body: `${userObject?.name} started following you!!`,
             }),
@@ -221,6 +224,15 @@ const SingleReel = ({
       followUser();
     }
   };
+
+  const [commentCount, setCommentCount] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      // Update the comment count when the screen is focused
+      const updatedCommentCount = (video.data.comments || 0 || []).length || 0;
+      setCommentCount(updatedCommentCount);
+    }, [video]),
+  );
 
   const handleTouch = event => {
     const touchX = event.nativeEvent.locationX;
@@ -396,7 +408,7 @@ const SingleReel = ({
       if (result) {
         console.log('Shared successfully:', result);
       }
-    } catch (error: any) {
+    } catch (error) {
       if (error.message) {
         // Alert.alert('Error', error.message);
       } else if (error.dismissedAction) {
@@ -480,6 +492,8 @@ const SingleReel = ({
             fullscreen={isFullScreen}
             minBufferMs={15000}
             maxBufferMs={50000}
+            playInBackground={false}  // Ensure the video doesn't play in the background
+        playWhenInactive={false} 
             bufferForPlaybackMs={5000}
             bufferForPlaybackAfterRebufferMs={5000}
             muted={mute} // Use the passed mute prop
@@ -501,7 +515,7 @@ const SingleReel = ({
                 top: 0,
                 left: 0,
                 right: 0,
-                bottom: 20,
+                bottom: BottomTabHeight,
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
@@ -572,6 +586,8 @@ const SingleReel = ({
   ]);
 
   const [isExpanded, setIsExpanded] = useState(false);
+  console.log("Single Reel video data",video);
+  // console.log("Single Reel video data",video);
   // const slideAnim = useRef(new Animated.Value(0)).current;
   // const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -622,7 +638,7 @@ const SingleReel = ({
     <SafeAreaView
       style={isFullScreen ? styles.fullScreenContainer : styles.container}>
       <StatusBar hidden={isFullScreen} />
-      <CommentModal ref={commentModalRef} />
+      <CommentModal ref={commentModalRef} video={video} creator={creator} />
       {renderVideo}
 
       {!isFullScreen && !error && (
@@ -765,12 +781,12 @@ const SingleReel = ({
                 />
                 <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity
+              <TouchableOpacity
                 style={styles.actionButton}
                 onPress={handlePresentCommentModal}>
                 <Ionic name="chatbubble-outline" size={24} color="white" />
-                <Text style={styles.actionText}>190</Text>
-              </TouchableOpacity> */}
+                <Text style={styles.actionText}>{commentCount}</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
                 <Icon3 name="share" size={24} color="#FFFFFF" />
@@ -844,14 +860,14 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     position: 'absolute',
-    left: '50%',
-    top: '48%',
+    left: '51%',
+    top: '46%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   centeredIcon: {
     position: 'absolute',
-    left: '50%',
-    top: '48%',
+    left: '51%',
+    top: '46%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   errorContainer: {
@@ -957,7 +973,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontFamily: 'Poppins-Regular',
-    width: '100%',
+    width: '90%',
     opacity: 0.7,
     lineHeight: 18,
   },

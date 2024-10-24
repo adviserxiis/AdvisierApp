@@ -8,7 +8,7 @@ import {
 import React from 'react';
 import {useNavigation} from '@react-navigation/native';
 
-const ServicesCard = ({service}) => {
+const ServicesCard = ({service,servicelist}) => {
   const navigation = useNavigation();
   // console.log(service);
 
@@ -113,7 +113,7 @@ const ServicesCard = ({service}) => {
               borderColor: '#9C9C9C',
               flex:1,
             }}
-            onPress={() => navigation.navigate('EditServices', {service})}>
+            onPress={() => navigation.navigate('EditServices', {service, servicelist})}>
             <Text
               style={{
                 color: '#9C9C9C',

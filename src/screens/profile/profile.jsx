@@ -45,6 +45,7 @@ import ServicesCard from './components/ServicesCard';
 import BookingCard from './components/BookingCard';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SetAvailablity from './components/SetAvailablity';
+import Card2 from './components/Card2';
 // import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 
 // const adUnitId = __DEV__
@@ -124,6 +125,7 @@ const Profile = () => {
     profileImage: null,
     bannerImage: null,
   });
+  // console.log(user?.userid);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalYPosition] = useState(new Animated.Value(-200)); // Initial position off-screen
   const [modalOpacity] = useState(new Animated.Value(0));
@@ -285,6 +287,7 @@ const Profile = () => {
       // Parse JSON response
       const jsonResponse = await response.json();
       setDetails(jsonResponse);
+      console.log(jsonResponse);
       const modalShown = await AsyncStorage.getItem('modalShown');
       if (modalShown === null && jsonResponse?.followers?.length < 100) {
         console.log('Modal pop up again');
@@ -399,11 +402,11 @@ const Profile = () => {
     return jsonresponse;
   };
 
-  const [bookings,setBookings] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
-  const getBooking = async()=>{
+  const getBooking = async () => {
     const response = await fetch(
-      `https://adviserxiis-backend-three.vercel.app/service/getbookingsofuser/${user.userid}`,
+      `https://adviserxiis-backend-three.vercel.app/service/getbookingsofuser/${user?.userid}`,
       {
         method: 'GET',
         headers: {
@@ -414,7 +417,7 @@ const Profile = () => {
     const jsonresponse = await response.json();
     console.log('Booking Details', jsonresponse.bookings);
     setBookings(jsonresponse?.bookings);
-  }
+  };
 
   // useEffect(()=>{
   //   getBooking();
@@ -670,8 +673,6 @@ const Profile = () => {
   //   outputRange: ['0deg', '45deg'], // Rotate the plus icon into an X
   // });
 
-
-
   return (
     <ScrollView
       style={styles.container}
@@ -838,6 +839,24 @@ const Profile = () => {
               />
             </TouchableOpacity>
           )}
+          {/* {details?.social_links?.linkedin && (
+            <TouchableOpacity
+              onPress={() => handleLinkPress(details?.social_links?.spotify)}>
+              <Image
+                source={require('../../assets/images/icons8-linkedin-48.png')}
+                style={{width: 32, height: 32}}
+              />
+            </TouchableOpacity>
+          )}
+          {details?.social_links?.twitter && (
+            <TouchableOpacity
+              onPress={() => handleLinkPress(details?.social_links?.spotify)}>
+              <Image
+                source={require('../../assets/images/spotify.png')}
+                style={{width: 32, height: 32}}
+              />
+            </TouchableOpacity>
+          )} */}
         </View>
 
         {/* <View style={{
@@ -952,7 +971,11 @@ const Profile = () => {
         <Card
           followers={details?.followers?.length || 0}
           duration={totalDuration}
+          service={services.length > 0}
+          earnings={details?.earnings || 0}
         />
+
+        {/* <Card2/> */}
       </View>
 
       <View style={styles.navbar}>
@@ -1018,7 +1041,7 @@ const Profile = () => {
       </View>
 
       {activeTab === 'reels' ? (
-        reels.length === 0 ? (
+        reels?.length === 0 ? (
           <View style={styles.noReelsContainer}>
             <Text style={styles.noReelsText}>No reels uploaded</Text>
           </View>
@@ -1034,7 +1057,7 @@ const Profile = () => {
           />
         )
       ) : activeTab === 'posts' ? (
-        posts.length === 0 ? (
+        posts?.length === 0 ? (
           <View style={styles.noPostsContainer}>
             <Text style={styles.noPostsText}>No posts available</Text>
           </View>
@@ -1055,7 +1078,7 @@ const Profile = () => {
           />
         )
       ) : activeTab === 'services' ? (
-        services.length === 0 ? (
+        services?.length === 0 ? (
           <View style={styles.noReelsContainer}>
             <Text style={styles.noReelsText}>No services available</Text>
           </View>
@@ -1063,14 +1086,16 @@ const Profile = () => {
           <FlatList
             data={services}
             ListHeaderComponent={<SetAvailablity />}
-            renderItem={({item}) => <ServicesCard service={item} />}
+            renderItem={({item}) => (
+              <ServicesCard service={item} servicelist={getServices} />
+            )}
             keyExtractor={item => item.serviceid}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.servicesList}
           />
         )
       ) : activeTab === 'booking' ? (
-        bookings.length === 0 ? (
+        bookings?.length === 0 ? (
           <View style={styles.noPostsContainer}>
             <Text style={styles.noPostsText}>No bookings available</Text>
           </View>
@@ -1078,10 +1103,11 @@ const Profile = () => {
           <FlatList
             data={bookings}
             renderItem={({item}) => <BookingCard booking={item} />}
-            keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()} 
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.bookingsList}
-            
           />
         )
       ) : null}
@@ -1150,8 +1176,6 @@ const Profile = () => {
           </View>
         </Modal>
       )}
-
-      
     </ScrollView>
   );
 };
@@ -1481,7 +1505,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
   },
- 
 });
 
 export default Profile;

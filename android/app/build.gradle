@@ -82,8 +82,8 @@ android {
         applicationId "com.advisiorapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 62
-        versionName "6.1.1"
+        versionCode 65
+        versionName "6.1.4"
     }
     signingConfigs {
         release {
@@ -127,6 +127,7 @@ dependencies {
   implementation 'com.google.firebase:firebase-messaging:23.2.1'
   implementation project(':react-native-code-push')
   implementation project(':react-native-linear-gradient')
+  
 
 // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")

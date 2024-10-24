@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
 import {
   View,
   StatusBar,
@@ -8,20 +8,27 @@ import {
   RefreshControl,
 } from 'react-native';
 import VideoPlayer from './components/VideoPlayer';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Mixpanel } from 'mixpanel-react-native';
-import { useSelector } from 'react-redux';
-import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
-import { debounce } from 'lodash';
-import { useFocusEffect } from '@react-navigation/native';
+import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
+import {Mixpanel} from 'mixpanel-react-native';
+import {useSelector} from 'react-redux';
+import {
+  InterstitialAd,
+  AdEventType,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+import {debounce} from 'lodash';
+import {useFocusEffect} from '@react-navigation/native';
 const trackAutomaticEvents = false;
 const mixpanel = new Mixpanel(
   'f03fcb4e7e5cdc7d32f57611937c5525',
   trackAutomaticEvents,
 );
+
 mixpanel.init();
-const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
-const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-1658613370450501/1720983301'; // Replace with actual ad unit ID
+const {height: screenHeight, width: screenWidth} = Dimensions.get('window');
+const adUnitId = __DEV__
+  ? TestIds.INTERSTITIAL
+  : 'ca-app-pub-1658613370450501/1720983301'; // Replace with actual ad unit ID
 // const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-3940256099942544/6300978111'; // Replace with actual ad unit ID
 
 const Reel = () => {
@@ -33,8 +40,9 @@ const Reel = () => {
   const [ad, setAd] = useState(null);
   const flatListRef = useRef(null);
   const BottomTabHeight = useBottomTabBarHeight();
-  const screenHeightAdjusted = Dimensions.get('window').height - BottomTabHeight;
-  const user = useSelector((state) => state.user);
+  const screenHeightAdjusted =
+    Dimensions.get('window').height - BottomTabHeight;
+  const user = useSelector(state => state.user);
 
   const getVideoList = async () => {
     try {
@@ -64,7 +72,7 @@ const Reel = () => {
   //     const fetchData = async () => {
   //       await getVideoList();
   //     };
-  
+
   //     fetchData();
   //   }, [])
   // );
@@ -74,20 +82,29 @@ const Reel = () => {
       requestNonPersonalizedAdsOnly: true,
     });
 
-    const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-      setAdLoaded(true);
-    });
+    const unsubscribeLoaded = interstitial.addAdEventListener(
+      AdEventType.LOADED,
+      () => {
+        setAdLoaded(true);
+      },
+    );
 
-    const unsubscribeFailed = interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error('Ad failed to load:', error);
-      setAdLoaded(false);
-      interstitial.load();
-    });
+    const unsubscribeFailed = interstitial.addAdEventListener(
+      AdEventType.ERROR,
+      error => {
+        console.error('Ad failed to load:', error);
+        setAdLoaded(false);
+        interstitial.load();
+      },
+    );
 
-    const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
-      setAdLoaded(false);
-      setAd(null);
-    });
+    const unsubscribeClosed = interstitial.addAdEventListener(
+      AdEventType.CLOSED,
+      () => {
+        setAdLoaded(false);
+        setAd(null);
+      },
+    );
 
     interstitial.load();
     setAd(interstitial);
@@ -103,8 +120,8 @@ const Reel = () => {
     const timer = setInterval(() => {
       if (ad && adLoaded) {
         ad.show(); // Ensure this method exists or replace with correct method
-      }else{
-        console.log("No ad to show, showing fallback content instead.");
+      } else {
+        console.log('No ad to show, showing fallback content instead.');
       }
     }, 15 * 60 * 1000); // 15 minutes in milliseconds
 
@@ -113,14 +130,21 @@ const Reel = () => {
     };
   }, [ad, adLoaded]);
 
-  const handleViewableItemsChanged = useCallback(
-    debounce(({ viewableItems }) => {
-      if (viewableItems.length > 0 && viewableItems[0].isViewable) {
-        setCurrentIndex(viewableItems[0].index);
-      }
-    }, 200),
-    [],
-  );
+  // const handleViewableItemsChanged = useCallback(
+  //   debounce(({viewableItems}) => {
+  //     if (viewableItems.length > 0 && viewableItems[0].isViewable) {
+  //       setCurrentIndex(viewableItems[0].index);
+  //     }
+  //   }, 200),
+  //   [],
+  // );
+
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      const visibleIndex = viewableItems[0].index;
+      setCurrentIndex(visibleIndex);
+    }
+  }).current;
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -137,16 +161,20 @@ const Reel = () => {
     mixpanel.track('Active User');
   }, [user]);
 
-  const viewabilityConfig = useMemo(
-    () => ({
-      viewAreaCoveragePercentThreshold: 50,
-      minimumViewTime: 300,
-    }),
-    [],
-  );
+  // const viewabilityConfig = useMemo(
+  //   () => ({
+  //     viewAreaCoveragePercentThreshold: 50,
+  //     minimumViewTime: 300,
+  //   }),
+  //   [],
+  // );
+
+  const viewConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50, // When at least 50% of the item is visible
+  }).current;
 
   const renderItem = useCallback(
-    ({ item, index }) => (
+    ({item, index}) => (
       <MemoizedVideoPlayer
         video={item}
         isVisible={currentIndex === index}
@@ -169,19 +197,41 @@ const Reel = () => {
         data={memoizedList}
         renderItem={renderItem}
         keyExtractor={(item, index) => item._id || index.toString()}
-        onViewableItemsChanged={handleViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewConfig}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={10}
         windowSize={10}
         removeClippedSubviews
         pagingEnabled
-        decelerationRate='fast'
+        decelerationRate="fast"
+        snapToInterval={screenHeight}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
+
       />
+      {/* <FlatList
+  ref={flatListRef}
+  data={memoizedList}
+  renderItem={renderItem}
+  keyExtractor={(item, index) => item._id || index.toString()}
+  onViewableItemsChanged={handleViewableItemsChanged}
+  viewabilityConfig={viewabilityConfig}
+  showsVerticalScrollIndicator={false}
+  initialNumToRender={5}        // Render fewer items initially for better performance
+  maxToRenderPerBatch={2}       // Batch rendering for smoother experience
+  windowSize={3}                // Reduce the number of items kept in memory
+  removeClippedSubviews={true}  // Unmount views that are offscreen
+  pagingEnabled                 // Enable paging for snapping to each item
+  snapToAlignment="start"       // Snap to start of the screen
+  snapToInterval={screenHeight} // Ensure each item snaps to full screen
+  decelerationRate="fast"       // Fast deceleration for smooth scrolling
+  refreshControl={
+    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+  }
+/> */}
     </View>
   );
 };

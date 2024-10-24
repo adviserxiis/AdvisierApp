@@ -33,7 +33,7 @@ import CommentModal from './CommentModal';
 import LinearGradient from 'react-native-linear-gradient';
 import {TapGestureHandler} from 'react-native-gesture-handler';
 
-const {width: screenWidth} = Dimensions.get('window');
+const {width: screenWidth, height:screenHeight} = Dimensions.get('window');
 
 const VideoPlayer = ({
   video,
@@ -60,8 +60,9 @@ const VideoPlayer = ({
   const navigation = useNavigation();
   const BottomTabHeight = useBottomTabBarHeight();
   const screenHeight = Dimensions.get('window').height - BottomTabHeight;
+  const screenwidth = Dimensions.get('window').width;
   const [aspectRatio, setAspectRatio] = useState(1);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(video?.adviser?.data?.followers?.includes(user.userid));
 
   const commentModalRef = useRef(null); // No TypeScript type annotation in JS
 
@@ -99,13 +100,15 @@ const VideoPlayer = ({
     }
   }, [isVisible, currentIndex, index]);
 
+  
+
   // console.log(video?.adviser?.data);
 
   const followUser = async () => {
     const userObjectString = await AsyncStorage.getItem('user');
     let userObject = null;
     console.log('Adviser ID:', video?.data?.adviserid);
-    console.log('Adviser ID:', user.userid);
+    console.log('Adviser ID:', video?.adviser?.data);
 
     if (userObjectString) {
       userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
@@ -208,6 +211,15 @@ const VideoPlayer = ({
   //     Orientation.removeOrientationListener(handleOrientationChange);
   //   };
   // }, []);
+
+  const [commentCount, setCommentCount] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      // Update the comment count when the screen is focused
+      const updatedCommentCount = (video.data.comments || 0 || []).length || 0;
+      setCommentCount(updatedCommentCount);
+    }, [video]),
+  );
 
   const handleProgress = useCallback(
     data => {
@@ -422,11 +434,11 @@ const VideoPlayer = ({
   }, [video?.id, user.userid]);
 
   const onLoad = data => {
-    setVideoDuration(data.duration);
-    // Calculate aspect ratio: width / height
     const ratio = data.naturalSize.width / data.naturalSize.height;
     setAspectRatio(ratio); // Set the aspect ratio state
     setBuffering(false);
+    setVideoDuration(data.duration);
+    // Calculate aspect ratio: width / height
   };
 
   const [doubleTap, setDoubleTap] = useState(false);
@@ -484,6 +496,8 @@ const VideoPlayer = ({
             repeat={true}
             autoplay
             preload="auto"
+            playInBackground={false}  // Ensure the video doesn't play in the background
+        playWhenInactive={false} 
             bitrate={videoQuality === 'high' ? 1500000 : 500000}
             onLoadStart={() => setBuffering(true)}
             onLoad={onLoad}
@@ -499,7 +513,7 @@ const VideoPlayer = ({
                 top: 0,
                 left: 0,
                 right: 0,
-                bottom: 20,
+                bottom: BottomTabHeight,
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
@@ -616,11 +630,13 @@ const VideoPlayer = ({
   //   outputRange: [0, 150], // adjust for the expanded height of profile section
   // });
 
+  // console.log("jbsjbmbskjkbs",video?.id);
+
   return (
     <SafeAreaView
       style={isFullScreen ? styles.fullScreenContainer : styles.container}>
       <StatusBar hidden={isFullScreen} />
-      <CommentModal ref={commentModalRef} />
+      <CommentModal ref={commentModalRef} video={video}  />
       {renderVideo}
 
       {!isFullScreen && !error && (
@@ -764,12 +780,12 @@ const VideoPlayer = ({
                 />
                 <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity
+              <TouchableOpacity
                 style={styles.actionButton}
                 onPress={handlePresentCommentModal}>
                 <Ionic name="chatbubble-outline" size={24} color="white" />
-                <Text style={styles.actionText}>190</Text>
-              </TouchableOpacity> */}
+                <Text style={styles.actionText}>{commentCount} </Text>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.actionButton} onPress={sharePost}>
                 <Icon3 name="share" size={24} color="#FFFFFF" />
@@ -809,8 +825,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   video: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
+    width: screenWidth,
+    height: screenHeight,
     // position: 'absolute',
     // aspectRatio:9/16,
     // top:0,
@@ -822,8 +838,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   touchableArea: {
-    width: '100%',
-    height: '100%',
+    width: screenWidth,
+    height: screenHeight,
     flex: 1,
   },
   muteIcon: {
@@ -843,14 +859,14 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     position: 'absolute',
-    left: '50%',
-    top: '48%',
+    left: '51%',
+    top: '46%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   centeredIcon: {
     position: 'absolute',
-    left: '50%',
-    top: '48%',
+    left: '51%',
+    top: '46%',
     transform: [{translateX: -25}, {translateY: -25}],
   },
   errorContainer: {

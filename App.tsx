@@ -3,7 +3,7 @@ import {Provider} from 'react-redux';
 import store from './src/store/store';
 import Navigator from './src/navigator/Navigator';
 import messaging from '@react-native-firebase/messaging';
-import {Linking, PermissionsAndroid, Platform} from 'react-native';
+import {Alert, Linking, PermissionsAndroid, Platform} from 'react-native';
 import {useEffect} from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
 import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
@@ -15,6 +15,37 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 
 const App = () => {
+  // useEffect(() => {
+  //   // CodePush sync on app start
+  //   CodePush.sync(
+  //     {
+  //       installMode: CodePush.InstallMode.IMMEDIATE,
+  //       mandatoryInstallMode: CodePush.InstallMode.IMMEDIATE,
+  //     },
+  //     (status) => {
+  //       switch (status) {
+  //         case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
+  //           console.log('Downloading package...');
+  //           break;
+  //         case CodePush.SyncStatus.INSTALLING_UPDATE:
+  //           console.log('Installing update...');
+  //           break;
+  //         case CodePush.SyncStatus.UPDATE_INSTALLED:
+  //           console.log('Update installed!');
+  //           break;
+  //         case CodePush.SyncStatus.UNKNOWN_ERROR:
+  //           console.log('An unknown error occurred.');
+  //           Alert.alert('Update Error', 'An unknown error occurred during the update. Please try again later.');
+  //           break;
+  //       }
+  //     },
+  //     (error:any) => {
+  //       console.error('CodePush Sync Error:', error);
+  //       Alert.alert('Update Error', 'An error occurred while syncing the update. Please check your internet connection and try again.');
+  //     }
+  //   );
+  // }, []);
+
   const CURRENT_VERSION = DeviceInfo.getVersion();
   console.log('Current Version:', CURRENT_VERSION);
 
@@ -66,22 +97,36 @@ const App = () => {
             buttonPositive: 'OK',
           },
         );
+
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           console.log('Notification permission granted');
         } else {
           console.log('Notification permission denied');
+          // Alert.alert(
+          //   'Permission Denied',
+          //   'Please enable notifications in your app settings.',
+          //   [{ text: 'Go to Settings', onPress: () => Linking.openSettings() }]
+          // );
         }
       } else {
         const authStatus = await messaging().requestPermission();
         const enabled =
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
         if (enabled) {
           console.log('Authorization status:', authStatus);
+        } else {
+          console.log('Notification permission denied');
+          Alert.alert(
+            'Permission Denied',
+            'Please enable notifications in your app settings.',
+            [{text: 'Go to Settings', onPress: () => Linking.openSettings()}],
+          );
         }
       }
     } catch (err) {
-      console.log('Permission error:', err);
+      console.error('Permission error:', err);
     }
   };
 
@@ -106,7 +151,7 @@ const App = () => {
       handleNotificationClick('Foreground', detail);
     }
   };
-  
+
   const handleBackgroundEvent = async ({type, detail}) => {
     if (type === EventType.PRESS) {
       console.log('Background Event Press');
@@ -184,19 +229,35 @@ const App = () => {
   const handleNotificationClick = (context, remoteMessage) => {
     console.log('Notification Click Data:', remoteMessage);
     console.log('MNC', context);
-  
+
     const title = remoteMessage.notification?.title || '';
     const lastWord = getLastWord(title);
-  
+
     if (navigationRef.current) {
       if (remoteMessage.data?.screen) {
-        console.log(`${context} - Navigating to screen: ${remoteMessage.data.screen}`);
+        console.log(
+          `${context} - Navigating to screen: ${remoteMessage.data.screen}`,
+        );
         navigationRef.current.navigate(remoteMessage.data.screen);
-      } else if (lastWord === 'Update' || lastWord === 'Post' || lastWord === 'Now') {
-        console.log(`${context} - Navigating to Home screen because last word is ${lastWord}`);
+      } else if (lastWord === 'Post' || lastWord === 'Now') {
+        console.log(
+          `${context} - Navigating to Home screen because last word is ${lastWord}`,
+        );
         navigationRef.current.navigate('Home');
+      } else if (lastWord === 'Reel') {
+        console.log(
+          `${context} - Navigating to Reel screen because last word is ${lastWord}`,
+        );
+        navigationRef.current.navigate('Reel');
+      } else if (lastWord === 'Update') {
+        console.log(
+          `${context} - Navigating to PRofile screen because last word is ${lastWord}`,
+        );
+        navigationRef.current.navigate('Profile');
       } else {
-        console.warn('No screen specified in notification data. Redirecting to Home.');
+        console.warn(
+          'No screen specified in notification data. Redirecting to Home.',
+        );
         navigationRef.current.navigate('Home');
       }
     } else {
@@ -223,6 +284,8 @@ const App = () => {
 let codePushOptions = {
   deploymentKey: 'Lnp8myMJX1vFKxWp_G5RFcj8aOfGmJv_MKJfM',
   checkFrequency: CodePush.CheckFrequency.ON_APP_START,
+  // installMode: CodePush.InstallMode.IMMEDIATE, // Install the update immediately after download
+  // mandatoryInstallMode: CodePush.InstallMode.IMMEDIATE,
 };
 
 export default CodePush(codePushOptions)(App);

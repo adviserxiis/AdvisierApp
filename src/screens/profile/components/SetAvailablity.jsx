@@ -12,10 +12,12 @@ import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
 import DatePicker from 'react-native-date-picker';
 import {useSelector} from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 const SetAvailablity = () => {
   const [AvailableModal, setAvailableModal] = useState(false);
   const [selectedTime, setSelectedTime] = useState({})
   const user = useSelector(state => state.user);
+  const navigation = useNavigation();
 
   const [currentDay, setCurrentDay] = useState('');
   const [isStart, setIsStart] = useState(true);
@@ -201,7 +203,10 @@ const SetAvailablity = () => {
     <View
       style={{
         marginTop: 10,
-        alignItems: 'flex-end',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        flexDirection:'row',
+        gap:10,
         paddingHorizontal: 16,
       }}>
       <TouchableOpacity
@@ -215,7 +220,7 @@ const SetAvailablity = () => {
           paddingVertical: 3,
           borderRadius: 15,
         }}>
-        <Icon name="calendar" size={14} color="white" />
+          <Icon name="calendar" size={14} color="white" />
         <Text
           style={{
             color: 'white',
@@ -225,6 +230,23 @@ const SetAvailablity = () => {
           }}>
           Calendar
         </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={()=>navigation.navigate('ServicesPost')} style={{
+        flexDirection: 'row',
+        gap: 6,
+        backgroundColor: '#0069B4',
+        paddingHorizontal: 12,
+        alignItems: 'center',
+        paddingVertical: 3,
+        borderRadius: 15,
+      }}>
+          <Icon name="plus" size={14} color="white" />
+        <Text style={{
+            color: 'white',
+            fontSize: 12,
+            fontFamily: 'Poppins-Regular',
+            marginTop: 4,
+          }}>Add Service</Text>
       </TouchableOpacity>
       {AvailableModal && (
         <Modal visible={AvailableModal} transparent={true} animationType="fade">
@@ -249,6 +271,7 @@ const SetAvailablity = () => {
                 <Text
                   style={{
                     fontSize: 12,
+                    color:'white',
                     fontFamily: 'Poppins-Regular',
                   }}>
                   Days
@@ -256,6 +279,7 @@ const SetAvailablity = () => {
                 <Text
                   style={{
                     fontSize: 12,
+                    color:'white',
                     fontFamily: 'Poppins-Regular',
                   }}>
                   Start
@@ -263,6 +287,7 @@ const SetAvailablity = () => {
                 <Text
                   style={{
                     fontSize: 12,
+                    color:'white',
                     fontFamily: 'Poppins-Regular',
                   }}>
                   End

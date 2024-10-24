@@ -34,7 +34,7 @@ const MultipleReel = () => {
   const route = useRoute();
   const {video, creator, advsid} = route.params;
   const [list, setList] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(null);
   const [mute, setMute] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [adLoaded, setAdLoaded] = useState(false);
@@ -61,7 +61,7 @@ const MultipleReel = () => {
       );
       const jsonResponse = await response.json();
       setList(jsonResponse);
-      // console.log(jsonResponse);
+      // console.log("User videoLiat",jsonResponse?.data);
     } catch (error) {
       console.error('Error fetching video list:', error);
     }
@@ -134,14 +134,21 @@ const MultipleReel = () => {
     };
   }, [ad, adLoaded]);
 
-  const handleViewableItemsChanged = useCallback(
-    debounce(({viewableItems}) => {
-      if (viewableItems.length > 0 && viewableItems[0].isViewable) {
-        setCurrentIndex(viewableItems[0].index);
-      }
-    }, 200),
-    [],
-  );
+  // const handleViewableItemsChanged = useCallback(
+  //   debounce(({viewableItems}) => {
+  //     if (viewableItems.length > 0 && viewableItems[0].isViewable) {
+  //       setCurrentIndex(viewableItems[0].index);
+  //     }
+  //   }, 200),
+  //   [],
+  // );
+
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      const visibleIndex = viewableItems[0].index;
+      setCurrentIndex(visibleIndex);
+    }
+  }).current;
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -158,13 +165,17 @@ const MultipleReel = () => {
     mixpanel.track('Active User');
   }, [user]);
 
-  const viewabilityConfig = useMemo(
-    () => ({
-      viewAreaCoveragePercentThreshold: 50,
-      minimumViewTime: 300,
-    }),
-    [],
-  );
+  // const viewabilityConfig = useMemo(
+  //   () => ({
+  //     viewAreaCoveragePercentThreshold: 50,
+  //     minimumViewTime: 300,
+  //   }),
+  //   [],
+  // );
+
+  const viewConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50, // When at least 50% of the item is visible
+  }).current;
 
   const renderItem = useCallback(
     ({item, index}) => (
@@ -176,10 +187,14 @@ const MultipleReel = () => {
         currentIndex={currentIndex}
         mute={mute}
         setMute={setMute}
+        onVideoPress={() => setCurrentIndex(index)}
       />
     ),
     [currentIndex, mute, creator],
   );
+
+  console.log(currentIndex);
+  
 
   const memoizedList = useMemo(() => list, [list]);
 
@@ -191,19 +206,19 @@ const MultipleReel = () => {
         data={memoizedList}
         renderItem={renderItem}
         keyExtractor={(item, index) => item._id || index.toString()}
-        onViewableItemsChanged={handleViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewConfig}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={10}
         windowSize={10}
         removeClippedSubviews
         pagingEnabled
+        snapToInterval={screenHeight}
         decelerationRate="fast"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
-        
       />
     </View>
   );

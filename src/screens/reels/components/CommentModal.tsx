@@ -1,14 +1,22 @@
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {forwardRef, useCallback, useMemo, useState} from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -17,103 +25,24 @@ import {
 } from '@gorhom/bottom-sheet';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import moment from 'moment';
+import {useSelector} from 'react-redux';
 
 export type Ref = BottomSheetModal;
 
-// const commentsData = [
-//   {
-//     id: '1',
-//     username: 'ayush_r_1979',
-//     time: '2h',
-//     comment: '❤️😢',
-//     profilePic: 'https://lh3.googleusercontent.com/a/AEdFTp4V-B6AHugmI4geeR6vk_XvsugEYDWLiZyGc4fd=s96-c',
-//   },
-//   {
-//     id: '2',
-//     username: 'haarrii_10',
-//     time: '18h',
-//     comment: '❤️❤️ 🙌',
-//     profilePic: 'https://example.com/user2.jpg',
-//   },
-//   {
-//     id: '3',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '4',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '5',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '6',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '7',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '8',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '9',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '10',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '11',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   {
-//     id: '12',
-//     username: 'vk_photography_vijaykamble',
-//     time: '21h',
-//     comment: '❤️😍',
-//     profilePic: 'https://example.com/user3.jpg',
-//   },
-//   // More comments...
-// ];
-
-const CommentModal = forwardRef<Ref>((props, ref) => {
+const CommentModal = forwardRef<Ref>(({video, creator}, ref) => {
   const [commentList, setCommentList] = useState([]); // Store the list of comments
   const [commentText, setCommentText] = useState(''); // Handle comment input
-  const snapPoints = useMemo(() => ['100%'], []); // Adjust the height for comments
+  const snapPoints = useMemo(() => ['100%'], []);
   const {dismiss} = useBottomSheetModal();
   const {bottom} = useSafeAreaInsets();
+  console.log('Creator at comment ', creator?.device_token);
+  const navigation = useNavigation();
+
+  const user = useSelector((state: any) => state.user);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -122,97 +51,330 @@ const CommentModal = forwardRef<Ref>((props, ref) => {
         appearsOnIndex={0}
         disappearsOnIndex={-1}
         {...props}
-        onPress={dismiss} // Dismiss modal on backdrop press
+        onPress={dismiss}
       />
     ),
     [dismiss],
   );
 
-  const handleComment = () => {
-    if (commentText.trim() === '') return; // Don't add empty comments
+  useEffect(() => {
+    if (video && video.comments) {
+      setCommentList(video.comments); // Set initial comments
+    }
+  }, [video]);
+  console.log(video?.adviserDetails?.username);
 
-    const newComment = {
-      id: Date.now(), // Generate a unique ID (use better logic if needed)
-      username: 'Abhijeet Visheakarme', // Replace with actual user data
-      profilePic: 'https://lh3.googleusercontent.com/a/AEdFTp4V-B6AHugmI4geeR6vk_XvsugEYDWLiZyGc4fd=s96-c', // Replace with actual profile pic
-      time: '2m ago', // Replace with logic to get actual time
-      comment: commentText,
-    };
+  console.log('device token', video);
 
-    // Add the new comment to the comment list
-    setCommentList(prevComments => [...prevComments, newComment]);
-    setCommentText(''); // Clear input after submission
+  const handleAddComment = async () => {
+    const userObjectString = await AsyncStorage.getItem('user');
+    let userObject = null;
+
+    if (userObjectString) {
+      userObject = JSON.parse(userObjectString);
+    } else {
+      console.error('No user found in AsyncStorage');
+      return;
+    }
+
+    try {
+      const postid = video?.id; // Assuming videoSrc has an id property
+      if (!postid) {
+        console.error('Post ID is missing.');
+        return;
+      }
+
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/post/addcomment',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            adviserid: userObject.userid,
+            postid: postid,
+            message: commentText, // Using the correct variable
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error posting comment: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(`Backend error: ${data.error}`);
+      } else {
+        // Add new comment to the state
+        // setCommentList(prev => [...prev, { // Append new comment to the list
+        //   id: Date.now().toString(), // Generate a unique ID
+        //   username: userObject.name,
+        //   time: 'Just now', // You can implement actual time logic if needed
+        //   comment: commentText,
+        //   profilePic: userObject.profilePic || 'https://example.com/default-profile-pic.jpg', // Default image
+        // }]);
+
+        // Clear the input field
+        setCommentText('');
+        fetchComment();
+
+        // Send notification logic
+        const NotificationResponse = await fetch(
+          'https://adviserxiis-backend-three.vercel.app/notification/sendnotification',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              deviceToken:
+                video?.adviser?.data?.device_token || creator?.device_token,
+              title: 'Commented Now',
+              body: `${userObject.name} commented on your reel!`,
+            }),
+          },
+        );
+        const notificationJsonResponse = await NotificationResponse.json();
+        console.log('Notification response:', notificationJsonResponse);
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
-  const renderComment = item => (
-    <View style={styles.commentContainer} key={item.id}>
-      <Image source={{uri: item.profilePic}} style={styles.profilePic} />
+  const fetchComment = async () => {
+    // const postid = post?.id;
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/post/fetchcomments/${video?.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      // if (!response.ok) {
+      //   throw new Error('Error fetching comments');
+      // }
+
+      const data = await response.json();
+
+      console.log('Response Data:', data.comments);
+      setCommentList(data?.comments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchComment();
+    }, [video?.id]),
+  );
+
+  const deleteComment = commentIndex => {
+    const postid = video?.id;
+    console.log('Post Id', postid);
+    console.log('COmment Id', commentIndex);
+
+    Alert.alert(
+      'Delete comment',
+      'Are you sure you want to delete this comment?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete canceled'),
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              console.log('Deleting reel with ID:', postid);
+              const response = await fetch(
+                'https://adviserxiis-backend-three.vercel.app/post/deletecomment',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    postid: postid,
+                    commentIndex: commentIndex,
+                  }),
+                },
+              );
+
+              // Fetch updated reels list after deletion
+              const jsonResponse = await response.json();
+              console.log('Comment deleted:', jsonResponse);
+              fetchComment();
+
+              // Optional: You can show another alert for success
+              // Alert.alert('Success', 'The reel has been deleted.');
+            } catch (error) {
+              console.error('Error deleting reel:', error);
+              Alert.alert(
+                'Error',
+                'Failed to delete the reel. Please try again.',
+              );
+            }
+          },
+          style: 'destructive', // Optional: Makes the delete button red on iOS
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const getRelativeTime = dateString => {
+    // Parse the date string into a moment object
+    const parsedDate = moment(dateString);
+
+    // Get the relative time (e.g., "1 day ago", "2 days ago")
+    const relativeTime = parsedDate.fromNow();
+
+    return relativeTime;
+  };
+
+  const [profilePhoto, setProfilePhoto] = useState(null);
+
+  const getProfilePhoto = async () => {
+    try {
+      // Fetch profile photo from AsyncStorage
+      const userptp = await AsyncStorage.getItem('user');
+      const profileData = JSON.parse(userptp);
+      // console.log('async store for photo', profileData?.profile_photo);
+      // console.log('async store for name', profileData?.name);
+      if (profileData) {
+        setProfilePhoto(profileData?.profile_photo); // Update the state with the fetched photo
+        // setName(profileData?.name); // Update the state with the fetched name
+      }
+    } catch (error) {
+      console.log('Error retrieving profile photo:', error);
+    }
+  };
+
+  useEffect(() => {
+    getProfilePhoto();
+  }, []);
+
+  const renderComment = (item, index) => (
+    <View style={styles.commentContainer} key={index}>
+      <Pressable
+        onPress={() => {
+          navigation.navigate('ViewProfile', item?.adviserDetails?.id);
+          dismiss(); // Assuming dismiss is a valid function to call
+        }}>
+        <Image
+          source={
+            item?.adviserDetails?.profile_photo
+              ? {uri: item?.adviserDetails?.profile_photo}
+              : require('../../../assets/images/profiles.png')
+          }
+          style={styles.profilePic}
+        />
+      </Pressable>
       <View style={styles.commentContent}>
-        <Text style={styles.username}>
-          {item.username} <Text style={styles.time}>{item.time}</Text>
-        </Text>
-        <Text style={styles.commentText}>{item.comment}</Text>
+        <Pressable
+          onPress={() => {
+            navigation.navigate('ViewProfile', item?.adviserDetails?.id);
+            dismiss(); // Assuming dismiss is a valid function to call
+          }}>
+          <Text style={styles.username}>
+            {item?.adviserDetails?.username}{' '}
+            {/* <Text style={styles.time}>{getRelativeTime(item?.date)}</Text> */}
+          </Text>
+        </Pressable>
+        <Text style={styles.commentText}>{item?.message}</Text>
       </View>
-      <TouchableOpacity>
+      {/* <TouchableOpacity>
         <Icon
           name="heart-outline"
           size={20}
           color="#fff"
           style={styles.likeIcon}
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
+      {item?.adviserDetails?.id === user.userid && (
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => deleteComment(index)} // Assuming handleRemoveComment exists
+        >
+          <Icon1 name="delete" size={20} color="white" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
   return (
-    <>
-      <BottomSheetModal
-        snapPoints={snapPoints}
-        backdropComponent={renderBackdrop}
-        ref={ref}
-        handleIndicatorStyle={{
-          backgroundColor: 'gray',
-        }}
-        handleStyle={{
-          backgroundColor: '#17191A',
-          borderTopLeftRadius: 15,
-          borderTopRightRadius: 15,
-        }}
-        index={0}>
-        {/* <KeyboardAvoidingView
-          style={{flex: 1}}
-          behavior={Platform.OS == 'ios' ? 'padding' : 'height'}> */}
-          {/* Comment List with BottomSheetScrollView */}
-          <View style={styles.contentContainer}>
-            <Text style={styles.containerHeadline}>Comments</Text>
-            <BottomSheetScrollView
-              contentContainerStyle={styles.commentsSection}
-              showsVerticalScrollIndicator={false}>
-              {commentList.map(renderComment)}
-            </BottomSheetScrollView>
-          </View>
+    <BottomSheetModal
+      snapPoints={snapPoints}
+      backdropComponent={renderBackdrop}
+      ref={ref}
+      handleIndicatorStyle={{
+        backgroundColor: 'gray',
+      }}
+      handleStyle={{
+        backgroundColor: '#17191A',
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+      }}
+      index={0}>
+      {/* <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}> */}
+      {/* Comment List with BottomSheetScrollView */}
+      <View style={styles.contentContainer}>
+        <Text style={styles.containerHeadline}>Comments</Text>
+        <BottomSheetScrollView
+          contentContainerStyle={styles.commentsSection}
+          showsVerticalScrollIndicator={false}>
+          {commentList.length === 0 ? (
+            <Text
+              style={{
+                fontSize: 16,
+                color: '#fff',
+                textAlign: 'center',
+                fontFamily: 'Poppins-Regular',
+                marginTop: 20,
+              }}>
+              No comments yet
+            </Text>
+          ) : (
+            commentList.map((item, index) => renderComment(item, index))
+          )}
+        </BottomSheetScrollView>
+      </View>
 
-          {/* Fixed Input at the Bottom */}
-          <View style={styles.inputContainer}>
-            <Image
-              source={require('../../../assets/images/profiles.png')}
-              style={styles.inputProfilePic}
-            />
-            <TextInput
-             autoFocus
-              style={styles.input}
-              placeholder="Add a comment..."
-              placeholderTextColor="#999"
-              value={commentText}
-              onChangeText={setCommentText}
-            />
-            <TouchableOpacity style={styles.sendButton} onPress={handleComment}>
-              <Icon name="send" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        {/* </KeyboardAvoidingView> */}
-      </BottomSheetModal>
-    </>
+      {/* Fixed Input at the Bottom */}
+      <View style={styles.inputContainer}>
+        <Image
+          source={
+            profilePhoto
+              ? {uri: profilePhoto}
+              : require('../../../assets/images/profiles.png')
+          }
+          style={styles.inputProfilePic}
+        />
+        <TextInput
+          autoFocus
+          style={styles.input}
+          placeholder="Add a comment..."
+          placeholderTextColor="#999"
+          value={commentText}
+          onChangeText={setCommentText}
+        />
+        <TouchableOpacity style={styles.sendButton} onPress={handleAddComment}>
+          <Icon name="send" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+      {/* </KeyboardAvoidingView> */}
+    </BottomSheetModal>
   );
 });
 
@@ -230,19 +392,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Poppins-Medium',
   },
+  deleteButton: {
+    // position:'absolute',
+    // top:20,
+    marginTop: 10,
+    // right:0,
+  },
   commentsSection: {
     paddingHorizontal: 15,
-    paddingBottom: 60, // Extra padding for the input
+    paddingBottom: 80, // Adjusted for the input field
   },
   commentContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 20,
   },
   profilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 30,
     marginRight: 10,
   },
   commentContent: {
@@ -250,16 +418,17 @@ const styles = StyleSheet.create({
   },
   username: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+    // fontSize: 14,
+    fontFamily: 'Poppins-Medium',
   },
   time: {
     color: '#999',
     fontSize: 12,
+    fontFamily: 'Poppins-Regular',
   },
   commentText: {
-    color: '#fff',
-    marginTop: 5,
+    fontFamily: 'Poppins-Regular',
+    color: '#838383',
   },
   likeIcon: {
     marginLeft: 10,
@@ -269,22 +438,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    // flex:1,
     paddingVertical: 15,
     backgroundColor: '#17191A',
     borderTopWidth: 1,
     borderTopColor: '#333',
-    position: 'absolute', // Keep it fixed at the bottom
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex:999
+    zIndex: 999,
   },
   inputProfilePic: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    marginRight: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    marginRight: 5,
   },
   input: {
     flex: 1,
@@ -295,6 +463,13 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   sendButton: {
-    marginLeft: 10,
+    marginLeft: 5,
+    height: 40,
+    width: 40,
+    padding: 10,
+    backgroundColor: '#0069B4',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

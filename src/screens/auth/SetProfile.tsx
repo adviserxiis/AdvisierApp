@@ -58,6 +58,8 @@ const interestsList = [
 const linkLogos = {
   Instagram: require('../../assets/images/instagram.png'),
   Spotify: require('../../assets/images/spotify.png'),
+  // Linkedin: require('../../assets/images/icons8-linkedin-48.png'),
+  // Twitter: require('../../assets/images/icons8-x-48.png'),
 };
 
 import {Mixpanel} from 'mixpanel-react-native';
@@ -135,13 +137,14 @@ const SetProfile = () => {
 
     if (!name || !title || !description || !interests) {
       Alert.alert('Validation Error', 'Please fill all the fields');
-      setIsLoading(false)
+      setIsLoading(false);
       return; // Stop execution if validation fails
     }
 
     if (profileImage) {
       formData.append('profile_photo', {
-        uri: Platform.OS === 'android' ? `file://${profileImage}` : profileImage,
+        uri:
+          Platform.OS === 'android' ? `file://${profileImage}` : profileImage,
         name: 'profile_photo.jpg',
         type: 'image/jpeg',
       });
@@ -169,7 +172,7 @@ const SetProfile = () => {
     );
 
     try {
-      console.log("setProfile formdata",formData);
+      console.log('setProfile formdata', formData);
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/creator/savedetails',
         {
@@ -183,7 +186,7 @@ const SetProfile = () => {
 
       const jsonResponse = await response.json();
       console.log('Hi', jsonResponse);
-      console.log('useird',jsonResponse.userid);
+      console.log('useird', jsonResponse.userid);
 
       if (response.ok) {
         // Alert.alert('Success', jsonResponse.message);
@@ -197,7 +200,7 @@ const SetProfile = () => {
             social_links: social,
             profile_photo: profileImage,
             profile_background: bannerImage,
-            userid : userid,
+            userid: userid,
           }),
         );
 
@@ -245,7 +248,7 @@ const SetProfile = () => {
       height: 90,
       cropping: true,
       mediaType: 'photo',
-      compressImageQuality:1,
+      compressImageQuality: 1,
     })
       .then(image => {
         setProfileImage(image.path);
@@ -322,240 +325,240 @@ const SetProfile = () => {
         </View>
       </Modal>
       <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <StatusBar barStyle={'light-content'} backgroundColor="#17191A" />
-        <View style={styles.bannerContainer}>
-          {bannerImage && (
-            <Image
-              source={{uri: bannerImage}}
-              style={styles.bannerImage}
-              resizeMode="contain"
-            />
-          )}
-          {bannerImage && (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <StatusBar barStyle={'light-content'} backgroundColor="#17191A" />
+          <View style={styles.bannerContainer}>
+            {bannerImage && (
+              <Image
+                source={{uri: bannerImage}}
+                style={styles.bannerImage}
+                resizeMode="contain"
+              />
+            )}
+            {bannerImage && (
+              <Pressable
+                onPress={pickImage}
+                style={styles.bannerEditIconContainer}>
+                <Image
+                  source={require('../../assets/images/pen.png')}
+                  style={styles.editIcon}
+                />
+              </Pressable>
+            )}
+            {!bannerImage && (
+              <Pressable onPress={pickImage} style={styles.uploadButton}>
+                <Text style={styles.uploadText}>Upload banner</Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View
+            style={{
+              height: 90,
+              width: 90,
+              backgroundColor: 'white',
+              position: 'absolute',
+              top: 110,
+              borderWidth: 3,
+              borderRadius: 50,
+              borderColor: '#17191A',
+              left: '50%',
+              marginLeft: -45,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            {profileImage && (
+              <Image
+                source={{uri: profileImage}}
+                style={styles.profileImage}
+                resizeMode="cover"
+              />
+            )}
             <Pressable
-              onPress={pickImage}
-              style={styles.bannerEditIconContainer}>
+              onPress={pickProfileImage}
+              style={{
+                padding: 5,
+                backgroundColor: 'black',
+                borderRadius: 50,
+                position: 'absolute',
+                right: 0,
+                top: 55,
+                borderColor: 'white',
+                borderWidth: 1,
+              }}>
               <Image
                 source={require('../../assets/images/pen.png')}
-                style={styles.editIcon}
+                alt="upload"
+                style={{
+                  height: 10,
+                  width: 10,
+                }}
               />
             </Pressable>
-          )}
-          {!bannerImage && (
-            <Pressable onPress={pickImage} style={styles.uploadButton}>
-              <Text style={styles.uploadText}>Upload banner</Text>
-            </Pressable>
-          )}
-        </View>
-
-        <View
-          style={{
-            height: 90,
-            width: 90,
-            backgroundColor: 'white',
-            position: 'absolute',
-            top: 110,
-            borderWidth: 3,
-            borderRadius: 50,
-            borderColor: '#17191A',
-            left: '50%',
-            marginLeft: -45,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          {profileImage && (
-            <Image
-              source={{uri: profileImage}}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          )}
-          <Pressable
-            onPress={pickProfileImage}
-            style={{
-              padding: 5,
-              backgroundColor: 'black',
-              borderRadius: 50,
-              position: 'absolute',
-              right: 0,
-              top: 55,
-              borderColor: 'white',
-              borderWidth: 1,
-            }}>
-            <Image
-              source={require('../../assets/images/pen.png')}
-              alt="upload"
-              style={{
-                height: 10,
-                width: 10,
-              }}
-            />
-          </Pressable>
-        </View>
-
-        <View
-          style={{
-            flex: 1,
-            paddingHorizontal: 20,
-            marginTop: 100,
-            flexDirection: 'column',
-            gap: 20,
-          }}>
-          <TextInput
-            placeholder="Name"
-            value={name}
-            onChangeText={setName}
-            style={{
-              height: 44,
-              backgroundColor: '#3A3B3C',
-              color: 'white',
-              paddingLeft: 10,
-              borderRadius: 10,
-            }}
-          />
-          <TextInput
-            placeholder="Ex. Software Developer"
-            value={title}
-            placeholderTextColor='#838383'
-            onChangeText={setTitle}
-            style={{
-              height: 44,
-              backgroundColor: '#3A3B3C',
-              color: 'white',
-              paddingLeft: 10,
-              borderRadius: 10,
-            }}
-          />
-          <View
-            style={{
-              marginTop: -10,
-            }}>
-            <Text
-              style={{
-                fontSize: 10,
-                fontFamily: 'Poppins-Regular',
-                color: 'white',
-                opacity: 0.5,
-                textAlign: 'right',
-              }}>
-              {description.length}/60
-            </Text>
-            <TextInput
-              placeholder="Description"
-              // multiline={true}
-              // numberOfLines={4}
-              maxLength={60}
-              value={description}
-              onChangeText={setDescription}
-              placeholderTextColor='#838383'
-              style={{
-                height: 44,
-                backgroundColor: '#3A3B3C',
-                color: 'white',
-                paddingLeft: 10,
-                borderRadius: 10,
-              }}
-            />
           </View>
-          <Pressable
-            onPress={() => setModalVisible(true)}
-            style={{
-              marginTop: -10,
-            }}>
-            <Text
-              style={{
-                fontSize: 10,
-                fontFamily: 'Poppins-Regular',
-                color: 'white',
-                opacity: 0.5,
-                textAlign: 'right',
-              }}>
-              max 5
-            </Text>
-            <TextInput
-              placeholder="Choose your interested in"
-              editable={false}
-              multiline={false}
-              numberOfLines={4}
-              placeholderTextColor='#838383'
-              value={interests.join(', ').substring(0, 44)}
-              style={{
-                height: 44,
-                backgroundColor: '#3A3B3C',
-                color: 'white',
-                paddingLeft: 10,
-                borderRadius: 10,
-                textAlignVertical: 'top',
-                fontSize: 14,
-              }}
-            />
-            <Image
-              source={require('../../assets/images/arrow.png')}
-              style={{
-                width: 12,
-                height: 12,
-                resizeMode: 'contain',
-                position: 'absolute',
-                right: 15,
-                top: 33,
-              }}
-            />
-          </Pressable>
-          <Pressable onPress={() => setModalLinkVisible(true)}>
-            <TextInput
-              placeholder="Add your important links"
-              editable={false}
-              multiline={false}
-              numberOfLines={4}
-              placeholderTextColor='#838383'
-              value={
-                Array.isArray(links)
-                  ? links.map(link => link.type).join(', ')
-                  : ''
-              }
-              style={{
-                height: 44,
-                backgroundColor: '#3A3B3C',
-                color: 'white',
-                paddingLeft: 10,
-                borderRadius: 10,
-                textAlignVertical: 'top',
-                fontSize: 14,
-              }}
-            />
-            <Image
-              source={require('../../assets/images/arrow.png')}
-              style={{
-                width: 12,
-                height: 12,
-                resizeMode: 'contain',
-                position: 'absolute',
-                right: 15,
-                top: 15,
-              }}
-            />
-          </Pressable>
 
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: 10,
-              paddingHorizontal: 5,
-              marginTop: 30,
+              flex: 1,
+              paddingHorizontal: 20,
+              marginTop: 100,
+              flexDirection: 'column',
+              gap: 20,
             }}>
+            <TextInput
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              style={{
+                height: 44,
+                backgroundColor: '#3A3B3C',
+                color: 'white',
+                paddingLeft: 10,
+                borderRadius: 10,
+              }}
+            />
+            <TextInput
+              placeholder="Ex. Software Developer"
+              value={title}
+              placeholderTextColor="#838383"
+              onChangeText={setTitle}
+              style={{
+                height: 44,
+                backgroundColor: '#3A3B3C',
+                color: 'white',
+                paddingLeft: 10,
+                borderRadius: 10,
+              }}
+            />
+            <View
+              style={{
+                marginTop: -10,
+              }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  opacity: 0.5,
+                  textAlign: 'right',
+                }}>
+                {description.length}/60
+              </Text>
+              <TextInput
+                placeholder="Description"
+                // multiline={true}
+                // numberOfLines={4}
+                maxLength={60}
+                value={description}
+                onChangeText={setDescription}
+                placeholderTextColor="#838383"
+                style={{
+                  height: 44,
+                  backgroundColor: '#3A3B3C',
+                  color: 'white',
+                  paddingLeft: 10,
+                  borderRadius: 10,
+                }}
+              />
+            </View>
             <Pressable
-              onPress={() => navigation.goBack()}
-              style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Back</Text>
+              onPress={() => setModalVisible(true)}
+              style={{
+                marginTop: -10,
+              }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'Poppins-Regular',
+                  color: 'white',
+                  opacity: 0.5,
+                  textAlign: 'right',
+                }}>
+                max 5
+              </Text>
+              <TextInput
+                placeholder="Choose your interested in"
+                editable={false}
+                multiline={false}
+                numberOfLines={4}
+                placeholderTextColor="#838383"
+                value={interests.join(', ').substring(0, 44)}
+                style={{
+                  height: 44,
+                  backgroundColor: '#3A3B3C',
+                  color: 'white',
+                  paddingLeft: 10,
+                  borderRadius: 10,
+                  textAlignVertical: 'top',
+                  fontSize: 14,
+                }}
+              />
+              <Image
+                source={require('../../assets/images/arrow.png')}
+                style={{
+                  width: 12,
+                  height: 12,
+                  resizeMode: 'contain',
+                  position: 'absolute',
+                  right: 15,
+                  top: 33,
+                }}
+              />
             </Pressable>
-            <Pressable style={styles.saveButton} onPress={handleSaveDetails}>
-              <Text style={styles.saveButtonText}>Save</Text>
+            <Pressable onPress={() => setModalLinkVisible(true)}>
+              <TextInput
+                placeholder="Add your important links"
+                editable={false}
+                multiline={false}
+                numberOfLines={4}
+                placeholderTextColor="#838383"
+                value={
+                  Array.isArray(links)
+                    ? links.map(link => link.type).join(', ')
+                    : ''
+                }
+                style={{
+                  height: 44,
+                  backgroundColor: '#3A3B3C',
+                  color: 'white',
+                  paddingLeft: 10,
+                  borderRadius: 10,
+                  textAlignVertical: 'top',
+                  fontSize: 14,
+                }}
+              />
+              <Image
+                source={require('../../assets/images/arrow.png')}
+                style={{
+                  width: 12,
+                  height: 12,
+                  resizeMode: 'contain',
+                  position: 'absolute',
+                  right: 15,
+                  top: 15,
+                }}
+              />
             </Pressable>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 10,
+                paddingHorizontal: 5,
+                marginTop: 30,
+              }}>
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Back</Text>
+              </Pressable>
+              <Pressable style={styles.saveButton} onPress={handleSaveDetails}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
         </ScrollView>
 
         <Modal
@@ -619,117 +622,120 @@ const SetProfile = () => {
             setSelectedLink(null);
             setLinkInput({});
           }}>
-          <View style={styles.modalContainers}>
-            <View
-              style={{
-                marginTop: 20,
-                width: '90%',
-              }}>
-              <FlatList
-                data={Object.keys(linkLogos)}
-                keyExtractor={item => item}
-                renderItem={({item}) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.linkTypeButton,
-                      selectedLink === item && styles.selectedLinkLogoItem,
-                    ]}
-                    onPress={() => {
-                      setSelectedLink(item);
-                      setLinkInput(prevState => ({
-                        ...prevState,
-                        [item]: linkInput[item] || '',
-                      }));
-                    }}>
-                    <Image
-                      source={linkLogos[item]}
-                      style={{
-                        width: 40,
-                        height: 40,
-                        alignSelf: 'center',
-                      }}
-                    />
-                    <View
-                      style={{
-                        marginLeft: 10,
-                        flex: 1,
+          <>
+            <View style={styles.modalContainers}>
+              <View
+                style={{
+                  marginTop: 20,
+                  width: '90%',
+                }}>
+                <FlatList
+                  data={Object.keys(linkLogos)}
+                  keyExtractor={item => item}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.linkTypeButton,
+                        selectedLink === item && styles.selectedLinkLogoItem,
+                      ]}
+                      onPress={() => {
+                        setSelectedLink(item);
+                        setLinkInput(prevState => ({
+                          ...prevState,
+                          [item]: linkInput[item] || '',
+                        }));
                       }}>
-                      <Text style={styles.linkTypeText}>{item}</Text>
+                      <Image
+                        source={linkLogos[item]}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          alignSelf: 'center',
+                        }}
+                      />
                       <View
                         style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginTop: 10,
+                          marginLeft: 10,
+                          flex: 1,
                         }}>
-                        <TextInput
-                          placeholder="www.example.com"
-                          placeholderTextColor="#3A3B3C"
-                          value={linkInput[item] || ''}
-                          onChangeText={text =>
-                            setLinkInput(prevState => ({
-                              ...prevState,
-                              [item]: text,
-                            }))
-                          }
+                        <Text style={styles.linkTypeText}>{item}</Text>
+                        <View
                           style={{
-                            flex: 1,
-                            backgroundColor: '#F5F5F5',
-                            height: 35,
-                            fontSize: 12,
-                            color: 'black',
-                            borderRadius: 10,
-                            paddingHorizontal: 10,
-                            marginRight: 10,
-                            textTransform: 'lowercase',
-                          }}
-                        />
-                        <Pressable
-                          style={{
-                            padding: 5,
-                            backgroundColor: 'black',
-                            borderRadius: 50,
-                            borderWidth: 1,
-                            borderColor: 'white',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginTop: 10,
                           }}>
-                          <Image
-                            source={require('../../assets/images/pen.png')}
+                          <TextInput
+                            placeholder="www.example.com"
+                            placeholderTextColor="#3A3B3C"
+                            value={linkInput[item] || ''}
+                            onChangeText={text =>
+                              setLinkInput(prevState => ({
+                                ...prevState,
+                                [item]: text,
+                              }))
+                            }
                             style={{
-                              width: 10,
-                              height: 10,
+                              flex: 1,
+                              backgroundColor: '#F5F5F5',
+                              height: 35,
+                              fontSize: 12,
+                              color: 'black',
+                              borderRadius: 10,
+                              paddingHorizontal: 10,
+                              marginRight: 10,
+                              textTransform: 'lowercase',
                             }}
                           />
-                        </Pressable>
+                          <Pressable
+                            style={{
+                              padding: 5,
+                              backgroundColor: 'black',
+                              borderRadius: 50,
+                              borderWidth: 1,
+                              borderColor: 'white',
+                            }}>
+                            <Image
+                              source={require('../../assets/images/pen.png')}
+                              style={{
+                                width: 10,
+                                height: 10,
+                              }}
+                            />
+                          </Pressable>
+                        </View>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 10,
-                flex: 1,
-                paddingHorizontal: 23,
-                marginBottom: 50,
-              }}>
-              <Pressable
-                style={styles.closeButton}
-                onPress={() => {
-                  setModalLinkVisible(false);
-                  setSelectedLink(null);
-                  setLinkInput({});
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 10,
+                  // marginTop: 40,
+                  // flex: 1,
+                  paddingHorizontal: 23,
+                  marginBottom: 20,
                 }}>
-                <Text style={styles.closeButtonText}>Back</Text>
-              </Pressable>
-              <Pressable style={styles.saveButton} onPress={saveLink}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </Pressable>
+                <Pressable
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setModalLinkVisible(false);
+                    setSelectedLink(null);
+                    setLinkInput({});
+                  }}>
+                  <Text style={styles.closeButtonText}>Back</Text>
+                </Pressable>
+                <Pressable style={styles.saveButton} onPress={saveLink}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
+          </>
         </Modal>
       </SafeAreaView>
     </>
@@ -826,7 +832,7 @@ const styles = StyleSheet.create({
   },
   modalContainers: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#17191A',
     opacity: 0.9,

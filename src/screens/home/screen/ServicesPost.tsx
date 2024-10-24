@@ -28,12 +28,51 @@ const ServicesPost = () => {
   const [isDurationFocused, setIsDurationFocused] = useState(false);
   const [isPriceFocused, setIsPriceFocused] = useState(false);
 
+  const [currentDay, setCurrentDay] = useState('');
+  const [isStart, setIsStart] = useState(true);
+  const [showPicker, setShowPicker] = useState(false);
+  const [checkedbox, setCheckedBox] = useState(false);
+  const [AvailableModal, setAvailableModal] = useState(false);
+  const [selectedTime, setSelectedTime] = useState({
+    Monday: {start: new Date(), end: new Date()},
+    Tuesday: {start: new Date(), end: new Date()},
+    Wednesday: {start: new Date(), end: new Date()},
+    Thursday: {start: new Date(), end: new Date()},
+    Friday: {start: new Date(), end: new Date()},
+    Saturday: {start: new Date(), end: new Date()},
+    Sunday: {start: new Date(), end: new Date()},
+  });
+
+
+  useEffect(()=>{
+    AvailableDetails();
+  },[]);
+
+  
+  const AvailableDetails = async()=>{
+
+    const response = await fetch(
+      `https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`,
+    );
+    const data = await response.json();
+    console.log("user dtata",data?.availability);
+    if(!data?.availability){
+      setAvailableModal(true)
+    }
+  }
   const handleSubmit = async () => {
     setLoading(true);
     if (!servicename || !description || !duration || !price) {
       Alert.alert('Error', 'Please fill all the fields');
+      setLoading(false);
       return;
     }
+
+    // if(!currentDay){
+    //   setAvailableModal(true);
+    //   setLoading(false);
+    //   return;
+    // }
 
     try {
       const response = await fetch(
@@ -76,25 +115,13 @@ const ServicesPost = () => {
     }
   };
 
-  const [AvailableModal, setAvailableModal] = useState(true);
-  const [selectedTime, setSelectedTime] = useState({
-    Monday: {start: new Date(), end: new Date()},
-    Tuesday: {start: new Date(), end: new Date()},
-    Wednesday: {start: new Date(), end: new Date()},
-    Thursday: {start: new Date(), end: new Date()},
-    Friday: {start: new Date(), end: new Date()},
-    Saturday: {start: new Date(), end: new Date()},
-    Sunday: {start: new Date(), end: new Date()},
-  });
+ 
 
-  useEffect(() => {
-    setAvailableModal(true);
-  }, []);
+  // useEffect(() => {
+  //   setAvailableModal(true);
+  // }, []);
 
-  const [currentDay, setCurrentDay] = useState('');
-  const [isStart, setIsStart] = useState(true);
-  const [showPicker, setShowPicker] = useState(false);
-  const [checkedbox, setCheckedBox] = useState(false);
+  
 
   const handleTimeConfirm = selectedDate => {
     setSelectedTime({
@@ -126,6 +153,13 @@ const ServicesPost = () => {
             `End time cannot be less than start time for ${day}.`,
           );
           return null; // Skip this day
+        }
+
+        if(startTime === endTime){
+          Alert.alert(
+            'Error',
+            "Starting Time and Ending time doesn't be same"
+          )
         }
 
         // Format startTime and endTime in "AM/PM" format and convert to uppercase
@@ -364,7 +398,7 @@ const ServicesPost = () => {
                 {label: '120 min', value: 120},
               ]}
               placeholder={{
-                label: 'Select Duration in Minutes',
+                label: 'Duration in Minutes',
                 value: null,
                 color: '#838383',
               }}
@@ -399,7 +433,7 @@ const ServicesPost = () => {
         </View>
         <View
           style={{
-            marginTop: 5,
+            marginTop: 15,
           }}>
           {(isPriceFocused || price) && (
             <Text
@@ -455,6 +489,7 @@ const ServicesPost = () => {
                 }}>
                 <Text
                   style={{
+                    color:'white',
                     fontSize: 12,
                     fontFamily: 'Poppins-Regular',
                   }}>
@@ -462,6 +497,7 @@ const ServicesPost = () => {
                 </Text>
                 <Text
                   style={{
+                    color:'white',
                     fontSize: 12,
                     fontFamily: 'Poppins-Regular',
                   }}>
@@ -469,6 +505,7 @@ const ServicesPost = () => {
                 </Text>
                 <Text
                   style={{
+                    color:'white',
                     fontSize: 12,
                     fontFamily: 'Poppins-Regular',
                   }}>
@@ -516,19 +553,27 @@ const ServicesPost = () => {
                     }}>
                     <TouchableOpacity onPress={() => openTimePicker(day, true)}>
                       <Text style={styles.timeText1}>
-                        {selectedTime[day].start.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {selectedTime[day].start
+                          .toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                          .toUpperCase()}{' '}
+                        {/* Display start time in AM/PM */}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => openTimePicker(day, false)}>
                       <Text style={styles.timeText1}>
-                        {selectedTime[day].end.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {selectedTime[day].end
+                          .toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                          .toUpperCase()}{' '}
+                        {/* Display end time in AM/PM */}
                       </Text>
                     </TouchableOpacity>
                   </View>

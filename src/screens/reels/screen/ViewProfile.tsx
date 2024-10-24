@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
@@ -284,9 +284,15 @@ const ViewProfile = () => {
     }
   };
 
-  useEffect(()=>{
-    getServices();
-  },[])
+  // useEffect(()=>{
+  // },[]);
+  
+  useFocusEffect(
+    useCallback(() => {
+      // getPostList();
+      getServices();
+    }, []),
+  );
 
   const [videoAspectRatio, setVideoAspectRatio] = useState(16 / 9); // Default aspect ratio
 
@@ -363,6 +369,29 @@ const ViewProfile = () => {
   // const viewabilityConfig = {
   //   itemVisiblePercentThreshold: 60,
   // };
+
+  const getPostList = async () => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/post/gethomepostsofadviser/${advsid}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const jsonResponse = await response.json();
+      console.log("SJisis", jsonResponse);
+      setPosts(jsonResponse);
+    } catch (error) {
+      console.error('Error fetching video list:', error);
+    }
+  };
+
+  useEffect(() => {
+    getPostList();
+  }, []);
 
   const handleLinkPress = url => {
     if (url) {
@@ -683,7 +712,7 @@ const ViewProfile = () => {
               <PostItems
                 post={item}
                 isVisible={visiblePostIndex === index}
-                // getPostlist={getPostList}
+                getpost={getPostList}
               />
             )}
             keyExtractor={item => item.id}

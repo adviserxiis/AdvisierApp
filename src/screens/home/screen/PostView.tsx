@@ -700,6 +700,7 @@ const PostView = () => {
             keyExtractor={item => item.id}
             onViewableItemsChanged={onViewableItemsChanged.current}
             viewabilityConfig={viewabilityConfig}
+            ListFooterComponent={<View style={{ height: 50 }} />}
           />
         )
       ) : activeTab === 'services' ? (
