@@ -12,6 +12,7 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.microsoft.codepush.react.CodePush
 import com.facebook.soloader.SoLoader
 import com.BV.LinearGradient.LinearGradientPackage;
+// import io.agora.rtc.react.RtcEnginePackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -22,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               LinearGradientPackage()
+              // RtcEnginePackage()
             }
 
         override fun getJSBundleFile(): String {

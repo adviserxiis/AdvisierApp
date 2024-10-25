@@ -19,6 +19,8 @@ const BookingCard = ({booking}) => {
     return `${year}-${month}-${day}`; // Format YYYY-MM-DD
   }
 
+  console.log(booking?.meetingid)
+
   // const isJoinButtonActive = () => {
   //   const currentDateTime = moment(); // Current date and time
   //   const bookingDateTime = moment(
@@ -215,7 +217,7 @@ const BookingCard = ({booking}) => {
             {booking?.adviserDetails?.name}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleJoinButtonClick}  style={{
+        <TouchableOpacity onPress={()=>navigation.navigate('CallScreen',{ meetingid: booking?.meetingid })}  style={{
           paddingVertical:2,
           backgroundColor: isJoinButtonActive() ? '#0069B4' : 'gray',
           paddingHorizontal:29,

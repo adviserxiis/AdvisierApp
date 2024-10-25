@@ -2,6 +2,7 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
@@ -115,10 +116,19 @@ android {
             resValue "string", "CodePushDeploymentKey", project.ext.has("CodePushDeploymentKey") ? project.CodePushDeploymentKey : "@string/CodePushDeploymentKey"
         }
     }
+    // project.ext.react = [
+    //     enableHermes: false
+    // ]
+}
+
+ext {
+    agoraSdkVersion = '4.4.0' // Set this version if not already set in your root build.gradle
+    kotlin_version = "1.9.22"
 }
 
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation("com.facebook.react:react-android")
     implementation platform('com.google.firebase:firebase-bom:33.1.2')
     implementation 'com.google.firebase:firebase-analytics'
@@ -127,7 +137,8 @@ dependencies {
   implementation 'com.google.firebase:firebase-messaging:23.2.1'
   implementation project(':react-native-code-push')
   implementation project(':react-native-linear-gradient')
-  
+  implementation project(':react-native-agora')
+  implementation "io.agora.rtc:full-sdk:${agoraSdkVersion}"
 
 // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
