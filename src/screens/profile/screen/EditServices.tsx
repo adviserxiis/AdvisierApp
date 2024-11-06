@@ -650,6 +650,7 @@ const styles = StyleSheet.create({
   checkboxText: {
     color: '#fff',
     fontSize: 12,
+    marginTop:3,
     fontFamily: 'Poppins-Regular',
   },
 });

@@ -30,6 +30,8 @@ import KnowMore from '../screens/home/screen/KnowMore';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import CallScreen from '../screens/profile/screen/CallScreen';
 import CheckOut from '../screens/reels/screen/CheckOut';
+import Services from '../screens/servicec/Services';
+import ServiceDetails from '../screens/servicec/screen/ServiceDetails';
 
 const Tabs = createMaterialTopTabNavigator();
 //Home Stack
@@ -187,6 +189,16 @@ function ProfileStackScreen() {
     </ProfileStack.Navigator>
   );
 }
+
+const ServiceStack =createStackNavigator();
+function ServiceStackScreen() {
+  return (
+    <ServiceStack.Navigator>
+      <ServiceStack.Screen name='Services' component={Services}/>
+      {/* <ServiceStack.Screen name='ServiceDetails' component={ServiceDetails}/> */}
+    </ServiceStack.Navigator>
+  );
+}
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
 function MyTabs() {
@@ -234,6 +246,9 @@ function MyTabs() {
             case 'Reel':
               iconName = 'play';
               break;
+            case 'Service': 
+              iconName='bookmark';
+              break;
             case 'Profile':
               iconName = 'user';
               break;
@@ -249,6 +264,7 @@ function MyTabs() {
       <Tab.Screen name="Search" component={SearchStackScreen} />
       {/* <Tab.Screen name="AddPost" component={PostStackScreen} /> */}
       <Tab.Screen name="Reel" component={ReelStackScreen} />
+      <Tab.Screen name="Service" component={ServiceStackScreen}/>
       <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
   );

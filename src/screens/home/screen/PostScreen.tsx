@@ -53,21 +53,21 @@ const PostScreen = () => {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [name, setName] = useState(null);
   const [hashtags, setHashTags] = useState('');
-  const [tags, setTags] = useState([]);
+  // const [tags, setTags] = useState([]);
 
-  const removeTag = index => {
-    const newTags = [...tags];
-    newTags.splice(index, 1);
-    setTags(newTags);
-  };
+  // const removeTag = index => {
+  //   const newTags = [...tags];
+  //   newTags.splice(index, 1);
+  //   setTags(newTags);
+  // };
 
   // Function to add a tag
-  const addTag = () => {
-    if (hashtags && !tags.includes(hashtags)) {
-      setTags([...tags, hashtags]);
-      setHashTags('');
-    }
-  };
+  // const addTag = () => {
+  //   if (hashtags && !tags.includes(hashtags)) {
+  //     setTags([...tags, hashtags]);
+  //     setHashTags('');
+  //   }
+  // };
 
   const getProfilePhoto = async () => {
     try {
@@ -188,7 +188,7 @@ const PostScreen = () => {
     //   setIsPosting(false); // Initialize AbortController
     // }
 
-    if (tags.length === 0) {
+    if (hashtags==='') {
       Alert.alert('Error', 'Hashtags are mandatory');
       return;
     }
@@ -234,7 +234,7 @@ const PostScreen = () => {
           });
         });
         formData.append('adviserid', user.userid);
-        formData.append('luitags', tags);
+        formData.append('luitags', hashtags);
         if (postText) formData.append('description', postText);
 
         response = await fetch(
@@ -300,7 +300,7 @@ const PostScreen = () => {
               videoURLs: videoURLs,
               durations: durations,
               description: postText,
-              luitags: tags,
+              luitags: hashtags,
             }),
             signal: abortControllerRef.current?.signal,
           },
@@ -316,7 +316,7 @@ const PostScreen = () => {
             body: JSON.stringify({
               adviserid: user.userid,
               message: postText,
-              luitags: tags,
+              luitags: hashtags,
             }),
             signal: abortControllerRef.current?.signal,
           },
@@ -339,7 +339,7 @@ const PostScreen = () => {
         setImageList([]);
         setVideoList([]);
         setPostText('');
-        setTags([]);
+        setHashTags('');
         mixpanel.identify(user.userid); // Identifies the user by unique ID
         // mixpanel.getPeople().set({
         //   $name: name,
@@ -768,7 +768,7 @@ const PostScreen = () => {
         contentContainerStyle={styles.tagList}
       /> */}
 
-          <View style={styles.tagContainer}>
+          {/* <View style={styles.tagContainer}>
             {tags.map((item, index) => (
               <View style={styles.tag} key={index}>
                 <Text style={styles.tagText}>{item}</Text>
@@ -777,13 +777,13 @@ const PostScreen = () => {
                 </TouchableOpacity>
               </View>
             ))}
-          </View>
+          </View> */}
           <TextInput
             value={hashtags}
             onChangeText={setHashTags}
             placeholder="Add #luitags (#hashtags)"
             placeholderTextColor="#838383"
-            onSubmitEditing={addTag}
+            // onSubmitEditing={addTag}
             style={{
               height: 49,
               paddingHorizontal: 16,

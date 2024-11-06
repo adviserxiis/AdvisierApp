@@ -110,6 +110,17 @@ const Home = () => {
     outputRange: ['0deg', '45deg'], // Rotate the plus icon into an X
   });
 
+  const handleNavigation = (route) => {
+    // Reset rotation to zero
+    Animated.timing(rotateValue, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+    }).start();
+    navigation.navigate(route);
+    setIsExpanded(false); // Close FAB
+};
+
   useEffect(() => {
     const getProfilePhoto = async () => {
       try {
@@ -418,8 +429,9 @@ const Home = () => {
             }}>
             <TouchableOpacity
               onPress={() => {
-                setIsExpanded(false);
-                navigation.navigate('PostScreen');
+                // setIsExpanded(false);
+                // navigation.navigate('PostScreen');
+                handleNavigation('PostScreen')
               }}
               style={{
                 padding: 10,
@@ -444,8 +456,9 @@ const Home = () => {
             }}>
             <TouchableOpacity
               onPress={() => {
-                setIsExpanded(false);
-                navigation.navigate('CreatePost');
+                // setIsExpanded(false);
+                // navigation.navigate('CreatePost');
+                handleNavigation('CreatePost')
               }}
               style={{
                 padding: 10,
@@ -470,8 +483,9 @@ const Home = () => {
             }}>
             <TouchableOpacity
               onPress={() => {
-                setIsExpanded(false);
-                navigation.navigate('ServicesPost');
+                // setIsExpanded(false);
+                // navigation.navigate('ServicesPost');
+                handleNavigation('ServicesPost')
               }}
               style={{
                 padding: 10,

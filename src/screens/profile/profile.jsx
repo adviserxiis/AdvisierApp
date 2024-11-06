@@ -104,7 +104,7 @@ const reelItemHeight = reelItemWidth * 1.7;
 //   },
 // ];
 
-const Profile = () => {
+const Profile = ({route}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
   const [details, setDetails] = useState(null);
@@ -126,6 +126,7 @@ const Profile = () => {
     bannerImage: null,
   });
   // console.log(user?.userid);
+  // const route = useRoute();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalYPosition] = useState(new Animated.Value(-200)); // Initial position off-screen
   const [modalOpacity] = useState(new Animated.Value(0));
@@ -133,10 +134,18 @@ const Profile = () => {
   const [views, setViews] = useState('1K');
   const [refreshing, setRefreshing] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [activeTab, setActiveTab] = useState('posts');
+  const { initialTab } = route.params || {};
+  const [activeTab, setActiveTab] = useState(initialTab || 'posts');
   const [visiblePostIndex, setVisiblePostIndex] = useState(null);
   const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
   const [modalPopUp, setModalPopUp] = useState(false);
+
+  useEffect(() => {
+    if (initialTab) {
+      console.log("sbjdhjdbhh",initialTab);
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const onViewableItemsChanged = useRef(({viewableItems}) => {
     if (viewableItems.length > 0) {

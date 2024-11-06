@@ -149,7 +149,7 @@
 // 
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, Dimensions, BackHandler, Alert } from 'react-native';
 import AgoraUIKit from 'agora-rn-uikit';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -157,29 +157,78 @@ import KeepAwake from 'react-native-keep-awake';
 
 const CallScreen = () => {
   const route = useRoute();
-  const { meetingid } = route.params;
+  const { meetingid, adviserid, userid } = route.params;
   const [videoCall, setVideoCall] = useState(true);
   const navigation = useNavigation();
   const callEndedRef = useRef(false);
   const user = useSelector((state) => state.user);
 
-  // State to manage usernames
+  const [remoteDetails, setRemoteDetails] = useState(null);
+  const [localDetails, setLocalDetails] = useState({
+    name: user?.userInfo?.name || 'Local User',
+  });
+
   const [usernames, setUsernames] = useState({
-    local: user?.userInfo?.name || 'Local User', // Local username from Redux or default
-    remote: 'Remote User',
+    local: localDetails.name,
+    remote: '',
   });
 
   const connectionData = {
     appId: 'f33a78e85a4e4fb5b10b4f295aac37c1',
-    channel: meetingid || 'test',
-    
+    channel: meetingid || 'luinkai',
+    // token:'007eJxTYPj54//zf2H88ypzox7kPJpTz+B/dkNc0lTV4z8296vP3zJbgSHN2DjR3CLVwjTRJNUkLck0ydAgySTNyNI0MTHZ2DzZsHenTHpDICPDocuHGRkZIBDEZ2fIKc3My07MZGAAAPD6JNc=',
+    // uid: parseInt(meetingid, 10),
   };
 
+  const showExitAlert = () => {
+    Alert.alert(
+      'End Call',
+      'Are you sure you want to end the call?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Yes', onPress: handleEndCall }
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleBackPress = useCallback(() => {
+    showExitAlert();
+    return true; // Prevents default back action
+  }, []);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => backHandler.remove();
+  }, [handleBackPress]);
+
+  // Fetch remote user details based on the user role
+  const getDetails = async (userid) => {
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/creator/getuser/${userid}`
+      );
+      const data = await response.json();
+      console.log(data);
+      setRemoteDetails(data);
+      setUsernames((prev) => ({ ...prev, remote: data.username }));
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.userid === adviserid) {
+      getDetails(userid);
+    } else {
+      getDetails(adviserid);
+    }
+  }, []);
 
   const handleEndCall = useCallback(() => {
     if (!callEndedRef.current) {
       callEndedRef.current = true;
-      setVideoCall(false); // Schedule state update after component has fully rendered
+      setVideoCall(false);
       navigation.goBack();
       KeepAwake.deactivate();
     }
@@ -187,15 +236,28 @@ const CallScreen = () => {
 
   const rtcCallbacks = {
     EndCall: handleEndCall,
-    // Additional callbacks (onUserJoined, onUserOffline) can go here
+    onUserJoined: (uid) => {
+      console.log('User joined with UID:', uid);
+      if (uid !== connectionData.uid) {
+        // Assuming remote user joined, show their username
+        setUsernames((prev) => ({ ...prev, remote: remoteDetails?.username || 'Remote User' }));
+      }
+    },
+    onUserOffline: (uid) => {
+      console.log('User went offline with UID:', uid);
+      if (uid !== connectionData.uid) {
+        // Remote user left, reset remote username to default
+        setUsernames((prev) => ({ ...prev, remote: 'Remote User' }));
+      }
+    },
   };
 
   useEffect(() => {
     if (videoCall) {
-      KeepAwake.activate(); // Activate KeepAwake to keep the screen on during the call
+      KeepAwake.activate();
     }
     return () => {
-      KeepAwake.deactivate(); // Ensure KeepAwake is deactivated if the component unmounts
+      KeepAwake.deactivate();
     };
   }, [videoCall]);
 
@@ -218,8 +280,16 @@ const CallScreen = () => {
             width: 100,
             height: 180,
           },
+          usernameText:{
+            fontSize: 18,
+            color: '#fff',
+          }
         }}
       />
+      {/* Display remote or local username based on view */}
+      <View style={styles.usernameContainer}>
+        <Text style={styles.username}>{usernames.remote}</Text>
+      </View>
     </View>
   ) : null;
 };
@@ -231,16 +301,15 @@ const styles = StyleSheet.create({
   },
   usernameContainer: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    alignItems: 'center',
+    bottom: 0,
+    right: 0,
   },
-  // username: {
-  //   color: 'white',
-  //   fontSize: 16,
-  //   marginBottom: 5,
-  // },
+  username: {
+    color: 'white',
+    fontSize: 16,
+    marginBottom: 5,
+  },
 });
 
 export default CallScreen;
+

@@ -99,7 +99,8 @@ const BookingCard = ({booking}) => {
         alert(`The meeting will start at ${bookingDateTime.format('hh:mm A')} on ${bookingDateTime.format('MMMM D, YYYY')}`); // Display alert message
     } else if (isJoinButtonActive()) {
         // Navigate to CallScreen if conditions are met
-        navigation.navigate('CallScreen', { meetingid: booking?.meetingid });
+        // navigation.navigate('CallScreen', { meetingid: booking?.meetingid });
+        navigation.navigate('CallScreen',{ meetingid: booking?.meetingid , adviserid: booking?.adviserid, userid: booking?.userid });
     } else {
         alert("Meeting time has ended."); // Handle case where the meeting is over
     }
@@ -217,7 +218,7 @@ const BookingCard = ({booking}) => {
             {booking?.adviserDetails?.name}
           </Text>
         </View>
-        <TouchableOpacity onPress={()=>navigation.navigate('CallScreen',{ meetingid: booking?.meetingid })}  style={{
+        <TouchableOpacity onPress={handleJoinButtonClick}  style={{
           paddingVertical:2,
           backgroundColor: isJoinButtonActive() ? '#0069B4' : 'gray',
           paddingHorizontal:29,

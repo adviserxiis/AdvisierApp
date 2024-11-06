@@ -1,5 +1,6 @@
 import {
   Alert,
+  BackHandler,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -56,6 +57,15 @@ const CommentModal = forwardRef<Ref>(({video, creator}, ref) => {
     ),
     [dismiss],
   );
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      dismiss();
+      return true; // Prevents the default back action
+    });
+
+    return () => backHandler.remove(); // Cleanup listener on unmount
+  }, [dismiss]);
 
   useEffect(() => {
     if (video && video.comments) {

@@ -19,10 +19,11 @@
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.READ_PHONE_STATE" />
   <uses-permission android:name="android.permission.WAKE_LOCK" />
-<!-- For devices running Android 12 (API level 32) or higher and integrating Agora Video SDK version v4.1.0 or lower, you also need to add the following permissions -->
-<uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-<!-- For Android 12.0 or higher, the following permissions are also required -->
-<uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <!-- For devices running Android 12 (API level 32) or higher and integrating Agora Video SDK version v4.1.0 or lower, you also need to add the following permissions -->
+  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+  <!-- For Android 12.0 or higher, the following permissions are also required -->
+  <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
   <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:usesCleartextTraffic="true" android:supportsRtl="true" android:hardwareAccelerated="true" android:largeHeap="true" android:theme="@style/AppTheme">
 

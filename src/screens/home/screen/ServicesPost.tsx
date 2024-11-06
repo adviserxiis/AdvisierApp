@@ -14,6 +14,7 @@ import {useSelector} from 'react-redux';
 import RNPickerSelect from 'react-native-picker-select';
 import Icon from 'react-native-vector-icons/Feather';
 import DatePicker from 'react-native-date-picker';
+import { useNavigation } from '@react-navigation/native';
 const ServicesPost = () => {
   const [servicename, setServiceName] = useState('');
   const [description, setDescription] = useState('');
@@ -22,6 +23,7 @@ const ServicesPost = () => {
   const [descriptionHeight, setDescriptionHeight] = useState(44);
   const user = useSelector(state => state.user);
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   const [isServiceFocused, setIsServiceFocused] = useState(false);
   const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
@@ -43,27 +45,34 @@ const ServicesPost = () => {
     Sunday: {start: new Date(), end: new Date()},
   });
 
-
-  useEffect(()=>{
+  useEffect(() => {
     AvailableDetails();
-  },[]);
+  }, []);
 
-  
-  const AvailableDetails = async()=>{
-
+  const AvailableDetails = async () => {
     const response = await fetch(
       `https://adviserxiis-backend-three.vercel.app/creator/getuser/${user.userid}`,
     );
     const data = await response.json();
-    console.log("user dtata",data?.availability);
-    if(!data?.availability){
-      setAvailableModal(true)
+    console.log('user dtata', data?.availability);
+    if (!data?.availability) {
+      setAvailableModal(true);
     }
-  }
+  };
   const handleSubmit = async () => {
     setLoading(true);
     if (!servicename || !description || !duration || !price) {
       Alert.alert('Error', 'Please fill all the fields');
+      setLoading(false);
+      return;
+    }
+
+    if (price === '0') {
+      Alert.alert(
+        'Invalid Price',       // Title of the alert
+        'Price cannot be zero', // Message of the alert
+        [{ text: 'OK' }]        // Button options
+      );
       setLoading(false);
       return;
     }
@@ -96,12 +105,21 @@ const ServicesPost = () => {
       console.log(data);
 
       if (response.ok) {
-        Alert.alert('Success', 'Service created successfully!');
-        // Optionally clear fields after successful submission
-        setServiceName('');
-        setDescription('');
-        setDuration('');
-        setPrice('');
+        Alert.alert('Success', 'Service created successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to the Profile screen in the Services tab
+              navigation.navigate('Profile', { initialTab: 'services' })
+
+              // Optionally clear fields after successful submission
+              setServiceName('');
+              setDescription('');
+              setDuration('');
+              setPrice('');
+            },
+          },
+        ]);
       } else {
         Alert.alert(
           'Error',
@@ -115,13 +133,9 @@ const ServicesPost = () => {
     }
   };
 
- 
-
   // useEffect(() => {
   //   setAvailableModal(true);
   // }, []);
-
-  
 
   const handleTimeConfirm = selectedDate => {
     setSelectedTime({
@@ -155,11 +169,8 @@ const ServicesPost = () => {
           return null; // Skip this day
         }
 
-        if(startTime === endTime){
-          Alert.alert(
-            'Error',
-            "Starting Time and Ending time doesn't be same"
-          )
+        if (startTime === endTime) {
+          Alert.alert('Error', "Starting Time and Ending time doesn't be same");
         }
 
         // Format startTime and endTime in "AM/PM" format and convert to uppercase
@@ -422,7 +433,7 @@ const ServicesPost = () => {
                 placeholder: {
                   color: '#838383',
                   fontSize: 10, // Font size for placeholder
-                  fontFamily:'Poppins-Regular'
+                  fontFamily: 'Poppins-Regular',
                 },
               }}
               value={duration} // Bind the state value
@@ -489,7 +500,7 @@ const ServicesPost = () => {
                 }}>
                 <Text
                   style={{
-                    color:'white',
+                    color: 'white',
                     fontSize: 12,
                     fontFamily: 'Poppins-Regular',
                   }}>
@@ -497,7 +508,7 @@ const ServicesPost = () => {
                 </Text>
                 <Text
                   style={{
-                    color:'white',
+                    color: 'white',
                     fontSize: 12,
                     fontFamily: 'Poppins-Regular',
                   }}>
@@ -505,7 +516,7 @@ const ServicesPost = () => {
                 </Text>
                 <Text
                   style={{
-                    color:'white',
+                    color: 'white',
                     fontSize: 12,
                     fontFamily: 'Poppins-Regular',
                   }}>
@@ -708,9 +719,9 @@ const styles = StyleSheet.create({
   picker: {
     color: 'white',
     // paddingLeft: 50,
-    marginLeft:5,
-    fontSize:10,
-    fontFamily:'Poppins-Regular',
+    marginLeft: 5,
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
     borderRadius: 10,
   },
   checkbox: {
