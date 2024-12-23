@@ -8,14 +8,14 @@ Luink.ai is an innovative React Native application that lets users create, share
 - **CodePush Integration**: CodePush ensures automatic updates, allowing users to access the latest features without manual app updates.
 - **Monetization Features**: Users can earn money by uploading content and provide or purchase services using the in-app payment gateway.
 - **Modern UI/UX**: The app includes several screens to provide a seamless experience:
-  - **Splash Screen**: Welcome screen with branding.
-  - **Login/Sign Up**: User authentication with options for forgot password and account recovery.
-  - **Home Screen**: Browse content and navigate to other sections.
-  - **Search Screen**: Discover content, users, and services.
-  - **Profile Screen**: Manage user information, reels, posts, and services.
-  - **Reels Screen**: Watch or create engaging short videos.
-  - **Service Screen**: Offer or purchase services.
-  - **Create Reel and Post**: Tools for creating and uploading reels and posts.
+- **Splash Screen**: Welcome screen with branding.
+- **Login/Sign Up**: User authentication with options for forgot password and account recovery.
+- **Home Screen**: Browse content and navigate to other sections.
+- **Search Screen**: Discover content, users, and services.
+- **Profile Screen**: Manage user information, reels, posts, and services.
+- **Reels Screen**: Watch or create engaging short videos.
+- **Service Screen**: Offer or purchase services.
+- **Create Reel and Post**: Tools for creating and uploading reels and posts.
 
 ## Getting Started
 
@@ -24,6 +24,8 @@ Follow the steps below to get started with the Luink.ai app.
 ### Step 1: Environment Setup
 
 Ensure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions before proceeding.
+
+npm install for installing the dependencies
 
 ### Step 2: Start Metro Server
 
