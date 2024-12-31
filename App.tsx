@@ -4,7 +4,7 @@ import store from './src/store/store';
 import Navigator from './src/navigator/Navigator';
 import messaging from '@react-native-firebase/messaging';
 import {Alert, Linking, PermissionsAndroid, Platform} from 'react-native';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
 import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +13,19 @@ import CodePush from 'react-native-code-push';
 import {navigationRef} from './src/navigator/RootNavigator';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+import NetworkBanner from './src/screens/NetworkBanner';
+
+const config = {
+  screens:{
+    ViewProfile:'/user/:username',
+    Reel:'/reel/:id'
+  }
+}
+
+const linking = {
+  prefixes: ['https://adviserxiis.com','adviserxiis://'],
+  config,
+}
 
 const App = () => {
   // useEffect(() => {
@@ -48,6 +61,7 @@ const App = () => {
 
   const CURRENT_VERSION = DeviceInfo.getVersion();
   console.log('Current Version:', CURRENT_VERSION);
+  
 
   useEffect(() => {
     requestNotificationPermissions();
@@ -265,14 +279,22 @@ const App = () => {
     }
   };
 
+  const [isBannerVisible, setBannerVisible] = useState(false);
+  const handleBannerVisibility = (visible: boolean) => {
+    setBannerVisible(visible);
+  };
+  
+
+
   return (
     <Provider store={store}>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} linking={linking}>
         <GestureHandlerRootView
           style={{
             flex: 1,
           }}>
           <BottomSheetModalProvider>
+            <NetworkBanner onBannerVisible={handleBannerVisibility} />
             <Navigator />
           </BottomSheetModalProvider>
         </GestureHandlerRootView>
@@ -284,8 +306,9 @@ const App = () => {
 let codePushOptions = {
   deploymentKey: 'Lnp8myMJX1vFKxWp_G5RFcj8aOfGmJv_MKJfM',
   checkFrequency: CodePush.CheckFrequency.ON_APP_START,
-  // installMode: CodePush.InstallMode.IMMEDIATE, // Install the update immediately after download
+  installMode: CodePush.InstallMode.IMMEDIATE, // Install the update immediately after download
   // mandatoryInstallMode: CodePush.InstallMode.IMMEDIATE,
+  updateDialog: false,
 };
 
 export default CodePush(codePushOptions)(App);

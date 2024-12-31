@@ -27,6 +27,9 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Share from 'react-native-share';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import Pinchable from 'react-native-pinchable';
+import {RFValue} from 'react-native-responsive-fontsize';
+import RBSheet from 'react-native-raw-bottom-sheet';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const PostItems = ({post, isVisible, getpost}) => {
   const user = useSelector(state => state.user);
@@ -35,6 +38,9 @@ const PostItems = ({post, isVisible, getpost}) => {
   const [likeCount, setLikeCount] = useState(
     (post.data.likes || []).length || 0,
   );
+  const BottomSheetRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+  const toggleMute = () => setMuted(!muted);
   const [paused, setPaused] = useState(!isVisible);
   const [showControls, setShowControls] = useState(false);
   const [progress, setProgress] = useState({
@@ -77,11 +83,11 @@ const PostItems = ({post, isVisible, getpost}) => {
   );
 
   const openCommentsModal = () => {
-    setModalVisible(true); // Open modal on comment icon press
+    BottomSheetRef.current.open(); // Open modal on comment icon press
   };
 
   const closeCommentsModal = () => {
-    setModalVisible(false); // Close modal
+    BottomSheetRef.current.close(); // Close modal
   };
 
   const [comments, setComments] = useState([]);
@@ -451,12 +457,12 @@ const PostItems = ({post, isVisible, getpost}) => {
     // Update the URL pattern to match both 'https://' and 'www.'
     const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
     const parts = text.split(urlPattern);
-  
+
     return parts.map((part, index) => {
       if (urlPattern.test(part)) {
         // Check if the part starts with 'www.' and prepend 'https://' if necessary
         const url = part.startsWith('www.') ? `https://${part}` : part;
-  
+
         // Render the part as a clickable link
         return (
           <Text
@@ -487,41 +493,51 @@ const PostItems = ({post, isVisible, getpost}) => {
               style={styles.profilePic}
             />
           </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Pressable
-              onPress={() =>
-                navigation.navigate('PostView', post?.adviser?.id)
-              }>
-              <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
-            </Pressable>
-            <Text style={styles.role}>
-              • {post?.adviser?.data?.professional_title} •{' '}
-              {timeAgo(post?.data?.dop)}
-            </Text>
+          <View>
+            {post?.adviser?.data?.username && (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('PostView', post?.adviser?.id)
+                }>
+                <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
+              </Pressable>
+            )}
+
+            {/* Conditionally render the role Text only if professional_title exists */}
+            {post?.adviser?.data?.professional_title && (
+              <Text style={styles.role} numberOfLines={1}>
+                {post?.adviser?.data?.professional_title}
+              </Text>
+            )}
           </View>
         </View>
         <Pressable onPress={toggleDescription}>
-          <Text style={styles.message} numberOfLines={isExpanded ? undefined : 2}>
-            {/* {post?.data?.description ? post?.data?.description : null} */}
-            {post?.data?.description
-              ? parseTextWithLinks(post?.data?.description)
-              : post?.data?.description}
-          </Text>
+          {post?.data?.description &&
+          post?.data?.file_type !== 'image' &&
+          post?.data?.file_type !== 'long_video' ? (
+            <Text
+              style={styles.message}
+              numberOfLines={isExpanded ? undefined : 2}>
+              {parseTextWithLinks(post?.data?.description)}
+            </Text>
+          ) : null}
         </Pressable>
-        <Text
-          style={{
-            fontSize: 14,
-            fontFamily: 'Poppins-Medium',
-            color: '#388DEB',
-            // marginTop:5,
-            // textDecorationLine: 'underline',
-          }}>
-          {/* Array.isArray(post?.data?.luitags) ? */}
-          {/* {post?.data?.luitags }  */}
-          {Array.isArray(post?.data?.luitags)
-            ? post.data.luitags.join(' ')
-            : post.data.luitags}
-        </Text>
+
+        {post?.data?.luitags &&
+        post.data.luitags.length > 0 &&
+        post?.data?.file_type !== 'image' &&
+        post?.data?.file_type !== 'long_video' ? (
+          <Text
+            style={{
+              fontSize: RFValue(12),
+              fontFamily: 'Poppins-Light',
+              color: '#388DEB',
+              paddingHorizontal: 15,
+            }}>
+            {post.data.luitags}
+          </Text>
+        ) : null}
+
         {post?.data?.file_type === 'image' &&
         Array.isArray(post?.data?.post_file) ? (
           // Handle array of images
@@ -545,8 +561,8 @@ const PostItems = ({post, isVisible, getpost}) => {
               onViewableItemsChanged={onViewableItemsChanged}
               viewabilityConfig={viewabilityConfig}
             />
-            <View style={styles.indicatorContainer}>
-              {Array.isArray(post?.data?.post_file) && (
+            {post?.data?.post_file.length > 1 && ( // Show indicator only for multiple videos
+              <View style={styles.indicatorContainer}>
                 <View style={styles.indicatorWrapper}>
                   {post?.data?.post_file.map((_, index) => (
                     <View
@@ -555,14 +571,14 @@ const PostItems = ({post, isVisible, getpost}) => {
                         styles.indicator,
                         {
                           backgroundColor:
-                            index === currentIndex ? '#388DEB' : '#333', // Change color based on current page
+                            index === currentIndex ? '#388DEB' : '#333',
                         },
                       ]}
                     />
                   ))}
                 </View>
-              )}
-            </View>
+              </View>
+            )}
           </>
         ) : (
           post?.data?.file_type === 'image' && (
@@ -578,173 +594,191 @@ const PostItems = ({post, isVisible, getpost}) => {
         )}
 
         {post?.data?.file_type === 'long_video' &&
-        Array.isArray(post?.data?.post_file) ? (
-          <>
-            <FlatList
-              data={post?.data?.post_file}
-              keyExtractor={(item, index) => index.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              pagingEnabled
-              renderItem={({item, index}) => (
-                <View>
-                  <TouchableOpacity
-                    onPress={togglePlayPause}
-                    style={{
-                      width: Dimensions.get('window').width - 30,
-                      height: 260,
-                    }}>
-                    <Video
-                      source={{uri: item.video_url}}
-                      style={styles.postMediaVideo}
-                      resizeMode="contain"
-                      controls={false}
-                      paused={paused} // Pause if not the current visible video
-                      onProgress={handleVideoProgress}
-                      ref={ref => setVideoRef(index, ref)} // Set ref for each video
-                      onEnd={handleVideoEnd}
-                    />
-                    {showControls && (
-                      <View style={styles.overlayControls}>
+          Array.isArray(post?.data?.post_file) && (
+            <>
+              <FlatList
+                data={post?.data?.post_file}
+                keyExtractor={(item, index) => index.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                pagingEnabled
+                renderItem={({item, index}) => (
+                  <View>
+                    <Pressable
+                      onPress={togglePlayPause}
+                      style={{
+                        width: Dimensions.get('window').width,
+                        height: Dimensions.get('window').height - 250,
+                      }}>
+                      <Video
+                        source={{uri: item.video_url}}
+                        style={styles.postMediaVideo}
+                        resizeMode="contain"
+                        repeat
+                        controls={false}
+                        muted={muted}
+                        preload="auto"
+                        playInBackground={false} // Ensure the video doesn't play in the background
+                        playWhenInactive={false}
+                        minBufferMs={15000}
+                        maxBufferMs={50000}
+                        bufferForPlaybackMs={5000}
+                        bufferForPlaybackAfterRebufferMs={5000}
+                        paused={index !== currentIndex} // Play only if it is the visible video
+                        ref={ref => setVideoRef(index, ref)} // Set ref for each video
+                        onEnd={() => {
+                          if (videoRef[index]) {
+                            setPaused(false); // Start playing again
+                          }
+                        }} // Pause video on end
+                      />
+                      <TouchableOpacity
+                        onPress={toggleMute}
+                        style={{
+                          position: 'absolute',
+                          bottom: 20,
+                          right: 20,
+                          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                          borderRadius: 25,
+                          padding: 5,
+                        }}>
                         <Icon
-                          name={paused ? 'play' : 'pause'}
-                          size={40}
+                          name={muted ? 'volume-mute' : 'volume-high'}
+                          size={20}
                           color="white"
                         />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  <View
-                    style={{
-                      position: 'absolute',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      bottom: 10,
-                      paddingHorizontal: 15,
-                      marginTop: 20,
-                    }}>
-                    <Text style={{color: 'white'}}>
-                      {format(progress.currentTime)}
-                    </Text>
-                    <Slider
-                      style={{width: '75%', height: 40}}
-                      minimumValue={0}
-                      maximumValue={progress.seekableDuration}
-                      value={progress.currentTime}
-                      onSlidingComplete={handleSeek}
-                      minimumTrackTintColor="#FFFFFF"
-                      maximumTrackTintColor="#FFFFFF"
-                    />
-                    <Text style={{color: 'white'}}>
-                      {format(progress.seekableDuration)}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              onViewableItemsChanged={onViewableItemsChanged} // Track visible items
-              viewabilityConfig={viewabilityConfig}
-            />
-            <View style={styles.indicatorContainer}>
-              {Array.isArray(post?.data?.post_file) && (
-                <View style={styles.indicatorWrapper}>
-                  {post?.data?.post_file.map((_, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.indicator,
-                        {
-                          backgroundColor:
-                            index === currentIndex ? '#388DEB' : '#333', // Change color based on current page
-                        },
-                      ]}
-                    />
-                  ))}
-                </View>
-              )}
-            </View>
-          </>
-        ) : (
-          post?.data?.file_type === 'long_video' && (
-            // Handle single video
-            <View>
-              <TouchableOpacity
-                onPress={togglePlayPause}
-                style={{width: '100%', height: 200}}>
-                <Video
-                  source={{uri: post?.data?.post_file}}
-                  style={styles.postMediaVideo}
-                  controls={false}
-                  paused={currentVideoIndex != index}
-                  onProgress={handleVideoProgress}
-                  ref={videoRef}
-                  onEnd={handleVideoEnd}
-                  resizeMode="contain"
-                />
-                {showControls && (
-                  <View style={styles.overlayControls}>
-                    <Icon
-                      name={paused ? 'play' : 'pause'}
-                      size={40}
-                      color="white"
-                    />
+                      </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
-              </TouchableOpacity>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingHorizontal: 15,
-                  marginTop: 20,
-                }}>
-                <Text style={{color: 'white'}}>
-                  {format(progress.currentTime)}
-                </Text>
-                <Slider
-                  style={{width: '70%', height: 40}}
-                  minimumValue={0}
-                  maximumValue={progress.seekableDuration}
-                  value={progress.currentTime}
-                  onSlidingComplete={handleSeek}
-                  minimumTrackTintColor="#FFFFFF"
-                  maximumTrackTintColor="#FFFFFF"
-                />
-                <Text style={{color: 'white'}}>
-                  {format(progress.seekableDuration)}
-                </Text>
-              </View>
-            </View>
-          )
-        )}
+                onViewableItemsChanged={onViewableItemsChanged} // Track visible items
+                viewabilityConfig={viewabilityConfig}
+              />
+              {post?.data?.post_file.length > 1 && ( // Show indicator only for multiple videos
+                <View style={styles.indicatorContainer}>
+                  <View style={styles.indicatorWrapper}>
+                    {post?.data?.post_file.map((_, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.indicator,
+                          {
+                            backgroundColor:
+                              index === currentIndex ? '#388DEB' : '#333',
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
+          )}
 
         <View style={styles.interaction}>
           <View
             style={{
               flexDirection: 'row',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: 20,
             }}>
-            <TouchableOpacity onPress={likeHandler} style={styles.iconWithText}>
-              <Icon3
-                name={like ? 'heart' : 'heart-outline'}
-                size={20}
-                color={like ? '#FA4445' : 'white'}
-              />
-              <Text style={styles.iconText}>{likeCount}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconWithText}
-              onPress={openCommentsModal}>
-              <Icon3 name="chatbubble-outline" size={20} color="white" />
-              <Text style={styles.iconText}>{commentCount}</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 20,
+              }}>
+              <TouchableOpacity
+                onPress={likeHandler}
+                style={styles.iconWithText}>
+                <Icon3
+                  name={like ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={like ? '#FA4445' : 'white'}
+                />
+                <Text style={styles.iconText}>{likeCount}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconWithText}
+                onPress={openCommentsModal}>
+                <Icon3 name="chatbubble-outline" size={20} color="white" />
+                <Text style={styles.iconText}>{commentCount}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={shareProfile}>
+              <Icon1 name="share" size={20} color="white" />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={shareProfile}>
-            <Icon1 name="share" size={20} color="white" />
-          </TouchableOpacity>
+          <Pressable onPress={toggleDescription}>
+            {post?.data?.description &&
+            post?.data?.file_type == 'image' &&
+            post?.data?.file_type !== 'long_video' ? (
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: RFValue(12),
+                  // paddingHorizontal: 15,
+                  // marginTop: 10,
+                  fontFamily: 'Poppins-Light',
+                }}
+                numberOfLines={isExpanded ? undefined : 2}>
+                {parseTextWithLinks(post?.data?.description)}
+              </Text>
+            ) : null}
+            {post?.data?.description &&
+            post?.data?.file_type !== 'image' &&
+            post?.data?.file_type == 'long_video' ? (
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: RFValue(12),
+                  // paddingHorizontal: 15,
+                  // marginTop: 10,
+                  fontFamily: 'Poppins-Light',
+                }}
+                numberOfLines={isExpanded ? undefined : 2}>
+                {parseTextWithLinks(post?.data?.description)}
+              </Text>
+            ) : null}
+          </Pressable>
+
+          {post?.data?.luitags &&
+          post.data.luitags.length > 0 &&
+          post?.data?.file_type == 'image' &&
+          post?.data?.file_type !== 'long_video' ? (
+            <Text
+              style={{
+                fontSize: RFValue(12),
+                fontFamily: 'Poppins-Light',
+                color: '#388DEB',
+                // paddingHorizontal: 15,
+              }}>
+              {post.data.luitags}
+            </Text>
+          ) : null}
+          {post?.data?.luitags &&
+          post.data.luitags.length > 0 &&
+          post?.data?.file_type !== 'image' &&
+          post?.data?.file_type == 'long_video' ? (
+            <Text
+              style={{
+                fontSize: RFValue(12),
+                fontFamily: 'Poppins-Light',
+                color: '#388DEB',
+                // paddingHorizontal: 15,
+              }}>
+              {post.data.luitags}
+            </Text>
+          ) : null}
+          <Text
+            style={{
+              color: 'white',
+              opacity: 0.5,
+              fontSize: RFValue(10),
+              fontFamily: 'Poppins-Light',
+            }}>
+            {timeAgo(post?.data?.dop)}
+          </Text>
         </View>
       </View>
       <Modal
@@ -840,37 +874,106 @@ const PostItems = ({post, isVisible, getpost}) => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <RBSheet
+        ref={BottomSheetRef} // Reference to open/close the RBSheet
+        height={Platform.OS === 'ios' ? 400 : 450} // Set height
+        closeOnDragDown={true} // Allow closing by dragging down
+        closeOnPressMask={true} // Allow closing by tapping on the background
+        customStyles={{
+          container: {
+            padding: 20,
+            backgroundColor: '#17191A',
+            borderTopLeftRadius: 25,
+            borderTopRightRadius: 25,
+          },
+        }}>
+        {/* Modal Content */}
+        <View style={styles.modalContent}>
+          {/* Close Button */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom:10,
+            }}>
+            <Text style={styles.modalHeader}>Comments</Text>
+            <TouchableOpacity
+              style={{
+                padding: 5,
+                borderRadius: 30,
+                marginRight: 10,
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }}
+              onPress={() => BottomSheetRef.current.close()}>
+              <AntDesign name="close" size={RFValue(16)} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Comments List */}
+          <FlatList
+            data={comments}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item, index}) => (
+              <View style={styles.commentContainer}>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('PostView', item?.adviserDetails?.id)
+                  }>
+                  <Image
+                    source={
+                      item?.adviserDetails?.profile_photo
+                        ? {uri: item?.adviserDetails?.profile_photo}
+                        : require('../../../assets/images/bane.png')
+                    }
+                    style={styles.commentProfilePic}
+                  />
+                </TouchableOpacity>
+                <View style={styles.commentTextContainer}>
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate('PostView', item?.adviserDetails?.id)
+                    }>
+                    <Text style={styles.commentUsername}>
+                      {item?.adviserDetails?.username}
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.commentText}>{item?.message}</Text>
+                </View>
+                {item?.adviserDetails?.id === user.userid && (
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => deletePost(index)} // Assuming handleRemoveComment exists
+                  >
+                    <Icon1 name="delete" size={20} color="white" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+
+          {/* Comment Input */}
+          <View style={styles.commentInputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write a comment..."
+              placeholderTextColor="#888"
+              value={newComment}
+              onChangeText={setNewComment}
+              onSubmitEditing={handleAddComment} // Add comment on 'enter'
+              returnKeyType="send"
+            />
+            <TouchableOpacity
+              onPress={handleAddComment} // Clears the input and closes the RBSheet
+              style={styles.sendButton}>
+              <Icon name="send" size={20} color="#407BFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </RBSheet>
     </View>
-    // <View
-    //   style={{
-    //     paddingHorizontal: 10,
-    //   }}>
-    //   <View
-    //     style={{
-    //       flexDirection: 'row',
-    //       alignItems: 'center',
-    //     }}>
-    //     <Image
-    //       source={
-    //         post?.adviser?.data?.profile_photo
-    //           ? {uri: post?.adviser?.data?.profile_photo}
-    //           : require('../../../assets/images/profiles.png')
-    //       }
-    //       style={styles.profilePic}
-    //     />
-    //     <View>
-    //       <Pressable
-    //         onPress={() => navigation.navigate('PostView', post?.adviser?.id)}>
-    //         <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
-    //       </Pressable>
-    //       <Text style={styles.role}>
-    //         • {post?.adviser?.data?.professional_title} •{' '}
-    //         {timeAgo(post?.data?.dop)}
-    //       </Text>
-    //     </View>
-    //   </View>
-    //   <Text style={styles.message}>{post?.data?.description}</Text>
-    // </View>
   );
 };
 
@@ -878,14 +981,15 @@ export default PostItems;
 
 const styles = StyleSheet.create({
   postContainer: {
-    padding: 15,
+    // padding: 15,
     // paddingBottom: 15,
     borderBottomWidth: 1,
-    borderColor: '#333',
+    borderColor: '#42404070',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    padding: 15,
+    alignItems: 'center',
   },
   profilePic: {
     width: 40,
@@ -895,18 +999,19 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   postMediaImage: {
-    width: Dimensions.get('window').width - 30, // Full width of the container
-    height: 250, // Adjust height as needed
-    borderRadius: 15, // Rounded corners for a modern look
-    marginTop: 10, // Space between the image and the text/content
+    width: Dimensions.get('window').width, // Full width of the container
+    height: Dimensions.get('window').height - 280, // Adjust height as needed
+    // borderRadius: 15, // Rounded corners for a modern look
+    // marginTop: 10, // Space between the image and the text/content
     backgroundColor: 'black',
   },
   postMediaVideo: {
-    width: Dimensions.get('window').width - 30, // Full width for the video
-    height: 250, // Adjust the height depending on the media type
-    borderRadius: 15, // Same styling as the image
-    backgroundColor: '#000', // Background color for the video element
-    marginTop: 10, // Space between video and text/content
+    width: '100%', // Full width for the video
+    height: Dimensions.get('window').height - 250, // Adjust the height depending on the media type
+    // borderRadius: 15, // Same styling as the image
+    backgroundColor: '#000',
+    // Background color for the video element
+    // marginTop: 10, // Space between video and text/content
   },
   indicatorContainer: {
     alignItems: 'center',
@@ -930,25 +1035,27 @@ const styles = StyleSheet.create({
   name: {
     color: '#fff',
     lineHeight: 20,
+    fontSize: RFValue(13),
     fontFamily: 'Poppins-Medium',
   },
   role: {
     color: '#999',
-    fontSize: 12,
+    fontSize: RFValue(11),
     // width:Dimensions.get('window').width-70,
     fontFamily: 'Poppins-Regular',
     paddingRight: 31,
   },
   message: {
     color: '#fff',
-    marginTop: 10,
+    fontSize: RFValue(14),
+    paddingHorizontal: 15,
+    // marginTop: 10,
     fontFamily: 'Poppins-Regular',
   },
   interaction: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
+    flexDirection: 'column',
+    gap: 1,
+    padding: 15,
   },
   iconWithText: {
     flexDirection: 'row',
@@ -956,7 +1063,10 @@ const styles = StyleSheet.create({
   },
   iconText: {
     color: '#fff',
+    fontSize: RFValue(13),
+    fontFamily: 'Poppins-Regular',
     marginLeft: 5,
+    marginTop: 3,
   },
   absolute: {
     position: 'absolute',
@@ -966,12 +1076,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   modalContent: {
-    height: 400,
-    backgroundColor: '#17191A', // Semi-transparent background
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    marginTop: 'auto', // Align at the bottom like Instagram
+    flex: 1, // Align at the bottom like Instagram
   },
   commentInputContainer: {
     flexDirection: 'row',
@@ -982,11 +1087,11 @@ const styles = StyleSheet.create({
     flex: 1,
     borderColor: '#333',
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 25,
     paddingLeft: 15,
     lineHeight: 20,
-    fontFamily: 'Poppins-Regular',
-    height: 40,
+    // fontFamily: 'Poppins-Regular',
+    height: 44,
     color: 'white',
   },
   sendButton: {
@@ -995,7 +1100,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
-    marginBottom: 15,
+    // marginBottom: 15,
     color: 'white',
   },
   closeButton: {
@@ -1006,7 +1111,7 @@ const styles = StyleSheet.create({
   },
   commentContainer: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: 10,
     alignItems: 'center',
   },
   commentProfilePic: {

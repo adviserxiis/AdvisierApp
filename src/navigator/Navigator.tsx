@@ -42,6 +42,7 @@ const Navigator = () => {
 
   // return user.userid ? user.profileCompleted ? <Main /> : <Auth /> : <Auth />;
   // return user.discription ? <Main /> : <Auth />;
+  
   return user?.userInfo ? <Main /> : <Auth />;
 };
 

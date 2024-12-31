@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {RFValue} from 'react-native-responsive-fontsize';
 import React, {useCallback, useRef, useState} from 'react';
 import Icon3 from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
@@ -38,7 +39,13 @@ const PostItem = ({post, isVisible, getPostlist}) => {
     currentTime: 0,
     seekableDuration: 0,
   });
-  const videoRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+  const toggleMute = () => setMuted(!muted);
+  const videoRef = useRef([]);
+
+  const setVideoRef = (index, ref) => {
+    videoRef.current[index] = ref; // Store refs in an array to control individual videos
+  };
   const [modalVisible, setModalVisible] = useState(false);
 
   const openCommentsModal = () => {
@@ -464,12 +471,12 @@ const PostItem = ({post, isVisible, getPostlist}) => {
     // Update the URL pattern to match both 'https://' and 'www.'
     const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
     const parts = text.split(urlPattern);
-  
+
     return parts.map((part, index) => {
       if (urlPattern.test(part)) {
         // Check if the part starts with 'www.' and prepend 'https://' if necessary
         const url = part.startsWith('www.') ? `https://${part}` : part;
-  
+
         // Render the part as a clickable link
         return (
           <Text
@@ -486,86 +493,100 @@ const PostItem = ({post, isVisible, getPostlist}) => {
     });
   };
 
-
   return (
     <View>
       <View style={styles.postContainer}>
         <View style={styles.header}>
-          <Image
-            source={
-              post?.adviser?.data?.profile_photo
-                ? {uri: post?.adviser?.data?.profile_photo}
-                : require('../../../assets/images/profiles.png')
-            }
+          <View
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: '#ccc',
-              marginRight: 10,
-            }}
-          />
-          <View style={styles.headerText}>
-            <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
-            <Text style={styles.role}>
-              • {post?.adviser?.data?.professional_title} •{' '}
-              {timeAgo(post?.data?.dop)}
-            </Text>
+              flexDirection: 'row',
+            }}>
+            <Image
+              source={
+                post?.adviser?.data?.profile_photo
+                  ? {uri: post?.adviser?.data?.profile_photo}
+                  : require('../../../assets/images/profiles.png')
+              }
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#ccc',
+                marginRight: 10,
+              }}
+            />
+            <View style={styles.headerText}>
+              <Text style={styles.name}>{post?.adviser?.data?.username}</Text>
+              <Text style={styles.role} numberOfLines={1}>
+                {post?.adviser?.data?.professional_title}
+                {/* •{' '} */}
+                {/* {timeAgo(post?.data?.dop)} */}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             onPress={() => deletePost(post?.id)}
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: 10,
-            }}>
+            style={
+              {
+                // position: 'absolute',
+                // top: 10,
+                // right: 10,
+              }
+            }>
             <Icon2 name="trash" size={18} color="white" />
           </TouchableOpacity>
         </View>
         {/* <Text style={styles.message}>{post?.data?.description}</Text> */}
         <Pressable onPress={toggleDescription}>
-          <Text style={styles.message} numberOfLines={isExpanded ? undefined : 2}>
-            {/* {post?.data?.description ? post?.data?.description : null} */}
-            {post?.data?.description
-              ? parseTextWithLinks(post?.data?.description)
-              : post?.data?.description}
-          </Text>
+          {post?.data?.description &&
+          post?.data?.file_type !== 'image' &&
+          post?.data?.file_type !== 'long_video' ? (
+            <Text
+              style={styles.message}
+              numberOfLines={isExpanded ? undefined : 2}>
+              {parseTextWithLinks(post?.data?.description)}
+            </Text>
+          ) : null}
         </Pressable>
-        <Text
-          style={{
-            fontSize: 14,
-            fontFamily: 'Poppins-Medium',
-            color: '#388DEB',
-            marginTop:5,
-            // textDecorationLine: 'underline',
-          }}>
-          {Array.isArray(post?.data?.luitags) ? post?.data?.luitags.join(' ') : post?.data?.luitags }
-        </Text>
+        {post?.data?.luitags &&
+        post.data.luitags.length > 0 &&
+        post?.data?.file_type !== 'image' &&
+        post?.data?.file_type !== 'long_video' ? (
+          <Text
+            style={{
+              fontSize: RFValue(12),
+              fontFamily: 'Poppins-Light',
+              color: '#388DEB',
+              paddingHorizontal: 15,
+            }}>
+            {post.data.luitags}
+          </Text>
+        ) : null}
         {post?.data?.file_type === 'image' &&
         Array.isArray(post?.data?.post_file) ? (
           // Handle array of images
           <>
-          <FlatList
-            data={post?.data?.post_file}
-            keyExtractor={(item, index) => index.toString()}
-            pagingEnabled
-            renderItem={({item}) => (
-              <Image
-                source={
-                  item
-                    ? {uri: item}
-                    : require('../../../assets/images/bane.png')
-                }
-                style={styles.profilePic}
-              />
-            )}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-          />
-          <View style={styles.indicatorContainer}>
-              {Array.isArray(post?.data?.post_file) && (
+            <FlatList
+              data={post?.data?.post_file}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item}) => (
+                // <Pinchable>
+
+                <Image
+                  source={{uri: item}}
+                  style={styles.postMediaImage} // Style for the image
+                  resizeMode="contain"
+                />
+                // </Pinchable>
+              )}
+              pagingEnabled
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={viewabilityConfig}
+            />
+            {post?.data?.post_file.length > 1 && ( // Show indicator only for multiple videos
+              <View style={styles.indicatorContainer}>
                 <View style={styles.indicatorWrapper}>
                   {post?.data?.post_file.map((_, index) => (
                     <View
@@ -574,104 +595,92 @@ const PostItem = ({post, isVisible, getPostlist}) => {
                         styles.indicator,
                         {
                           backgroundColor:
-                            index === currentIndex ? '#388DEB' : '#333', // Change color based on current page
+                            index === currentIndex ? '#388DEB' : '#333',
                         },
                       ]}
                     />
                   ))}
                 </View>
-              )}
-            </View>
+              </View>
+            )}
           </>
         ) : (
           post?.data?.file_type === 'image' && (
             // Handle single image
-            // <Image
-            // source={{uri: post?.data?.post_file}}
-            // style={styles.postMediaImage} // Style for the image
-            // resizeMode="cover"
-            // />
+            // <Pinchable>
             <Image
-              source={
-                post?.data?.post_file
-                  ? {uri: post?.data?.post_file}
-                  : require('../../../assets/images/bane.png')
-              }
-              style={styles.profilePic}
+              source={{uri: post?.data?.post_file}}
+              style={styles.postMediaImage} // Style for the image
+              resizeMode="contain"
             />
+            // </Pinchable>
           )
         )}
 
         {post?.data?.file_type === 'long_video' &&
         Array.isArray(post?.data?.post_file) ? (
           <>
-          <FlatList
-            data={post?.data?.post_file}
-            keyExtractor={(item, index) => index.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            renderItem={({item}) => (
-              <View>
-                <TouchableOpacity
-                  onPress={togglePlayPause}
-                  style={{
-                    width: Dimensions.get('window').width - 30,
-                    height: 260,
-                  }}>
-                  <Video
-                    source={{uri: item.video_url}}
-                    style={styles.postMediaVideo} // Style for the video
-                    resizeMode="contain"
-                    controls={false}
-                    paused={paused}
-                    onProgress={handleVideoProgress}
-                    ref={videoRef}
-                    onEnd={handleVideoEnd}
-                  />
-                  {showControls && (
-                    <View style={styles.overlayControls}>
+            <FlatList
+              data={post?.data?.post_file}
+              keyExtractor={(item, index) => index.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              renderItem={({item, index}) => (
+                <View>
+                  <Pressable
+                    onPress={togglePlayPause}
+                    style={{
+                      width: Dimensions.get('window').width,
+                      height: Dimensions.get('window').height - 250,
+                    }}>
+                    <Video
+                      source={{uri: item.video_url}}
+                      style={styles.postMediaVideo}
+                      resizeMode="contain"
+                      repeat
+                      controls={false}
+                      preload="auto"
+                      playInBackground={false}  // Ensure the video doesn't play in the background
+                      playWhenInactive={false}
+                      minBufferMs={15000}
+                      maxBufferMs={50000}
+                      bufferForPlaybackMs={5000}
+                      bufferForPlaybackAfterRebufferMs={5000}
+                      muted={muted}
+                      paused={index !== currentIndex} // Play only if it is the visible video
+                      onProgress={() => {}}
+                      ref={ref => setVideoRef(index, ref)} // Set ref for each video
+                      onEnd={() => {
+                        if (videoRef[index]) {
+                          setPaused(false); // Start playing again
+                        }
+                      }} // Pause video on end
+                    />
+                    <TouchableOpacity
+                      onPress={toggleMute}
+                      style={{
+                        position: 'absolute',
+                        bottom: 20,
+                        right: 20,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        borderRadius: 25,
+                        padding: 5,
+                      }}>
                       <Icon
-                        name={paused ? 'play' : 'pause'}
-                        size={40}
+                        name={muted ? 'volume-mute' : 'volume-high'}
+                        size={20}
                         color="white"
                       />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <View
-                  style={{
-                    position: 'absolute',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    bottom: 10,
-                    paddingHorizontal: 15,
-                    marginTop: 20,
-                  }}>
-                  <Text style={{color: 'white'}}>
-                    {format(progress.currentTime)}
-                  </Text>
-                  <Slider
-                    style={{width: '75%', height: 40}}
-                    minimumValue={0}
-                    maximumValue={progress.seekableDuration}
-                    value={progress.currentTime}
-                    onSlidingComplete={handleSeek}
-                    minimumTrackTintColor="#FFFFFF"
-                    maximumTrackTintColor="#FFFFFF"
-                  />
-                  <Text style={{color: 'white'}}>
-                    {format(progress.seekableDuration)}
-                  </Text>
+                    </TouchableOpacity>
+                  </Pressable>
                 </View>
-              </View>
-            )}
-            onViewableItemsChanged={onViewableItemsChanged} // Track visible items
-            viewabilityConfig={viewabilityConfig}
-          />
-          <View style={styles.indicatorContainer}>
-              {Array.isArray(post?.data?.post_file) && (
+              )}
+              onViewableItemsChanged={onViewableItemsChanged} // Track visible items
+              viewabilityConfig={viewabilityConfig}
+            />
+            {post?.data?.post_file.length > 1 && ( // Show indicator only for multiple videos
+              <View style={styles.indicatorContainer}>
                 <View style={styles.indicatorWrapper}>
                   {post?.data?.post_file.map((_, index) => (
                     <View
@@ -680,67 +689,58 @@ const PostItem = ({post, isVisible, getPostlist}) => {
                         styles.indicator,
                         {
                           backgroundColor:
-                            index === currentIndex ? '#388DEB' : '#333', // Change color based on current page
+                            index === currentIndex ? '#388DEB' : '#333',
                         },
                       ]}
                     />
                   ))}
                 </View>
-              )}
-            </View>
+              </View>
+            )}
           </>
         ) : (
           post?.data?.file_type === 'long_video' && (
             // Handle single video
             <View>
-              <TouchableOpacity
+              <Pressable
                 onPress={togglePlayPause}
-                style={{width: '100%', height: 200}}>
+                style={{width: Dimensions.get('window').width, height: 200}}>
                 <Video
                   source={{uri: post?.data?.post_file}}
                   style={styles.postMediaVideo}
                   controls={false}
                   paused={paused}
+                  repeat={true}
+                  muted={muted}
+                  preload="auto"
+                  playInBackground={false}  // Ensure the video doesn't play in the background
+                  playWhenInactive={false}
+                  minBufferMs={15000}
+                  maxBufferMs={50000}
+                  bufferForPlaybackMs={5000}
+                  bufferForPlaybackAfterRebufferMs={5000}
                   onProgress={handleVideoProgress}
                   ref={videoRef}
                   onEnd={handleVideoEnd}
                   resizeMode="contain"
                 />
-                {showControls && (
-                  <View style={styles.overlayControls}>
-                    <Icon
-                      name={paused ? 'play' : 'pause'}
-                      size={40}
-                      color="white"
-                    />
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingHorizontal: 15,
-                  marginTop: 20,
-                }}>
-                <Text style={{color: 'white'}}>
-                  {format(progress.currentTime)}
-                </Text>
-                <Slider
-                  style={{width: '70%', height: 40}}
-                  minimumValue={0}
-                  maximumValue={progress.seekableDuration}
-                  value={progress.currentTime}
-                  onSlidingComplete={handleSeek}
-                  minimumTrackTintColor="#FFFFFF"
-                  maximumTrackTintColor="#FFFFFF"
-                />
-                <Text style={{color: 'white'}}>
-                  {format(progress.seekableDuration)}
-                </Text>
-              </View>
+                <TouchableOpacity
+                  onPress={toggleMute}
+                  style={{
+                    position: 'absolute',
+                    bottom: 20,
+                    right: 20,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    borderRadius: 25,
+                    padding: 5,
+                  }}>
+                  <Icon
+                    name={muted ? 'volume-mute' : 'volume-high'}
+                    size={20}
+                    color="white"
+                  />
+                </TouchableOpacity>
+              </Pressable>
             </View>
           )
         )}
@@ -748,27 +748,106 @@ const PostItem = ({post, isVisible, getPostlist}) => {
           <View
             style={{
               flexDirection: 'row',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: 20,
             }}>
-            <TouchableOpacity onPress={likeHandler} style={styles.iconWithText}>
-              <Icon3
-                name={like ? 'heart' : 'heart-outline'}
-                size={20}
-                color={like ? '#FA4445' : 'white'}
-              />
-              <Text style={styles.iconText}>{likeCount}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconWithText}
-              onPress={openCommentsModal}>
-              <Icon3 name="chatbubble-outline" size={20} color="white" />
-              <Text style={styles.iconText}>{commentCount}</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 20,
+              }}>
+              <TouchableOpacity
+                onPress={likeHandler}
+                style={styles.iconWithText}>
+                <Icon3
+                  name={like ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={like ? '#FA4445' : 'white'}
+                />
+                <Text style={styles.iconText}>{likeCount}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconWithText}
+                onPress={openCommentsModal}>
+                <Icon3 name="chatbubble-outline" size={20} color="white" />
+                <Text style={styles.iconText}>{commentCount}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={shareProfile}>
+              <Icon1 name="share" size={20} color="white" />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={shareProfile}>
-            <Icon1 name="share" size={20} color="white" />
-          </TouchableOpacity>
+          <Pressable onPress={toggleDescription}>
+            {post?.data?.description &&
+            post?.data?.file_type == 'image' &&
+            post?.data?.file_type !== 'long_video' ? (
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: RFValue(12),
+                  // paddingHorizontal: 15,
+                  // marginTop: 10,
+                  fontFamily: 'Poppins-Light',
+                }}
+                numberOfLines={isExpanded ? undefined : 2}>
+                {parseTextWithLinks(post?.data?.description)}
+              </Text>
+            ) : null}
+            {post?.data?.description &&
+            post?.data?.file_type !== 'image' &&
+            post?.data?.file_type == 'long_video' ? (
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: RFValue(12),
+                  // paddingHorizontal: 15,
+                  // marginTop: 10,
+                  fontFamily: 'Poppins-Light',
+                }}
+                numberOfLines={isExpanded ? undefined : 2}>
+                {parseTextWithLinks(post?.data?.description)}
+              </Text>
+            ) : null}
+          </Pressable>
+
+          {post?.data?.luitags &&
+          post.data.luitags.length > 0 &&
+          post?.data?.file_type == 'image' &&
+          post?.data?.file_type !== 'long_video' ? (
+            <Text
+              style={{
+                fontSize: RFValue(12),
+                fontFamily: 'Poppins-Light',
+                color: '#388DEB',
+                // paddingHorizontal: 15,
+              }}>
+              {post.data.luitags}
+            </Text>
+          ) : null}
+          {post?.data?.luitags &&
+          post.data.luitags.length > 0 &&
+          post?.data?.file_type !== 'image' &&
+          post?.data?.file_type == 'long_video' ? (
+            <Text
+              style={{
+                fontSize: RFValue(12),
+                fontFamily: 'Poppins-Light',
+                color: '#388DEB',
+                // paddingHorizontal: 15,
+              }}>
+              {post.data.luitags}
+            </Text>
+          ) : null}
+          <Text
+            style={{
+              color: 'white',
+              opacity: 0.5,
+              fontSize: RFValue(10),
+              fontFamily: 'Poppins-Light',
+            }}>
+            {timeAgo(post?.data?.dop)}
+          </Text>
         </View>
       </View>
       <Modal
@@ -859,16 +938,18 @@ export default PostItem;
 
 const styles = StyleSheet.create({
   postContainer: {
-    padding: 15,
+    // padding: 15,
     borderBottomWidth: 1,
-    borderColor: '#333',
+    borderColor: '#42404070',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   profilePic: {
-    width: Dimensions.get('window').width - 30, // Full width of the container
+    width: Dimensions.get('window').width, // Full width of the container
     height: 250, // Adjust height as needed
     borderRadius: 15, // Rounded corners for a modern look
     marginTop: 10,
@@ -880,17 +961,18 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   postMediaImage: {
-    width: '100%', // Full width of the container
-    height: 250, // Adjust height as needed
-    borderRadius: 15, // Rounded corners for a modern look
-    marginTop: 10, // Space between the image and the text/content
+    width: Dimensions.get('window').width, // Full width of the container
+    height: Dimensions.get('window').height - 280, // Adjust height as needed
+    backgroundColor: 'black',
+    // borderRadius: 15, // Rounded corners for a modern look
+    // marginTop: 10, // Space between the image and the text/content
   },
   postMediaVideo: {
-    width: '100%', // Full width for the video
-    height: 250, // Adjust the height depending on the media type
-    borderRadius: 15, // Same styling as the image
+    width: Dimensions.get('window').width, // Full width for the video
+    height: Dimensions.get('window').height - 250, // Adjust the height depending on the media type
+    // borderRadius: 15, // Same styling as the image
     backgroundColor: '#000', // Background color for the video element
-    marginTop: 10, // Space between video and text/content
+    // marginTop: 10, // Space between video and text/content
   },
   overlayControls: {
     position: 'absolute',
@@ -901,24 +983,27 @@ const styles = StyleSheet.create({
   name: {
     color: '#fff',
     lineHeight: 20,
+    fontSize: RFValue(13),
     fontFamily: 'Poppins-Medium',
   },
   role: {
     color: '#999',
-    fontSize: 12,
-    paddingRight: 31,
+    fontSize: RFValue(11),
+    // width:Dimensions.get('window').width-70,
     fontFamily: 'Poppins-Regular',
+    paddingRight: 31,
   },
   message: {
     color: '#fff',
-    marginTop: 10,
+    fontSize: RFValue(14),
+    paddingHorizontal: 15,
+    // marginTop: 10,
     fontFamily: 'Poppins-Regular',
   },
   interaction: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
+    flexDirection: 'column',
+    gap: 1,
+    padding: 15,
   },
   iconWithText: {
     flexDirection: 'row',
@@ -926,7 +1011,10 @@ const styles = StyleSheet.create({
   },
   iconText: {
     color: '#fff',
+    fontSize: RFValue(13),
+    fontFamily: 'Poppins-Regular',
     marginLeft: 5,
+    marginTop: 3,
   },
   absolute: {
     position: 'absolute',

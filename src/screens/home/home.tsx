@@ -15,6 +15,7 @@ import {
   Animated,
   Easing,
   StatusBar,
+  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Icon1 from 'react-native-vector-icons/Feather';
@@ -31,6 +32,9 @@ import Slider from '@react-native-community/slider';
 import {BlurView} from '@react-native-community/blur';
 import PostItems from './components/PostItems';
 import EventCard from './components/EventCard';
+import Feather from 'react-native-vector-icons/Feather';
+import BotChat from '../BotChat';
+import HomeSkeleton from './components/HomeSkeleton';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -46,12 +50,12 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const onViewableItemsChanged = useRef(({viewableItems}) => {
     if (viewableItems.length > 0) {
-      setVisiblePostIndex(viewableItems[0].index); // Set index of visible post
+      setVisiblePostIndex(viewableItems[0].index); // Update visible post index
     }
-  });
-  const [loading, setLoading] = useState(false);
+  }).current;
   const [isLoading, setIsLoading] = useState(true);
-
+  const [loading, setLoading] = useState(false);
+  const [chatVisible, setChatVisible] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState(null);
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -110,16 +114,16 @@ const Home = () => {
     outputRange: ['0deg', '45deg'], // Rotate the plus icon into an X
   });
 
-  const handleNavigation = (route) => {
+  const handleNavigation = route => {
     // Reset rotation to zero
     Animated.timing(rotateValue, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
     }).start();
     navigation.navigate(route);
     setIsExpanded(false); // Close FAB
-};
+  };
 
   useEffect(() => {
     const getProfilePhoto = async () => {
@@ -152,101 +156,53 @@ const Home = () => {
         </View>
       ),
       headerRight: () => (
-        <Image
-          source={
-            profilePhoto
-              ? {uri: profilePhoto}
-              : require('../../assets/images/profiles.png')
-          }
-          resizeMode="contain"
+        <View
           style={{
-            height: 40,
-            width: 40,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 15,
             marginRight: 16,
-            borderRadius: 30,
-          }}
-        />
+          }}>
+          <Pressable onPress={() => setChatVisible(true)}>
+            <Image
+              source={require('../../assets/images/chatbot.png')}
+              style={{
+                width: 30,
+                objectFit: 'cover',
+                height: 30,
+              }}
+            />
+          </Pressable>
+          <Image
+            source={
+              profilePhoto
+                ? {uri: profilePhoto}
+                : require('../../assets/images/profiles.png')
+            }
+            resizeMode="contain"
+            style={{
+              height: 40,
+              width: 40,
+              borderRadius: 30,
+            }}
+          />
+          {/* <TouchableOpacity onPress={() => navigation.navigate('ChatList')}>
+            <Icon name="chatbubble-outline" size={25} color="white" />
+          </TouchableOpacity> */}
+        </View>
       ),
     });
   }, [navigation, profilePhoto]);
-
-  const openImagePicker = () => {
-    const options = {
-      mediaType: 'photo',
-      quality: 1,
-    };
-
-    launchImageLibrary(options, response => {
-      if (response.assets && response.assets.length > 0) {
-        setSelectedImage(response.assets[0].uri); // Store image URI
-        console.log(response.assets[0].uri);
-      }
-    });
-  };
-
-  const openVideoPicker = () => {
-    const options = {
-      mediaType: 'video',
-    };
-
-    launchImageLibrary(options, response => {
-      if (response.assets && response.assets.length > 0) {
-        setSelectedVideo(response.assets[0].uri);
-        setDuration(response.assets[0].duration);
-        console.log('Duration', response.assets[0].duration);
-        // Store video URI
-      }
-    });
-  };
-
-  const handleRemoveImage = () => {
-    setSelectedImage(null); // Clear selected image
-  };
-
-  const handleRemoveVideo = () => {
-    setSelectedVideo(null); // Clear selected video
-  };
-
-  const [Aloading,setALoading] = useState(true);
-
-  const notifyAllUsers = async () => {
-    const storedProfileData = await AsyncStorage.getItem('user');
-    const profileData = JSON.parse(storedProfileData);
-    console.log('Profile Data', profileData.name);
-    try {
-      const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/notification/sendnotificationtoall', // Replace with your backend endpoint
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: 'Check new post',
-            body: `${profileData.name} Uploaded a new post!`,
-          }),
-        },
-      );
-
-      const jsonresponse = await response.json();
-      console.log('Notificed', jsonresponse);
-
-      if (!response.ok) {
-        throw new Error('Failed to notify users.');
-      }
-    } catch (error: any) {
-      console.log('Notification Error:', error.message || error);
-      Alert.alert('Notification Error', 'Failed to notify users.');
-    }
-  };
 
   if (loading) {
     return <ActivityIndicator size="large" color="#white" />;
   }
 
   const getPost = async () => {
-    console.log('Hi');
+    setIsLoading(true);
     try {
+      // Fetch data from the API
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/post/getallposts',
         {
@@ -257,11 +213,39 @@ const Home = () => {
         },
       );
       const jsonResponse = await response.json();
-      // console.log('Post Details', jsonResponse.length);
-      setPosts(jsonResponse);
+
+      if (response.ok) {
+        console.log('Fetched new data from API');
+        setPosts(jsonResponse);
+
+        // Save the fetched data to AsyncStorage
+        await AsyncStorage.setItem('posts', JSON.stringify(jsonResponse));
+        console.log('Saved new data to AsyncStorage');
+      } else {
+        console.error('API responded with an error:', jsonResponse);
+
+        // If API call fails, fallback to AsyncStorage
+        const storedPosts = await AsyncStorage.getItem('posts');
+        if (storedPosts) {
+          console.log('Loaded data from AsyncStorage as fallback');
+          setPosts(JSON.parse(storedPosts));
+        } else {
+          console.error('No fallback data available in AsyncStorage');
+        }
+      }
     } catch (error) {
-      console.log('Hie');
-      console.error('Error fetching video list:', error);
+      console.error('Error fetching data from API:', error);
+
+      // Fallback to AsyncStorage if an error occurs
+      const storedPosts = await AsyncStorage.getItem('posts');
+      if (storedPosts) {
+        console.log('Loaded data from AsyncStorage as fallback');
+        setPosts(JSON.parse(storedPosts));
+      } else {
+        console.error('No fallback data available in AsyncStorage');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -311,235 +295,155 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#17191A" />
-      {/* <ScrollView showsVerticalScrollIndicator={false}> */}
-      {/* {loading && (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="white" />
-      </View>
-    )} */}
-      {/* <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.inputContainer}>
-          <Image
-            source={
-              profilePhoto
-                ? {uri: profilePhoto}
-                : require('../../assets/images/profilei.png')
-            }
-            resizeMode="contain"
-            style={styles.profileImage}
-          />
-          <View style={styles.textInputContainer}>
-            {/* <TextInput
-              placeholder="Type Something? "
-              placeholderTextColor="#838383"
-              multiline={true}
-              value={postText}
-              onChangeText={setPostText}
-              style={[
-                styles.textInput,
-                {height: inputHeight}, // Ensure minimum height
-              ]}
-              onContentSizeChange={
-                event => setInputHeight(event.nativeEvent.contentSize.height) // Update the height based on content
-              }
-            /> */}
-      {/* {selectedImage && (
-              <View style={styles.mediaContainer}>
-                <Image
-                  source={{uri: selectedImage}}
-                  style={styles.mediaPreview}
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={handleRemoveImage}>
-                  <Icon name="close-circle-outline" color="#333333" size={24} />
-                </TouchableOpacity>
-              </View>
-            )} */}
-      {/* {selectedVideo && (
-              <View style={styles.videoContainer}>
-                <Video
-                  source={{uri: selectedVideo}}
-                  style={styles.videoPreview}
-                  controls={false}
-                  repeat
-                  resizeMode="contain"
-                />
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={handleRemoveVideo}>
-                  <Icon name="close-circle-outline" color="white" size={24} />
-                </TouchableOpacity>
-              </View>
-            )} *
-            <View style={styles.actionContainer}>
-              <View style={styles.iconRow}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  // onPress={openImagePicker}
-                  >
-                  <Icon name="image-outline" color="white" size={18} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  // onPress={openVideoPicker}
-                  >
-                  <Icon name="videocam-outline" color="white" size={18} />
-                </TouchableOpacity>
-                {/* <TouchableOpacity style={styles.iconButton}>
-                  <Icon name="happy-outline" color="white" size={18} />
-                </TouchableOpacity> *
-              </View>
-
-              <TouchableOpacity style={styles.postButton} onPress={()=>navigation.navigate('PostScreen')}>
-                <Text style={styles.postButtonText}>Post</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
+    <>
+      {isLoading ? (
         <View
           style={{
-            height: 1,
-            width: '100%',
-            backgroundColor: '#333333',
-          }}
-        />
-      </KeyboardAvoidingView> */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          right: 10,
-          zIndex: 999,
-          justifyContent: 'flex-end',
-          alignContent: 'flex-end',
-        }}>
-        {isExpanded && (
-          <Animated.View
-            style={{
-              transform: [{translateY: slidePostOption}],
-              opacity: animationValue,
-              marginBottom: 10,
-              alignItems: 'flex-end',
-            }}>
-            <TouchableOpacity
-              onPress={() => {
-                // setIsExpanded(false);
-                // navigation.navigate('PostScreen');
-                handleNavigation('PostScreen')
-              }}
-              style={{
-                padding: 10,
-                backgroundColor: '#388DEB',
-                borderRadius: 20,
-                flexDirection: 'row',
-                alignItems: 'center',
-                // width: '100%',
-              }}>
-              <Icon1 name="image" size={20} color="white" />
-              <Text style={{color: 'white', marginLeft: 10}}>Post</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-        {isExpanded && (
-          <Animated.View
-            style={{
-              transform: [{translateY: slideReelsOption}],
-              opacity: animationValue,
-              marginBottom: 10,
-              alignItems: 'flex-end',
-            }}>
-            <TouchableOpacity
-              onPress={() => {
-                // setIsExpanded(false);
-                // navigation.navigate('CreatePost');
-                handleNavigation('CreatePost')
-              }}
-              style={{
-                padding: 10,
-                backgroundColor: '#388DEB',
-                borderRadius: 20,
-                flexDirection: 'row',
-                alignItems: 'center',
-                // width: '100%',
-              }}>
-              <Icon1 name="video" size={20} color="white" />
-              <Text style={{color: 'white', marginLeft: 10}}>Reels</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-        {isExpanded && (
-          <Animated.View
-            style={{
-              transform: [{translateY: slideReelsOption}],
-              opacity: animationValue,
-              marginBottom: 10,
-              alignItems: 'flex-end',
-            }}>
-            <TouchableOpacity
-              onPress={() => {
-                // setIsExpanded(false);
-                // navigation.navigate('ServicesPost');
-                handleNavigation('ServicesPost')
-              }}
-              style={{
-                padding: 10,
-                backgroundColor: '#388DEB',
-                borderRadius: 20,
-                flexDirection: 'row',
-                alignItems: 'center',
-                // width: '100%',
-              }}>
-              <Icon1 name="globe" size={20} color="white" />
-              <Text style={{color: 'white', marginLeft: 10}}>Services</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-        <TouchableOpacity
-          onPress={toggleFAB}
-          style={{
-            backgroundColor: '#388DEB',
-            borderRadius: 30,
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: 60,
-            width: 60,
-            marginLeft: 44,
+            backgroundColor: '#17191A',
           }}>
-          <Animated.View style={{transform: [{rotate: rotateIcon}]}}>
-            <Icon1 name="plus" size={24} color="white" />
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
+          <HomeSkeleton />
+        </View>
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor="#17191A" />
+          {/* <ScrollView showsVerticalScrollIndicator={false}> */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              right: 10,
+              zIndex: 999,
+              justifyContent: 'flex-end',
+              alignItems: 'flex-end',
+            }}>
+            {isExpanded && (
+              <Animated.View
+                style={{
+                  transform: [{translateY: slidePostOption}],
+                  opacity: animationValue,
+                  marginBottom: 10,
+                  alignItems: 'flex-end',
+                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // setIsExpanded(false);
+                    // navigation.navigate('PostScreen');
+                    handleNavigation('PostScreen');
+                  }}
+                  style={{
+                    padding: 10,
+                    backgroundColor: '#388DEB',
+                    borderRadius: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    // width: '100%',
+                  }}>
+                  <Icon1 name="image" size={20} color="white" />
+                  <Text style={{color: 'white', marginLeft: 10}}>Post</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
+            {isExpanded && (
+              <Animated.View
+                style={{
+                  transform: [{translateY: slideReelsOption}],
+                  opacity: animationValue,
+                  marginBottom: 10,
+                  alignItems: 'flex-end',
+                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // setIsExpanded(false);
+                    // navigation.navigate('CreatePost');
+                    handleNavigation('VideoRecorder');
+                  }}
+                  style={{
+                    padding: 10,
+                    backgroundColor: '#388DEB',
+                    borderRadius: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    // width: '100%',
+                  }}>
+                  <Icon1 name="video" size={20} color="white" />
+                  <Text style={{color: 'white', marginLeft: 10}}>Reels</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
+            {isExpanded && (
+              <Animated.View
+                style={{
+                  transform: [{translateY: slideReelsOption}],
+                  opacity: animationValue,
+                  marginBottom: 10,
+                  alignItems: 'flex-end',
+                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // setIsExpanded(false);
+                    // navigation.navigate('ServicesPost');
+                    handleNavigation('ServicesPost');
+                  }}
+                  style={{
+                    padding: 10,
+                    backgroundColor: '#388DEB',
+                    borderRadius: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    // width: '100%',
+                  }}>
+                  <Icon1 name="globe" size={20} color="white" />
+                  <Text style={{color: 'white', marginLeft: 10}}>Services</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
+            <TouchableOpacity
+              onPress={toggleFAB}
+              style={{
+                backgroundColor: '#388DEB',
+                borderRadius: 30,
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 60,
+                width: 60,
+                marginLeft: 44,
+              }}>
+              <Animated.View style={{transform: [{rotate: rotateIcon}]}}>
+                <Icon1 name="plus" size={24} color="white" />
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
 
-      {/* <EventCard/> */}
+          {chatVisible && (
+            <BotChat
+              visible={chatVisible}
+              onClose={() => setChatVisible(false)}
+            />
+          )}
+          {/* <EventCard/> */}
 
-      {/* Reels Option */}
-      <FlatList
-        data={posts}
-        // ListHeaderComponent={contestdetail ? <EventCard /> : null}
-        showsVerticalScrollIndicator={false}
-        renderItem={({item, index}) => (
-          <PostItems
-            post={item}
-            isVisible={visiblePostIndex === index}
-            getpost={getPost}
+          <FlatList
+            data={posts}
+            // ListHeaderComponent={contestdetail ? <EventCard /> : null}
+            showsVerticalScrollIndicator={false}
+            renderItem={({item, index}) => (
+              <PostItems
+                post={item}
+                isVisible={visiblePostIndex === index}
+                getpost={getPost}
+              />
+            )}
+            keyExtractor={(item, index) => index.toString()}
+            onViewableItemsChanged={onViewableItemsChanged.current}
+            viewabilityConfig={viewabilityConfig}
+            refreshing={refreshing} // Add refreshing prop
+            onRefresh={onRefresh}
+            // ListFooterComponent={refreshing ? <ActivityIndicator size="small" color="#0000ff" /> : null}
           />
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        onViewableItemsChanged={onViewableItemsChanged.current}
-        viewabilityConfig={viewabilityConfig}
-        refreshing={refreshing} // Add refreshing prop
-        onRefresh={onRefresh}
-        // ListFooterComponent={refreshing ? <ActivityIndicator size="small" color="#0000ff" /> : null}
-      />
-      {/* </ScrollView> */}
-    </SafeAreaView>
+          {/* </ScrollView> */}
+        </SafeAreaView>
+      )}
+    </>
   );
 };
 

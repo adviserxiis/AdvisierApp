@@ -248,8 +248,6 @@ const AddPost = () => {
       return;
     }
 
-    
-
     const updateProgress = () => {
       return new Promise(resolve => {
         let currentProgress = 0;
@@ -274,7 +272,7 @@ const AddPost = () => {
       const storageZoneName = 'luink-ai'; // Replace with your storage zone name
       const storageUrl = `https://storage.bunnycdn.com/${storageZoneName}/${fileName}`;
 
-      const accessUrl = `https://myluinkai.b-cdn.net/${fileName}`;
+      const accessUrl =`https://myluinkai.b-cdn.net/${fileName}`;
 
       try {
         const response = await fetch(storageUrl, {
@@ -354,6 +352,7 @@ const AddPost = () => {
     };
 
     uploadToBunny();
+
   };
 
   return (
@@ -445,7 +444,7 @@ const AddPost = () => {
 
         {video && (
           <View style={styles.videoContainer}>
-            <TouchableOpacity
+            <Pressable
               style={styles.videoTouchable}
               onPress={() => setShowControls(prev => !prev)}>
               <Video
@@ -481,7 +480,7 @@ const AddPost = () => {
                   </TouchableOpacity>
                 </View>
               )}
-            </TouchableOpacity>
+            </Pressable>
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={handleDeleteVideo}>
@@ -507,6 +506,7 @@ const AddPost = () => {
               borderBottomColor: 'gray',
               borderBottomWidth: 1,
               color: 'white',
+              flex:1,
               fontFamily: 'Poppins-Regular',
             }}
           />
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
   video: {
     width: '100%',
     aspectRatio: 9 / 16,
-    backgroundColor: 'black',
+    // backgroundColor: 'black',
     height: 350,
     // borderRadius: 50,
   },

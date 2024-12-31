@@ -40,6 +40,7 @@ const MultipleReel = () => {
   const [adLoaded, setAdLoaded] = useState(false);
   const [ad, setAd] = useState(null);
   const flatListRef = useRef(null);
+  console.log("Id",video?.id);
   const BottomTabHeight = useBottomTabBarHeight();
   const screenHeightAdjusted =
     Dimensions.get('window').height - BottomTabHeight;

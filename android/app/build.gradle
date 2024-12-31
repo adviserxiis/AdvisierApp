@@ -83,8 +83,8 @@ android {
         applicationId "com.advisiorapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 67
-        versionName "6.1.6"
+        versionCode 70
+        versionName "6.1.9"
     }
     signingConfigs {
         release {
@@ -138,8 +138,9 @@ dependencies {
   implementation project(':react-native-code-push')
   implementation project(':react-native-linear-gradient')
   implementation project(':react-native-agora')
+  implementation project(':react-native-vision-camera')
   implementation "io.agora.rtc:full-sdk:${agoraSdkVersion}"
-
+    
 // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
     if (hermesEnabled.toBoolean()) {

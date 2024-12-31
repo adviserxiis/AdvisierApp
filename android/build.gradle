@@ -7,6 +7,11 @@ buildscript {
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.22"
         googlePlayServicesAuthVersion= "19.2.0"
+        useExoplayerIMA = false
+        useExoplayerRtsp = true
+        useExoplayerSmoothStreaming = true
+        useExoplayerDash = true
+        useExoplayerHls = true
     }
     repositories {
         google()
@@ -19,7 +24,6 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
         classpath 'com.google.gms:google-services:4.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        
     }
 }
 
@@ -29,6 +33,7 @@ allprojects{
         jcenter()
         maven{
             url "$rootDir/../node_modules/react-native/android"
+             url "$rootDir/../node_modules/react-native-video-cache/android/libs"
         }
     }
 }

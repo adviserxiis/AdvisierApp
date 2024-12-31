@@ -358,7 +358,7 @@ const SetProfile = () => {
               width: 90,
               backgroundColor: 'white',
               position: 'absolute',
-              top: 110,
+              top: 100,
               borderWidth: 3,
               borderRadius: 50,
               borderColor: '#17191A',

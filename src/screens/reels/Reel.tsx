@@ -1,4 +1,10 @@
-import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   View,
   StatusBar,
@@ -6,18 +12,20 @@ import {
   FlatList,
   Dimensions,
   RefreshControl,
+  ViewToken,
 } from 'react-native';
 import VideoPlayer from './components/VideoPlayer';
-import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
-import {Mixpanel} from 'mixpanel-react-native';
-import {useSelector} from 'react-redux';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { Mixpanel } from 'mixpanel-react-native';
+import { useSelector } from 'react-redux';
 import {
   InterstitialAd,
   AdEventType,
   TestIds,
 } from 'react-native-google-mobile-ads';
-import {debounce} from 'lodash';
-import {useFocusEffect} from '@react-navigation/native';
+import { debounce } from 'lodash';
+import { useFocusEffect } from '@react-navigation/native';
+
 const trackAutomaticEvents = false;
 const mixpanel = new Mixpanel(
   'f03fcb4e7e5cdc7d32f57611937c5525',
@@ -25,24 +33,31 @@ const mixpanel = new Mixpanel(
 );
 
 mixpanel.init();
-const {height: screenHeight, width: screenWidth} = Dimensions.get('window');
+
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+
 const adUnitId = __DEV__
   ? TestIds.INTERSTITIAL
   : 'ca-app-pub-1658613370450501/1720983301'; // Replace with actual ad unit ID
-// const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-3940256099942544/6300978111'; // Replace with actual ad unit ID
 
-const Reel = () => {
-  const [list, setList] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [mute, setMute] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [adLoaded, setAdLoaded] = useState(false);
-  const [ad, setAd] = useState(null);
-  const flatListRef = useRef(null);
+interface Video {
+  _id?: string;
+  [key: string]: any;
+}
+
+const Reel: React.FC = () => {
+  const [list, setList] = useState<Video[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [mute, setMute] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [adLoaded, setAdLoaded] = useState<boolean>(false);
+  const [ad, setAd] = useState<InterstitialAd | null>(null);
+
+  const flatListRef = useRef<FlatList<Video>>(null);
   const BottomTabHeight = useBottomTabBarHeight();
-  const screenHeightAdjusted =
-    Dimensions.get('window').height - BottomTabHeight;
-  const user = useSelector(state => state.user);
+  const user = useSelector((state: any) => state.user);
+
+  const screenHeightAdjusted = Dimensions.get('window').height - BottomTabHeight;
 
   const getVideoList = async () => {
     try {
@@ -55,9 +70,8 @@ const Reel = () => {
           },
         },
       );
-      const jsonResponse = await response.json();
+      const jsonResponse: Video[] = await response.json();
       setList(jsonResponse);
-      // console.log(jsonResponse);
     } catch (error) {
       console.error('Error fetching video list:', error);
     }
@@ -66,16 +80,6 @@ const Reel = () => {
   useEffect(() => {
     getVideoList();
   }, []);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchData = async () => {
-  //       await getVideoList();
-  //     };
-
-  //     fetchData();
-  //   }, [])
-  // );
 
   useEffect(() => {
     const interstitial = InterstitialAd.createForAdRequest(adUnitId, {
@@ -119,7 +123,7 @@ const Reel = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       if (ad && adLoaded) {
-        ad.show(); // Ensure this method exists or replace with correct method
+        ad.show();
       } else {
         console.log('No ad to show, showing fallback content instead.');
       }
@@ -130,21 +134,13 @@ const Reel = () => {
     };
   }, [ad, adLoaded]);
 
-  // const handleViewableItemsChanged = useCallback(
-  //   debounce(({viewableItems}) => {
-  //     if (viewableItems.length > 0 && viewableItems[0].isViewable) {
-  //       setCurrentIndex(viewableItems[0].index);
-  //     }
-  //   }, 200),
-  //   [],
-  // );
-
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      const visibleIndex = viewableItems[0].index;
-      setCurrentIndex(visibleIndex);
-    }
-  }).current;
+  const onViewableItemsChanged = useRef(
+    debounce(({viewableItems}: {viewableItems: Array<ViewToken>}) => {
+      if (viewableItems.length > 0) {
+        setCurrentIndex(viewableItems[0].index || 0);
+      }
+    }, 200),
+  ).current;
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -161,20 +157,12 @@ const Reel = () => {
     mixpanel.track('Active User');
   }, [user]);
 
-  // const viewabilityConfig = useMemo(
-  //   () => ({
-  //     viewAreaCoveragePercentThreshold: 50,
-  //     minimumViewTime: 300,
-  //   }),
-  //   [],
-  // );
-
   const viewConfig = useRef({
     viewAreaCoveragePercentThreshold: 50, // When at least 50% of the item is visible
   }).current;
 
   const renderItem = useCallback(
-    ({item, index}) => (
+    ({ item, index }: { item: Video; index: number }) => (
       <MemoizedVideoPlayer
         video={item}
         isVisible={currentIndex === index}
@@ -187,11 +175,19 @@ const Reel = () => {
     [currentIndex, mute],
   );
 
+  const getItemLayout = useCallback(
+    (data: any, index: number) => ({
+      length: screenHeight,
+      offset: screenHeight * index,
+      index,
+    }),
+    [],
+  );
+
   const memoizedList = useMemo(() => list, [list]);
 
   return (
     <View style={styles.container}>
-      {/* <StatusBar hidden /> */}
       <FlatList
         ref={flatListRef}
         data={memoizedList}
@@ -205,33 +201,13 @@ const Reel = () => {
         windowSize={10}
         removeClippedSubviews
         pagingEnabled
+        getItemLayout={getItemLayout}
         decelerationRate="fast"
         snapToInterval={screenHeight}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
-
       />
-      {/* <FlatList
-  ref={flatListRef}
-  data={memoizedList}
-  renderItem={renderItem}
-  keyExtractor={(item, index) => item._id || index.toString()}
-  onViewableItemsChanged={handleViewableItemsChanged}
-  viewabilityConfig={viewabilityConfig}
-  showsVerticalScrollIndicator={false}
-  initialNumToRender={5}        // Render fewer items initially for better performance
-  maxToRenderPerBatch={2}       // Batch rendering for smoother experience
-  windowSize={3}                // Reduce the number of items kept in memory
-  removeClippedSubviews={true}  // Unmount views that are offscreen
-  pagingEnabled                 // Enable paging for snapping to each item
-  snapToAlignment="start"       // Snap to start of the screen
-  snapToInterval={screenHeight} // Ensure each item snaps to full screen
-  decelerationRate="fast"       // Fast deceleration for smooth scrolling
-  refreshControl={
-    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-  }
-/> */}
     </View>
   );
 };

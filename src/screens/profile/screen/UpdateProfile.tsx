@@ -29,6 +29,9 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import storage from '@react-native-firebase/storage';
+import {RFValue} from 'react-native-responsive-fontsize';
+import LinearGradient from 'react-native-linear-gradient';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 const interestsList = [
   'Actor',
   'Artist',
@@ -300,6 +303,68 @@ const UpdateProfile = () => {
     }
   };
 
+  const handleGenerateText = async ({description}) => {
+    const GEMINI_API_KEY = 'AIzaSyDpqrWSaTosINopL8TLRkdD6KrR3ZYczB8';
+
+    // Ensure description is valid
+    const currentDescription = description
+      ? `Please generate a description of at least 60 characters: ${description}`
+      : 'Generate some random description according there roles'; // Fallback in case description is empty
+    console.log('Current description:', currentDescription);
+
+    if (currentDescription.length > 0) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: currentDescription,
+                    },
+                  ],
+                },
+              ],
+            }),
+          },
+        );
+
+        const result = await response.json();
+        console.log('API response:', result); // Log full response for debugging
+
+        // Check if the candidates array exists and has content
+        if (result.candidates && result.candidates.length > 0) {
+          const candidate = result.candidates[0];
+          const generatedTextArray = candidate.content.parts; // Array of objects with `text`
+
+          // Combine all `text` parts into a single string
+          const combinedText = generatedTextArray
+            .map(part => part.text)
+            .join(' ');
+
+          // const trimmedText = combinedText.substring(0, 100);
+
+          console.log('Generated Text:', combinedText);
+          setDescription(combinedText); // Update the description
+        } else {
+          console.warn('No candidates received from API.');
+        }
+      } catch (error) {
+        console.error('Error generating text:', error.message);
+      }
+    } else {
+      console.log('Description is empty');
+    }
+  };
+
+  const [inputHeight, setInputHeight] = useState(44);
+
   const pickBannerImage = () => {
     ImagePicker.openPicker({
       width: 420,
@@ -393,6 +458,21 @@ const UpdateProfile = () => {
     setLinks(links.filter(item => item !== link));
   };
 
+  const [gradientColors, setGradientColors] = useState(['#4CAF50', '#8BC34A', '#FFC107']); // Initial gradient colors
+
+  // Change colors to create a moving effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGradientColors(prevColors => {
+        const newColors = [...prevColors];
+        newColors.push(newColors.shift()); // Shift the first color to the last position
+        return newColors;
+      });
+    }, 2000); // Update every 2 seconds for smooth transition
+
+    return () => clearInterval(interval); // Clean up the interval on unmount
+  }, []);
+
   return (
     <>
       <Modal visible={isLoading} transparent={true}>
@@ -401,7 +481,11 @@ const UpdateProfile = () => {
         </View>
       </Modal>
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: 40,
+          }}>
           <StatusBar barStyle={'light-content'} backgroundColor="#17191A" />
           <View style={styles.bannerContainer}>
             {bannerImage && (
@@ -434,7 +518,7 @@ const UpdateProfile = () => {
               width: 90,
               backgroundColor: 'white',
               position: 'absolute',
-              top: 110,
+              top: 100,
               borderWidth: 3,
               borderRadius: 50,
               borderColor: '#17191A',
@@ -477,10 +561,31 @@ const UpdateProfile = () => {
             style={{
               flex: 1,
               paddingHorizontal: 20,
-              marginTop: 100,
+              marginTop: 80,
               flexDirection: 'column',
               gap: 20,
             }}>
+            {/* <View style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              paddingHorizontal:10,
+            }}>
+              <LinearGradient
+                colors={['#9C27B0', '#E91E63']} // Gradient colors
+                style={styles.button}>
+                <TouchableOpacity
+                  style={styles.buttonContent}
+                  onPress={() => handleGenerateText({description})}>
+                  <MaterialCommunityIcons
+                    name="robot-love"
+                    size={16}
+                    color="#fff"
+                    style={styles.icon}
+                  />
+                  {/* <Text style={styles.buttonText}>Ai</Text> 
+                </TouchableOpacity>
+              </LinearGradient>
+            </View> */}
             <TextInput
               placeholder="Name"
               value={name}
@@ -519,23 +624,30 @@ const UpdateProfile = () => {
                   opacity: 0.5,
                   textAlign: 'right',
                 }}>
-                {description.length}/60
+                {description.length}/1000
               </Text>
+
               <TextInput
                 placeholder="Description"
-                // multiline={true}
-                // numberOfLines={4}
-                maxLength={60}
+                multiline={true}
+                numberOfLines={4}
+                maxLength={1000}
                 value={description}
                 placeholderTextColor="#838383"
                 onChangeText={setDescription}
-                style={{
-                  height: 44,
-                  backgroundColor: '#3A3B3C',
-                  color: 'white',
-                  paddingLeft: 10,
-                  borderRadius: 10,
+                onContentSizeChange={event => {
+                  const {contentSize} = event.nativeEvent;
+                  setInputHeight(
+                    Math.min(Math.max(10, contentSize.height), 300),
+                  ); // Adjust the height of TextInput dynamically
                 }}
+                style={[
+                  styles.textInput,
+                  {
+                    height: inputHeight,
+                    // textAlignVertical: 'top',
+                  },
+                ]}
               />
             </View>
             <Pressable
@@ -659,12 +771,20 @@ const UpdateProfile = () => {
                 keyExtractor={item => item}
                 renderItem={({item}) => (
                   <TouchableOpacity
-                    style={[
-                      styles.interestItem,
-                      interests.includes(item) && styles.selectedInterestItem,
-                    ]}
+                    style={styles.interestItem}
                     onPress={() => toggleInterest(item)}>
-                    <Text style={styles.interestText}>{item}</Text>
+                    <Text
+                      style={[
+                        styles.interestText,
+                        {
+                          fontSize: interests.includes(item)
+                            ? RFValue(13)
+                            : RFValue(13),
+                          color: interests.includes(item) ? '#0069B4' : '#fff',
+                        },
+                      ]}>
+                      {item}
+                    </Text>
                   </TouchableOpacity>
                 )}
               />
@@ -838,6 +958,25 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
   },
+  button: {
+    borderRadius: 25, // Rounded corners for the gradient button
+    // marginVertical: 10, // Vertical margin for spacing between buttons
+  },
+  buttonContent: {
+    flexDirection: 'row', // Align icon and text horizontally
+    alignItems: 'center', // Center items vertically
+    justifyContent: 'center', // Center the content
+    paddingVertical: 7, // Vertical padding for better touch area
+    paddingHorizontal: 15, // Horizontal padding for text spacing
+  },
+  buttonText: {
+    color: '#fff', // White text color
+    fontSize: 16, // Font size for the text
+    fontWeight: 'bold', // Bold text for emphasis
+  },
+  icon: {
+    // marginRight: 10, // Space between the icon and text
+  },
   uploadText: {
     fontFamily: 'Poppins-Regular',
     textDecorationLine: 'underline',
@@ -883,7 +1022,14 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     borderWidth: 1,
   },
-
+  textInput: {
+    height: 44,
+    backgroundColor: '#3A3B3C',
+    color: 'white',
+    paddingLeft: 10,
+    flex: 1,
+    borderRadius: 10,
+  },
   uploadButton: {
     position: 'absolute',
     right: 15,
@@ -926,9 +1072,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   selectedInterestItem: {
-    backgroundColor: '#0069B4',
-    borderRadius: 10,
-    padding: 10,
+    // backgroundColor: '#0069B4',
+    // borderRadius: 10,
+    // padding: 10,
   },
   interestText: {
     color: '#fff',

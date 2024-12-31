@@ -20,15 +20,22 @@ import {useDispatch, useSelector} from 'react-redux';
 import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
-import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ScrollView} from 'react-native-virtualized-view';
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 import PostItems from '../../home/components/PostItems';
 import ServicesCard from '../../profile/components/ServicesCard';
 import CreatroService from '../components/CreatroService';
+import SkeletonLoading from '../../profile/components/SkeletonLoading';
 
-const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/4940380881';
+const adUnitId = __DEV__
+  ? TestIds.BANNER
+  : 'ca-app-pub-1658613370450501/4940380881';
 // const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-3940256099942544/9214589741';
 
 const {width} = Dimensions.get('screen');
@@ -38,11 +45,12 @@ const reelItemHeight = reelItemWidth * 1.7;
 const ViewProfile = () => {
   const route = useRoute();
   const advsid = route.params;
-  // console.log("useid", advsid);
+  console.log('useid', advsid);
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
   const [details, setDetails] = useState(null);
   const [reels, setReels] = useState([]);
+  const [loading,setLoading] = useState(true);
   const user = useSelector(state => state.user);
   const [isFollowing, setIsFollowing] = useState(false);
   // const [currentPlaying, setCurrentPlaying] = useState(null);
@@ -55,8 +63,8 @@ const ViewProfile = () => {
   const [links, setLinks] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [bannerImage, setBannerImage] = useState(null);
-  const [activeTab, setActiveTab] = useState('posts');
-  const [posts, setPosts]=useState([]);
+  const [activeTab, setActiveTab] = useState('reels');
+  const [posts, setPosts] = useState([]);
   const [visiblePostIndex, setVisiblePostIndex] = useState(null);
   const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
 
@@ -66,8 +74,7 @@ const ViewProfile = () => {
     }
   });
 
-  const [services,setServices] = useState([]);
-  
+  const [services, setServices] = useState([]);
 
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
@@ -80,6 +87,7 @@ const ViewProfile = () => {
   //   };
 
   const getuser = async () => {
+    setLoading(true);
     try {
       const storedProfileData = await AsyncStorage.getItem('user');
       if (storedProfileData) {
@@ -113,6 +121,7 @@ const ViewProfile = () => {
     // setReels(jsonresponse.reels || []);
     // console.log("hah",response);
     // console.log('jsj',user.userid);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -165,7 +174,7 @@ const ViewProfile = () => {
 
   const followUser = async () => {
     const userObjectString = await AsyncStorage.getItem('user');
-    let  userObject = null;
+    let userObject = null;
 
     if (userObjectString) {
       userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
@@ -199,9 +208,9 @@ const ViewProfile = () => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              deviceToken:details?.device_token,
-              title:'Following Update',
-              body:`${userObject?.name} started following you!!`
+              deviceToken: details?.device_token,
+              title: 'Following Update',
+              body: `${userObject?.name} started following you!!`,
             }),
           },
         );
@@ -263,15 +272,15 @@ const ViewProfile = () => {
           },
         },
       );
-  
+
       // Check if the response is ok (status code 200-299)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log('Services', data);
-  
+
       // Check if data.services exists before setting state
       if (data?.services) {
         setServices(data.services); // Assuming data.services is an array
@@ -286,7 +295,7 @@ const ViewProfile = () => {
 
   // useEffect(()=>{
   // },[]);
-  
+
   useFocusEffect(
     useCallback(() => {
       // getPostList();
@@ -309,7 +318,11 @@ const ViewProfile = () => {
     <TouchableOpacity
       style={styles.reelItem}
       onPress={() =>
-        navigation.navigate('multipleReel', {video: item, creator: details, advsid: advsid})
+        navigation.navigate('multipleReel', {
+          video: item,
+          creator: details,
+          advsid: advsid,
+        })
       }>
       <Video
         source={{uri: item.data.post_file}} // Use video source
@@ -382,7 +395,7 @@ const ViewProfile = () => {
         },
       );
       const jsonResponse = await response.json();
-      console.log("SJisis", jsonResponse);
+      console.log('SJisis', jsonResponse);
       setPosts(jsonResponse);
     } catch (error) {
       console.error('Error fetching video list:', error);
@@ -421,7 +434,7 @@ const ViewProfile = () => {
           },
         );
         const jsonResponse = await response.json();
-        console.log("SJisis", jsonResponse);
+        console.log('SJisis', jsonResponse);
         setPosts(jsonResponse);
       } catch (error) {
         console.error('Error fetching video list:', error);
@@ -431,333 +444,382 @@ const ViewProfile = () => {
   }, []);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <StatusBar barStyle="light-content" backgroundColor="#17191A" />
-      {/* Header Image */}
-      <BannerAd
-        unitId={adUnitId}
-        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
-        }}
-      />
-      <View style={styles.headerContainer}>
-        <Image
-          source={
-            details?.profile_background
-              ? {uri: details.profile_background}
-              : require('../../../assets/images/bane.png')
-          }
-          style={styles.headerImage}
-        />
-
-        {/* <TouchableOpacity onPress={()}>
-          <Icon1
-            name="share"
-            size={24}
-            color="white"
-            style={styles.shareIcon}
+    <>
+      {loading ? (
+        <SkeletonLoading />
+      ) : (
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}>
+          <StatusBar barStyle="light-content" backgroundColor="#17191A" />
+          {/* Header Image */}
+          <BannerAd
+            unitId={adUnitId}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: true,
+            }}
           />
-        </TouchableOpacity> */}
-        <TouchableOpacity onPress={shareProfile}>
-          <Icon1
-            name="share"
-            size={24}
-            color="white"
-            style={styles.shareIcon}
-          />
-        </TouchableOpacity>
-      </View>
+          <View style={styles.headerContainer}>
+            <Image
+              source={
+                details?.profile_background
+                  ? {uri: details.profile_background}
+                  : require('../../../assets/images/bane.png')
+              }
+              style={styles.headerImage}
+            />
 
-      {/* Profile Information */}
-      <View style={styles.profileContainer}>
-        <Image
-          source={
-            details?.profile_photo
-              ? {uri: details.profile_photo}
-              : require('../../../assets/images/profiles.png')
-          }
-          style={styles.profileImage}
-        />
-        <View style={styles.profileDetails}>
-          <View style={styles.profileTextContainer}>
-            <Text style={styles.profileName}>{details?.username}</Text>
-            <Text style={styles.profileRole} numberOfLines={2}>
-              {details?.professional_title}
-            </Text>
+            {/* <TouchableOpacity onPress={()}>
+            <Icon1
+              name="share"
+              size={24}
+              color="white"
+              style={styles.shareIcon}
+            />
+          </TouchableOpacity> */}
+            <TouchableOpacity onPress={shareProfile}>
+              <Icon1
+                name="share"
+                size={24}
+                color="white"
+                style={styles.shareIcon}
+              />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={[
-              styles.followButton,
-              {
-                backgroundColor: isFollowing ? '#17191A' : '#388DEB',
-                borderColor: isFollowing ? '#388DEB' : 'transparent',
-                borderWidth: isFollowing ? 1 : 0,
-              },
-            ]}
-            onPress={handleFollowToggle}>
-            <Text
+
+          {/* Profile Information */}
+          <View style={styles.profileContainer}>
+            <Image
+              source={
+                details?.profile_photo
+                  ? {uri: details.profile_photo}
+                  : require('../../../assets/images/profiles.png')
+              }
+              style={styles.profileImage}
+            />
+            <View style={styles.profileDetails}>
+              <View style={styles.profileTextContainer}>
+                <Text style={styles.profileName}>{details?.username}</Text>
+                <Text style={styles.profileRole} numberOfLines={2}>
+                  {details?.professional_title}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.followButton,
+                  {
+                    backgroundColor: isFollowing ? '#17191A' : '#388DEB',
+                    borderColor: isFollowing ? '#388DEB' : 'transparent',
+                    borderWidth: isFollowing ? 1 : 0,
+                  },
+                ]}
+                onPress={handleFollowToggle}>
+                <Text
+                  style={[
+                    styles.editProfileText,
+                    {
+                      color: isFollowing ? '#388DEB' : 'white',
+                    },
+                  ]}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View
+            style={{
+              paddingHorizontal: 16,
+              marginTop: 15,
+            }}>
+            {details?.professional_title && (
+              <Text
+                style={{
+                  fontSize: 14,
+                  lineHeight: 19,
+                  fontFamily: 'Poppins-Medium',
+                  color: 'white',
+                }}>
+                {details?.professional_title}
+              </Text>
+            )}
+            {details?.professional_bio && (
+              <Pressable onPress={toggleDescription}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Poppins-Regular',
+                    color: '#9C9C9C',
+                    lineHeight: 16,
+                    marginTop: 4,
+                  }}
+                  numberOfLines={isExpanded ? 0 : 2}>
+                  {details?.professional_bio}
+                </Text>
+              </Pressable>
+            )}
+
+            <View
+              style={{
+                // marginVertical: 20,
+                flexDirection: 'row',
+                gap: 10,
+              }}>
+              {details?.social_links?.instagram && (
+                <View
+                  style={{
+                    marginTop: 10,
+                  }}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      handleLinkPress(details?.social_links?.instagram)
+                    }>
+                    <Image
+                      source={require('../../../assets/images/instagram.png')}
+                      style={{width: 32, height: 32}}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+              {details?.social_links?.spotify && (
+                <View
+                  style={{
+                    marginTop: 10,
+                  }}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      handleLinkPress(details?.social_links?.spotify)
+                    }>
+                    <Image
+                      source={require('../../../assets/images/spotify.png')}
+                      style={{width: 32, height: 32}}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                width: '100%',
+                borderRadius: 15,
+                marginTop: 10,
+              }}>
+              <View style={{alignItems: 'center'}}>
+                <Text
+                  style={{
+                    color: '#9C9C9C',
+                    fontSize: 10,
+                    letterSpacing: 1,
+                    fontFamily: 'Poppins-Regular',
+                    lineHeight: 15,
+                  }}>
+                  Followers
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: '#ffffff',
+                    fontFamily: 'Poppins-Medium',
+                    lineHeight: 21,
+                    letterSpacing: 1,
+                    marginTop: 2,
+                  }}>
+                  {details?.followers?.length || 0}
+                </Text>
+              </View>
+              <View
+                style={{
+                  height: 35,
+                  width: 1,
+                  backgroundColor: 'gray',
+                }}
+              />
+              <View style={{alignItems: 'center'}}>
+                <Text
+                  style={{
+                    color: '#9C9C9C',
+                    fontSize: 10,
+                    letterSpacing: 1,
+                    fontFamily: 'Poppins-Regular',
+                    lineHeight: 15,
+                  }}>
+                  Reels
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: 'white',
+                    lineHeight: 21,
+                    fontFamily: 'Poppins-Medium',
+                    marginTop: 2,
+                    letterSpacing: 1,
+                  }}>
+                  {reels.length || 0}
+                </Text>
+              </View>
+              <View
+                style={{
+                  height: 35,
+                  width: 1,
+                  backgroundColor: 'gray',
+                }}
+              />
+              <View style={{alignItems: 'center'}}>
+                <Text
+                  style={{
+                    color: '#9C9C9C',
+                    fontSize: 10,
+                    letterSpacing: 1,
+                    fontFamily: 'Poppins-Regular',
+                    lineHeight: 15,
+                  }}>
+                  Views
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: 'white',
+                    lineHeight: 21,
+                    fontFamily: 'Poppins-Medium',
+                    marginTop: 2,
+                    letterSpacing: 1,
+                  }}>
+                  {totalViews || 0}
+                </Text>
+              </View>
+            </View>
+
+            {/* <TouchableOpacity onPress={logout}>
+            <Text>Logout</Text>
+          </TouchableOpacity> */}
+          </View>
+
+          <View style={styles.navbar}>
+            <TouchableOpacity
               style={[
-                styles.editProfileText,
-                {
-                  color: isFollowing ? '#388DEB' : 'white',
-                },
-              ]}>
-              {isFollowing ? 'Following' : 'Follow'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View
-        style={{
-          paddingHorizontal: 16,
-          marginTop: 15,
-        }}>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 19,
-            fontFamily: 'Poppins-Medium',
-            color: 'white',
-          }}>
-          {details?.professional_title}
-        </Text>
-        <Pressable onPress={toggleDescription}>
-          <Text
-            style={{
-              fontSize: 12,
-              fontFamily: 'Poppins-Regular',
-              color: '#9C9C9C',
-              lineHeight: 16,
-              marginTop: 4,
-            }}
-            numberOfLines={isExpanded ? 0 : 2}>
-            {details?.professional_bio}
-          </Text>
-        </Pressable>
-
-        <View
-          style={{
-            marginVertical: 20,
-            flexDirection: 'row',
-            gap: 10,
-          }}>
-          {details?.social_links?.instagram && (
-            <TouchableOpacity
-              onPress={() => handleLinkPress(details?.social_links?.instagram)}>
-              <Image
-                source={require('../../../assets/images/instagram.png')}
-                style={{width: 32, height: 32}}
-              />
+                styles.navButton,
+                activeTab === 'posts' && styles.activeNavButton,
+              ]}
+              onPress={() => setActiveTab('posts')}>
+              <Text
+                style={[
+                  styles.navText,
+                  activeTab === 'posts' && styles.activeNavText,
+                ]}>
+                POSTS
+              </Text>
             </TouchableOpacity>
-          )}
-          {details?.social_links?.spotify && (
             <TouchableOpacity
-              onPress={() => handleLinkPress(details?.social_links?.spotify)}>
-              <Image
-                source={require('../../../assets/images/spotify.png')}
-                style={{width: 32, height: 32}}
-              />
+              style={[
+                styles.navButton,
+                activeTab === 'reels' && styles.activeNavButton,
+              ]}
+              onPress={() => setActiveTab('reels')}>
+              <Text
+                style={[
+                  styles.navText,
+                  activeTab === 'reels' && styles.activeNavText,
+                ]}>
+                REELS
+              </Text>
+              {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
             </TouchableOpacity>
-          )}
-        </View>
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                activeTab === 'services' && styles.activeNavButton,
+              ]}
+              onPress={() => setActiveTab('services')}>
+              <Text
+                style={[
+                  styles.navText,
+                  activeTab === 'services' && styles.activeNavText,
+                ]}>
+                SERVICES
+              </Text>
+              {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
+            </TouchableOpacity>
+          </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            width: '100%',
-            borderRadius: 15,
-          }}>
-          <View style={{alignItems: 'center'}}>
-            <Text
-              style={{
-                color: '#9C9C9C',
-                fontSize: 10,
-                letterSpacing: 1,
-                fontFamily: 'Poppins-Regular',
-                lineHeight: 15,
-              }}>
-              Followers
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#ffffff',
-                fontFamily: 'Poppins-Medium',
-                lineHeight: 21,
-                letterSpacing: 1,
-                marginTop: 2,
-              }}>
-              {details?.followers?.length || 0}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 35,
-              width: 1,
-              backgroundColor: 'gray',
-            }}
-          />
-          <View style={{alignItems: 'center'}}>
-            <Text
-              style={{
-                color: '#9C9C9C',
-                fontSize: 10,
-                letterSpacing: 1,
-                fontFamily: 'Poppins-Regular',
-                lineHeight: 15,
-              }}>
-              Reels
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: 'white',
-                lineHeight: 21,
-                fontFamily: 'Poppins-Medium',
-                marginTop: 2,
-                letterSpacing: 1,
-              }}>
-              {reels.length || 0}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 35,
-              width: 1,
-              backgroundColor: 'gray',
-            }}
-          />
-          <View style={{alignItems: 'center'}}>
-            <Text
-              style={{
-                color: '#9C9C9C',
-                fontSize: 10,
-                letterSpacing: 1,
-                fontFamily: 'Poppins-Regular',
-                lineHeight: 15,
-              }}>
-              Views
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: 'white',
-                lineHeight: 21,
-                fontFamily: 'Poppins-Medium',
-                marginTop: 2,
-                letterSpacing: 1,
-              }}>
-              {totalViews || 0}
-            </Text>
-          </View>
-        </View>
-
-        {/* <TouchableOpacity onPress={logout}>
-          <Text>Logout</Text>
-        </TouchableOpacity> */}
-      </View>
-
-      <View style={styles.navbar}>
-        <TouchableOpacity
-          style={[styles.navButton, activeTab === 'posts' && styles.activeNavButton]}
-          onPress={() => setActiveTab('posts')}
-        >
-          <Text style={[styles.navText, activeTab === 'posts' && styles.activeNavText]}>POSTS</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navButton, activeTab === 'reels' && styles.activeNavButton]}
-          onPress={() => setActiveTab('reels')}
-        >
-          <Text style={[styles.navText, activeTab === 'reels' && styles.activeNavText]}>REELS</Text>
-          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navButton, activeTab === 'services' && styles.activeNavButton]}
-          onPress={() => setActiveTab('services')}
-        >
-          <Text style={[styles.navText, activeTab === 'services' && styles.activeNavText]}>SERVICES</Text>
-          {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'reels' ? (
-        reels.length === 0 ? (
-          <View style={styles.noReelsContainer}>
-            <Text style={styles.noReelsText}>No reels uploaded</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={reels}
-            renderItem={renderReelItem}
-            keyExtractor={item => item.id}
-            numColumns={3}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.reelsList}
-            columnWrapperStyle={styles.reelColumnWrapper}
-          />
-        )
-      ) : activeTab === 'posts' ? (
-        posts.length === 0 ? (
-          <View style={styles.noPostsContainer}>
-            <Text style={styles.noPostsText}>No posts available</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={posts}
-            showsVerticalScrollIndicator={false}
-            renderItem={({item, index}) => (
-              <PostItems
-                post={item}
-                isVisible={visiblePostIndex === index}
-                getpost={getPostList}
+          {activeTab === 'reels' ? (
+            reels.length === 0 ? (
+              <View style={styles.noReelsContainer}>
+                <Text style={styles.noReelsText}>No reels uploaded</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={reels}
+                renderItem={renderReelItem}
+                keyExtractor={item => item.id}
+                numColumns={3}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.reelsList}
+                columnWrapperStyle={styles.reelColumnWrapper}
               />
-            )}
-            keyExtractor={item => item.id}
-            onViewableItemsChanged={onViewableItemsChanged.current}
-            viewabilityConfig={viewabilityConfig}
-          />
-        )
-      ) : activeTab === 'services' ? (
-        services.length === 0 ? (
-          <View style={styles.noReelsContainer}>
-            <Text style={styles.noReelsText}>No services available</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={services}
-            renderItem={({item}) => (
-              <CreatroService service={item}/>
-            )}
-            keyExtractor={item => `${item.serviceid}-${item.adviserid}`}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.servicesList}
-          />
-        )
-      ) : null}
+            )
+          ) : activeTab === 'posts' ? (
+            posts.length === 0 ? (
+              <View style={styles.noPostsContainer}>
+                <Text style={styles.noPostsText}>No posts available</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={posts}
+                showsVerticalScrollIndicator={false}
+                renderItem={({item, index}) => (
+                  <PostItems
+                    post={item}
+                    isVisible={visiblePostIndex === index}
+                    getpost={getPostList}
+                  />
+                )}
+                keyExtractor={item => item.id}
+                onViewableItemsChanged={onViewableItemsChanged.current}
+                viewabilityConfig={viewabilityConfig}
+              />
+            )
+          ) : activeTab === 'services' ? (
+            services.length === 0 ? (
+              <View style={styles.noReelsContainer}>
+                <Text style={styles.noReelsText}>No services available</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={services}
+                renderItem={({item}) => <CreatroService service={item} />}
+                keyExtractor={item => `${item.serviceid}-${item.adviserid}`}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.servicesList}
+              />
+            )
+          ) : null}
 
-      {/* <View style={styles.reelsSection}>
-        {reels.length === 0 ? (
-          <View style={styles.noReelsContainer}>
-            <Text style={styles.noReelsText}>No reels uploaded</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={reels}
-            renderItem={renderReelItem}
-            keyExtractor={item => item.id}
-            numColumns={3}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.reelsList}
-            columnWrapperStyle={styles.reelColumnWrapper}
-            // onViewableItemsChanged={onViewableItemsChanged}
-            // viewabilityConfig={viewabilityConfig}
-          />
-        )}
-      </View> */}
-    </ScrollView>
+          {/* <View style={styles.reelsSection}>
+          {reels.length === 0 ? (
+            <View style={styles.noReelsContainer}>
+              <Text style={styles.noReelsText}>No reels uploaded</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={reels}
+              renderItem={renderReelItem}
+              keyExtractor={item => item.id}
+              numColumns={3}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.reelsList}
+              columnWrapperStyle={styles.reelColumnWrapper}
+              // onViewableItemsChanged={onViewableItemsChanged}
+              // viewabilityConfig={viewabilityConfig}
+            />
+          )}
+        </View> */}
+        </ScrollView>
+      )}
+    </>
   );
 };
 
@@ -934,15 +996,14 @@ const styles = StyleSheet.create({
   activeNavButton: {
     borderBottomColor: '#0069B4',
     borderBottomWidth: 2,
-    borderRadius:2
+    borderRadius: 2,
   },
   activeNavText: {
     color: '#0069B4', // Text color for active tab
   },
-  navText:{
-    color:'#fff'
-  }
-
+  navText: {
+    color: '#fff',
+  },
 });
 
 export default ViewProfile;

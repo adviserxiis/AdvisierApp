@@ -11,8 +11,10 @@ import ZegoExpressEngine from 'zego-express-engine-reactnative';
 const CheckOut = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const {service, scheduleTime, scheduleDate} = route.params;
+  const {service, serviceid, adviser,  scheduleTime, scheduleDate} = route.params;
   console.log('User Service', service);
+  console.log('User Sevricd', serviceid);
+  console.log('User Adsn', adviser);
   console.log('User time', scheduleTime?.slot);
   console.log('User date', scheduleDate?.dateISO);
 
@@ -80,8 +82,9 @@ const CheckOut = () => {
   const [serviceData, setServiceData] = useState(null);
 
   const getServiceDetails = async () => {
+    const serviceids = service?.serviceid || serviceid;
     const response = await fetch(
-      `https://adviserxiis-backend-three.vercel.app/service/getservicedetails/${service?.serviceid} `,
+      `https://adviserxiis-backend-three.vercel.app/service/getservicedetails/${serviceids} `,
       {
         method: 'GET',
         headers: {

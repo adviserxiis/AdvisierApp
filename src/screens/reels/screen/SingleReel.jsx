@@ -586,7 +586,7 @@ const SingleReel = ({
   ]);
 
   const [isExpanded, setIsExpanded] = useState(false);
-  console.log("Single Reel video data",video);
+  // console.log("Single Reel video data",video);
   // console.log("Single Reel video data",video);
   // const slideAnim = useRef(new Animated.Value(0)).current;
   // const opacityAnim = useRef(new Animated.Value(0)).current;

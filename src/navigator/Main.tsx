@@ -3,7 +3,7 @@ import * as React from 'react';
 import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text, TouchableOpacity, View} from 'react-native';
+import {Image, Text, TouchableOpacity, View} from 'react-native';
 import User from '../screens/user/user';
 import Profile from '../screens/profile/profile';
 import Icon from 'react-native-vector-icons/Feather';
@@ -22,16 +22,23 @@ import LeadershipBoard from '../screens/home/screen/LeadershipBoard';
 import ContestReelUpload from '../screens/home/screen/ContestReelUpload';
 import ContestReelView from '../screens/home/screen/ContestReelView';
 import MultipleReel from '../screens/reels/screen/MultipleReel';
-import ServicesPost from '../screens/home/screen/ServicesPost';
 import PreviewScreen from '../screens/profile/screen/PreviewScreen';
 import EditServices from '../screens/profile/screen/EditServices';
-import KnowMore from '../screens/home/screen/KnowMore';
 // import Login from '../screens/auth/Login';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import CallScreen from '../screens/profile/screen/CallScreen';
 import CheckOut from '../screens/reels/screen/CheckOut';
 import Services from '../screens/servicec/Services';
 import ServiceDetails from '../screens/servicec/screen/ServiceDetails';
+import FeedBack from '../screens/profile/screen/FeedBack';
+import ChatList from '../screens/ChatList';
+import ChatScreen from '../screens/ChatScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BotChat from '../screens/BotChat';
+import KnowMore from '../screens/servicec/screen/KnowMore';
+import ServicesPost from '../screens/add/ServiceCreate/ServicesPost';
+import TagSelectionScreen from '../screens/add/ServiceCreate/components/TagSelectionScreen';
+import VideoRecorder from '../screens/add/ReelCreate/VideoRecorder';
 
 const Tabs = createMaterialTopTabNavigator();
 //Home Stack
@@ -149,8 +156,8 @@ function SearchStackScreen() {
         }}
       />
       <SearchStack.Screen
-        name="ViewProfile"
-        component={ViewProfile}
+        name="PostView"
+        component={PostView}
         options={{
           headerShown: false,
         }}
@@ -165,7 +172,6 @@ function SearchStackScreen() {
     </SearchStack.Navigator>
   );
 }
-
 
 //Profile Stack
 const ProfileStack = createStackNavigator();
@@ -190,18 +196,45 @@ function ProfileStackScreen() {
   );
 }
 
-const ServiceStack =createStackNavigator();
+const ServiceStack = createStackNavigator();
 function ServiceStackScreen() {
   return (
     <ServiceStack.Navigator>
-      <ServiceStack.Screen name='Services' component={Services}/>
+      <ServiceStack.Screen name="Services" component={Services} />
       {/* <ServiceStack.Screen name='ServiceDetails' component={ServiceDetails}/> */}
+      <ServiceStack.Screen
+        name="PostView"
+        component={PostView}
+        options={{
+          headerShown: false,
+        }}
+      />
     </ServiceStack.Navigator>
   );
 }
 // Bottom Tabs
 const Tab = createBottomTabNavigator();
 function MyTabs() {
+  const [profileImage, setProfileImage] = React.useState(null);
+
+  const getProfilePhoto = async () => {
+    try {
+      // Fetch profile photo from AsyncStorage
+      const userptp = await AsyncStorage.getItem('user');
+      const profileData = JSON.parse(userptp);
+      // console.log("async store for photo", profileData?.profile_photo);
+      if (profileData) {
+        setProfileImage(profileData?.profile_photo); // Update the state with the fetched photo
+      }
+    } catch (error) {
+      console.log('Error retrieving profile photo:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    getProfilePhoto();
+  }, []);
+
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -246,10 +279,22 @@ function MyTabs() {
             case 'Reel':
               iconName = 'play';
               break;
-            case 'Service': 
-              iconName='bookmark';
+            case 'Service':
+              iconName = 'bookmark';
               break;
             case 'Profile':
+              // return (
+              //   <Image
+              //     source={profileImage ? { uri: profileImage } : require('../assets/images/profiles.png')}
+              //     style={{
+              //       width: 28,
+              //       height: 28,
+              //       borderRadius: 15,
+              //       borderWidth: focused ? 2 : 0,
+              //       borderColor: focused ? '#0069B4' : 'transparent',
+              //     }}
+              //   />
+              // );
               iconName = 'user';
               break;
             default:
@@ -264,7 +309,7 @@ function MyTabs() {
       <Tab.Screen name="Search" component={SearchStackScreen} />
       {/* <Tab.Screen name="AddPost" component={PostStackScreen} /> */}
       <Tab.Screen name="Reel" component={ReelStackScreen} />
-      <Tab.Screen name="Service" component={ServiceStackScreen}/>
+      <Tab.Screen name="Service" component={ServiceStackScreen} />
       <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
   );
@@ -273,7 +318,6 @@ function MyTabs() {
 // Stack Navigator
 const Stack = createStackNavigator();
 function MyStack() {
-
   const navigation = useNavigation();
   return (
     <Stack.Navigator>
@@ -301,6 +345,7 @@ function MyStack() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name='VideoRecorder' component={VideoRecorder}/>
       <Stack.Screen
         name="PostScreen"
         component={PostScreen}
@@ -349,9 +394,9 @@ function MyStack() {
         component={ServicesPost}
         options={{
           headerShown: true,
-          title:'Create Service',
-          headerTitleStyle:{
-            fontFamily:'Poppins-Medium'
+          title: 'Create Service',
+          headerTitleStyle: {
+            fontFamily: 'Poppins-Medium',
           },
           headerStyle: {
             backgroundColor: '#17191A',
@@ -392,28 +437,32 @@ function MyStack() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="KnowMore" component={KnowMore} />
       <Stack.Screen
-        name="KnowMore"
-        component={KnowMore}
+        name="CallScreen"
         options={{
-          headerShown: true,
-          title:'Service',
-          headerTitleStyle:{
-            fontFamily:'Poppins-Medium'
-          },
-          headerStyle: {
-            backgroundColor: '#17191A',
-          },
-          headerShadowVisible: false,
-          headerTintColor: 'white',
+          headerShown: false,
         }}
+        component={CallScreen}
       />
-      <Stack.Screen name='CallScreen' options={{
-        headerShown:false
-      }} component={CallScreen}/>
-      <Stack.Screen name='CheckOut' options={{
-        headerShown:false
-      }} component={CheckOut}/>
+      <Stack.Screen
+        name="CheckOut"
+        options={{
+          headerShown: false,
+        }}
+        component={CheckOut}
+      />
+      <Stack.Screen
+        name="FeedBack"
+        options={{
+          headerShown: false,
+        }}
+        component={FeedBack}
+      />
+      <Stack.Screen name="ChatList" component={ChatList} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} />
+      <Stack.Screen name="TagSelectionScreen" component={TagSelectionScreen} />
+      {/* <Stack.Screen name='BotChat'component={BotChat}/> */}
     </Stack.Navigator>
   );
 }

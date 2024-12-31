@@ -13,48 +13,8 @@ import RazorpayCheckout from 'react-native-razorpay';
 import {RAZERPAY_KEY_ID} from '@env';
 import {useSelector} from 'react-redux';
 import ZegoExpressEngine from 'zego-express-engine-reactnative';
-// import UUID from 'react-native-uuid';
-// import {v4 as uuidv4} from 'uuid';
-// const data = [
-//   {
-//     id: '1',
-//     day: 'Wed',
-//     date: '09 Oct',
-//     start: '09:30 PM',
-//     endTime: '09:30 PM',
-//   },
-//   {
-//     id: '2',
-//     day: 'Thur',
-//     date: '10 Oct',
-//     start: '10:00 AM',
-//     endTime: '10:30 AM',
-//   },
-//   {
-//     id: '3',
-//     day: 'Thur',
-//     date: '10 Oct',
-//     start: '10:30 AM',
-//     endTime: '10:30 AM',
-//   },
-//   {
-//     id: '4',
-//     day: 'Thur',
-//     date: '10 Oct',
-//     start: '10:00 AM',
-//     endTime: '10:30 AM',
-//   },
-//   {
-//     id: '5',
-//     day: 'Thur',
-//     date: '10 Oct',
-//     start: '10:00 AM',
-//     endTime: '10:30 AM',
-//   },
-//   // Add more items here
-// ];
 
-const CreatroServices = ({service}) => {
+const CreatroServices = ({service,adviser,serviceId}) => {
   const navigation = useNavigation();
   const [ShowModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -395,7 +355,7 @@ const CreatroServices = ({service}) => {
               borderWidth: 1,
               borderColor: '#9C9C9C',
             }}
-            onPress={() => navigation.navigate('KnowMore', {service})}>
+            onPress={() => navigation.navigate('KnowMore', {service, adviser, serviceId})}>
             <Text
               style={{
                 color: '#9C9C9C',

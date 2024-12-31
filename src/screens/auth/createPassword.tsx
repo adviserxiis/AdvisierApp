@@ -3,13 +3,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
+
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {storeData} from '../../utils/store';

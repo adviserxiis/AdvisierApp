@@ -40,7 +40,7 @@ const CommentModal = forwardRef<Ref>(({video, creator}, ref) => {
   const snapPoints = useMemo(() => ['100%'], []);
   const {dismiss} = useBottomSheetModal();
   const {bottom} = useSafeAreaInsets();
-  console.log('Creator at comment ', creator?.device_token);
+  // console.log('Creator at comment ', creator?.device_token);
   const navigation = useNavigation();
 
   const user = useSelector((state: any) => state.user);
@@ -72,9 +72,9 @@ const CommentModal = forwardRef<Ref>(({video, creator}, ref) => {
       setCommentList(video.comments); // Set initial comments
     }
   }, [video]);
-  console.log(video?.adviserDetails?.username);
+  // console.log(video?.adviserDetails);
 
-  console.log('device token', video);
+  // console.log('device token', video);
 
   const handleAddComment = async () => {
     const userObjectString = await AsyncStorage.getItem('user');
@@ -173,7 +173,7 @@ const CommentModal = forwardRef<Ref>(({video, creator}, ref) => {
 
       const data = await response.json();
 
-      console.log('Response Data:', data.comments);
+      // console.log('Response Data:', data.comments);
       setCommentList(data?.comments);
     } catch (error) {
       console.error('Error fetching comments:', error);

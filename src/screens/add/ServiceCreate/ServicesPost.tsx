@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,7 +15,24 @@ import {useSelector} from 'react-redux';
 import RNPickerSelect from 'react-native-picker-select';
 import Icon from 'react-native-vector-icons/Feather';
 import DatePicker from 'react-native-date-picker';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import InputField from './components/InputField';
+import TagInput from './components/TagInput';
+import TagSelector from './components/TagSelector';
+import DateTextInput from './components/DateTextInput';
+import LinearGradient from 'react-native-linear-gradient';
+
+const suggestions = [
+  'React',
+  'JavaScript',
+  'TypeScript',
+  'Node.js',
+  'CSS',
+  'HTML',
+  'Redux',
+  'Vue',
+];
+
 const ServicesPost = () => {
   const [servicename, setServiceName] = useState('');
   const [description, setDescription] = useState('');
@@ -24,11 +42,20 @@ const ServicesPost = () => {
   const user = useSelector(state => state.user);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-
-  const [isServiceFocused, setIsServiceFocused] = useState(false);
-  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
-  const [isDurationFocused, setIsDurationFocused] = useState(false);
-  const [isPriceFocused, setIsPriceFocused] = useState(false);
+  // const [tags, setTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState('');
+  const [errors, setErrors] = useState({
+    servicename: '',
+    description: '',
+    selectedTags: '',
+    duration: '',
+    price: '',
+  });
+  
+  // const [isServiceFocused, setIsServiceFocused] = useState(false);
+  // const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
+  // const [isDurationFocused, setIsDurationFocused] = useState(false);
+  // const [isPriceFocused, setIsPriceFocused] = useState(false);
 
   const [currentDay, setCurrentDay] = useState('');
   const [isStart, setIsStart] = useState(true);
@@ -44,10 +71,53 @@ const ServicesPost = () => {
     Saturday: {start: new Date(), end: new Date()},
     Sunday: {start: new Date(), end: new Date()},
   });
+  
 
   useEffect(() => {
     AvailableDetails();
   }, []);
+
+  const tagsArray = selectedTags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag !== '');
+
+      console.log(tagsArray);
+
+  const validateInputs = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!servicename || servicename.trim().length === 0) {
+      newErrors.servicename = 'Service name is required.';
+    }
+
+    if (!description || description.trim().length < 10) {
+      newErrors.description = 'Description must be at least 10 characters.';
+    }
+
+    if (
+      !selectedTags ||
+      selectedTags.split(',').filter(tag => tag.trim() !== '').length === 0
+    ) {
+      newErrors.selectedTags = 'Please add at least one tag.';
+    } else if (
+      selectedTags.split(',').filter(tag => tag.trim() !== '').length > 5
+    ) {
+      newErrors.selectedTags = 'You can add up to 5 tags.';
+    }
+
+    if (!duration) {
+      newErrors.duration = 'Duration is required.';
+    }
+
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      newErrors.price = 'Price must be a valid number greater than 0.';
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
 
   const AvailableDetails = async () => {
     const response = await fetch(
@@ -59,23 +129,30 @@ const ServicesPost = () => {
       setAvailableModal(true);
     }
   };
+
   const handleSubmit = async () => {
     setLoading(true);
-    if (!servicename || !description || !duration || !price) {
-      Alert.alert('Error', 'Please fill all the fields');
+
+    if (!validateInputs()) {
       setLoading(false);
       return;
     }
 
-    if (price === '0') {
-      Alert.alert(
-        'Invalid Price',       // Title of the alert
-        'Price cannot be zero', // Message of the alert
-        [{ text: 'OK' }]        // Button options
-      );
-      setLoading(false);
-      return;
-    }
+    // if (!servicename || !description || !duration || !price) {
+    //   Alert.alert('Error', 'Please fill all the fields');
+    //   setLoading(false);
+    //   return;
+    // }
+
+    // if (price === '0') {
+    //   Alert.alert(
+    //     'Invalid Price', // Title of the alert
+    //     'Price cannot be zero', // Message of the alert
+    //     [{text: 'OK'}], // Button options
+    //   );
+    //   setLoading(false);
+    //   return;
+    // }
 
     // if(!currentDay){
     //   setAvailableModal(true);
@@ -84,6 +161,9 @@ const ServicesPost = () => {
     // }
 
     try {
+
+      
+      
       const response = await fetch(
         'https://adviserxiis-backend-three.vercel.app/service/createservice',
         {
@@ -97,6 +177,7 @@ const ServicesPost = () => {
             duration: duration,
             price: price,
             adviserid: user.userid,
+            tags:tagsArray,
           }),
         },
       );
@@ -110,13 +191,14 @@ const ServicesPost = () => {
             text: 'OK',
             onPress: () => {
               // Navigate to the Profile screen in the Services tab
-              navigation.navigate('Profile', { initialTab: 'services' })
+              navigation.navigate('Profile', {initialTab: 'services'});
 
               // Optionally clear fields after successful submission
               setServiceName('');
               setDescription('');
               setDuration('');
               setPrice('');
+              setSelectedTags('');
             },
           },
         ]);
@@ -258,60 +340,147 @@ const ServicesPost = () => {
           <ActivityIndicator size={'large'} color={'white'} />
         </View>
       )}
-      <View
+      <ScrollView
+        contentContainerStyle={{flexGrow: 1, marginTop: 20}}
+        keyboardShouldPersistTaps="handled">
+        <InputField
+          label="Service Name"
+          placeholder="Give a name to your service"
+          maxLength={40}
+          value={servicename}
+          onChangeText={text => {
+            setServiceName(text);
+            if (errors.servicename)
+              setErrors(prev => ({...prev, servicename: ''})); // Clear error
+          }}
+          helperText={`${servicename.length}/10`}
+          error={errors.servicename}
+        />
+        <InputField
+          label="Description"
+          placeholder="Describe what will you provide"
+          maxLength={500}
+          value={description}
+          onChangeText={text => {
+            setDescription(text);
+            if (errors.description)
+              setErrors(prev => ({...prev, description: ''})); // Clear error
+          }}
+          helperText={`${description.length}/1000`}
+          error={errors.description}
+        />
+        <TagSelector
+          label="Tag Topics"
+          placeholder="Add topics according to your niche"
+          value={selectedTags}
+          maxLength={50}
+          onChangeText={text => {
+            setSelectedTags(text);
+            if (errors.selectedTags)
+              setErrors(prev => ({...prev, selectedTags: ''})); // Clear error
+          }}
+          helperText={`${
+            selectedTags
+              ? selectedTags.split(',').filter(tag => tag.trim() !== '').length
+              : 0
+          }/5`} // Count non-empty tags
+          error={errors.selectedTags}
+          navigateTo="TagSelectionScreen" // Optional navigation
+        />
+        <DateTextInput
+          label="Duration"
+          value={duration}
+          setDuration={value => {
+            setDuration(value);
+            if (errors.duration) setErrors(prev => ({...prev, duration: ''})); // Clear error
+          }}
+          error={errors.duration}
+        />
+        <InputField
+          label="Price"
+          placeholder="Enter your price"
+          maxLength={10}
+          value={price}
+          onChangeText={text => {
+            setPrice(text);
+            if (errors.price) setErrors(prev => ({...prev, price: ''})); // Clear error
+          }}
+          error={errors.price}
+        />
+      </ScrollView>
+      {/* <View
         style={{
           flexDirection: 'column',
-          gap: 20,
+          // gap: 20,
           marginTop: 20,
         }}>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}>
-            {(isServiceFocused || servicename) && (
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontFamily: 'Poppins-Regular',
-                  color: 'white',
-                  opacity: 0.5,
-                  // textAlign: 'left',
-                  position: 'absolute',
-                }}>
-                Service
-              </Text>
-            )}
-          </View>
-          <Text
-            style={{
-              fontSize: 10,
-              fontFamily: 'Poppins-Regular',
-              color: 'white',
-              opacity: 0.5,
-              textAlign: 'right',
-            }}>
-            {servicename.length}/30
-          </Text>
-          <TextInput
-            value={servicename}
-            onChangeText={setServiceName}
-            maxLength={30}
-            placeholder="Services Name"
-            placeholderTextColor="#838383"
-            onFocus={() => setIsServiceFocused(true)}
-            onBlur={() => setIsServiceFocused(false)}
-            style={{
-              height: 44,
-              backgroundColor: '#3A3B3C',
-              color: 'white',
-              paddingLeft: 15,
-              borderRadius: 10,
-            }}
-          />
-        </View>
-        <View>
+        <InputField
+          label="Service Name"
+          placeholder="Give a name to your service"
+          maxLength={10}
+          value={servicename}
+          onChangeText={(text) => {
+            setServiceName(text);
+            if (errors.servicename) setErrors((prev) => ({ ...prev, servicename: '' })); // Clear error
+          }}
+          helperText={`${servicename.length}/10`}
+          error={errors.servicename}
+        />
+        <InputField
+          label="Description"
+          placeholder="Describe what will you provide"
+          maxLength={500}
+          // multiline={true}
+          value={description}
+          onChangeText={(text) => {
+            setDescription(text);
+            if (errors.description) setErrors((prev) => ({ ...prev, description: '' })); // Clear error
+          }}
+          helperText={`${description.length}/1000`}
+          error={errors.description}
+        />
+        <TagSelector
+          label="Tag Topics"
+          placeholder="Add topics according to your niche"
+          value={selectedTags}
+          maxLength={50}
+          onChangeText={(text) => {
+          setSelectedTags(text);
+          if (errors.selectedTags) setErrors((prev) => ({ ...prev, selectedTags: '' })); // Clear error
+        }}
+          helperText={`${
+            selectedTags
+              ? selectedTags.split(',').filter(tag => tag.trim() !== '').length
+              : 0
+          }/5`} // Count non-empty tags
+          error={errors.selectedTags}
+          navigateTo="TagSelectionScreen" // Optional navigation
+        />
+
+        <DateTextInput
+          label="Duration"
+          value={duration}
+          setDuration={(value) => {
+            setDuration(value);
+            if (errors.duration) setErrors((prev) => ({ ...prev, duration: '' })); // Clear error
+          }}
+          error={errors.duration}
+        />
+
+        <InputField
+          label="Price"
+          placeholder="Enter your price"
+          maxLength={10}
+          value={price}
+          onChangeText={(text) => {
+          setPrice(text);
+          if (errors.price) setErrors((prev) => ({ ...prev, price: '' })); // Clear error
+        }}
+        error={errors.price}
+          // helperText={`${servicename.length}/10`}
+        />
+
+        {/* <View>
           <View
             style={{
               flexDirection: 'row',
@@ -398,7 +567,7 @@ const ServicesPost = () => {
               marginBottom: 10,
               borderRadius: 10,
             }}
-          /> */}
+          /> *
           <View style={styles.pickerContainer}>
             <RNPickerSelect
               onValueChange={value => setDuration(value)}
@@ -476,8 +645,8 @@ const ServicesPost = () => {
               borderRadius: 10,
             }}
           />
-        </View>
-      </View>
+        </View> *
+      </View> */}
       {AvailableModal && (
         <Modal visible={AvailableModal} transparent={true} animationType="fade">
           <View style={styles.modalContainer1}>
@@ -644,9 +813,14 @@ const ServicesPost = () => {
         />
       )}
 
-      <TouchableOpacity style={styles.createButton} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Create</Text>
-      </TouchableOpacity>
+<TouchableOpacity style={styles.createButton} onPress={handleSubmit}>
+  <LinearGradient
+    colors={['#3184FE', '#003582']} // Gradient colors
+    style={[styles.createButton, { padding: 15, borderRadius: 10 }]} // Ensure styling fits your button style
+  >
+    <Text style={styles.buttonText}>Create</Text>
+  </LinearGradient>
+</TouchableOpacity>
       {/* </View> */}
     </View>
   );
@@ -666,9 +840,9 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   createButton: {
-    backgroundColor: '#0069B4',
+    // backgroundColor: '#0069B4',
     borderRadius: 10,
-    marginTop: 30,
+    // marginVertical: 10,
     paddingVertical: 12,
     // paddingHorizontal: 55,
     alignItems: 'center',

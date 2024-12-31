@@ -32,6 +32,7 @@ import {BottomSheetModal} from '@gorhom/bottom-sheet';
 import CommentModal from './CommentModal';
 import LinearGradient from 'react-native-linear-gradient';
 import {TapGestureHandler} from 'react-native-gesture-handler';
+import convertToProxyURL from 'react-native-video-cache';
 
 const {width: screenWidth, height:screenHeight} = Dimensions.get('window');
 
@@ -73,7 +74,7 @@ const VideoPlayer = ({
 
   useEffect(() => {
     const handleAppStateChange = nextAppState => {
-      if (nextAppState === 'background') {
+      if (nextAppState === 'background') { 
         setVideoQuality('low'); // Reduce quality
       } else {
         setVideoQuality('high'); // Restore quality
@@ -237,12 +238,14 @@ const VideoPlayer = ({
   );
 
   const handleTouch = (event: GestureResponderEvent) => {
-    const touchX = event.nativeEvent.locationX;
-    const newPosition = (touchX / progressBarWidth) * videoDuration;
-
-    if (videoRef.current) {
-      videoRef.current.seek(newPosition);
+    if (!videoRef.current || progressBarWidth === 0 || videoDuration === 0) {
+      return; // Prevent errors if values aren't ready
     }
+  
+    const touchX = event.nativeEvent.locationX; // Position of the tap
+    const newPosition = (touchX / progressBarWidth) * videoDuration; // Calculate time
+  
+    videoRef.current.seek(newPosition); // Seek video to the new position
   };
 
   const onLayout = useCallback(event => {
@@ -468,6 +471,7 @@ const VideoPlayer = ({
     //   setDoubleTap(false);
     // }, 10000);
   };
+
   // Only render the video component if it is visible and there is no error
   const renderVideo = useMemo(() => {
     if (!isVisible || currentIndex !== index) return null;
@@ -480,6 +484,7 @@ const VideoPlayer = ({
           style={styles.touchableArea}>
           <Video
             source={{uri: videoSrc}}
+            
             ref={videoRef}
             style={[styles.video, {height: screenHeight}]}
             controls={false}
@@ -497,7 +502,7 @@ const VideoPlayer = ({
             autoplay
             preload="auto"
             playInBackground={false}  // Ensure the video doesn't play in the background
-        playWhenInactive={false} 
+            playWhenInactive={false} 
             bitrate={videoQuality === 'high' ? 1500000 : 500000}
             onLoadStart={() => setBuffering(true)}
             onLoad={onLoad}
@@ -584,54 +589,7 @@ const VideoPlayer = ({
   ]);
 
   const [isExpanded, setIsExpanded] = useState(false);
-  // const slideAnim = useRef(new Animated.Value(0)).current;
-  // const opacityAnim = useRef(new Animated.Value(0)).current;
-
-  // const toggleExpand = () => {
-  //   if (!isExpanded) {
-  //     // Expand
-  //     Animated.parallel([
-  //       Animated.timing(slideAnim, {
-  //         toValue: 1, // fully expanded
-  //         duration: 300,
-  //         useNativeDriver: false,
-  //       }),
-  //       Animated.timing(opacityAnim, {
-  //         toValue: 1, // fully visible
-  //         duration: 300,
-  //         useNativeDriver: false,
-  //       }),
-  //     ]).start();
-  //   } else {
-  //     // Collapse
-  //     Animated.parallel([
-  //       Animated.timing(slideAnim, {
-  //         toValue: 0, // collapsed
-  //         duration: 300,
-  //         useNativeDriver: false,
-  //       }),
-  //       Animated.timing(opacityAnim, {
-  //         toValue: 0, // hidden
-  //         duration: 300,
-  //         useNativeDriver: false,
-  //       }),
-  //     ]).start();
-  //   }
-  //   setIsExpanded(!isExpanded);
-  // };
-
-  // const slideUp = slideAnim.interpolate({
-  //   inputRange: [0, 1],
-  //   outputRange: [100, 0], // adjust the first value for how much it should move up
-  // });
-
-  // const containerHeight = slideAnim.interpolate({
-  //   inputRange: [0, 1],
-  //   outputRange: [0, 150], // adjust for the expanded height of profile section
-  // });
-
-  // console.log("jbsjbmbskjkbs",video?.id);
-
+ 
   return (
     <SafeAreaView
       style={isFullScreen ? styles.fullScreenContainer : styles.container}>

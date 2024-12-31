@@ -11,6 +11,7 @@ import {
   Alert,
   StatusBar,
   Dimensions,
+  // ScrollView,
   Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -20,15 +21,19 @@ import {useDispatch, useSelector} from 'react-redux';
 import {clearUser} from '../../features/user/userSlice';
 import Share from 'react-native-share';
 import Video from 'react-native-video';
+import {ScrollView} from 'react-native-virtualized-view';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {ScrollView} from 'react-native-virtualized-view';
 import {BannerAd, BannerAdSize, TestIds} from 'react-native-google-mobile-ads';
 // import PostItems from '../../home/components/PostItems';
 import PostItems from './../components/PostItems';
 import CreatroServices from '../../reels/components/CreatroService';
+import {RFValue} from 'react-native-responsive-fontsize';
+import SkeletonLoading from '../../profile/components/SkeletonLoading';
 
-const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1658613370450501/4940380881';
+const adUnitId = __DEV__
+  ? TestIds.BANNER
+  : 'ca-app-pub-1658613370450501/4940380881';
 // const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-3940256099942544/9214589741';
 
 const {width} = Dimensions.get('screen');
@@ -56,7 +61,7 @@ const PostView = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [bannerImage, setBannerImage] = useState(null);
   const [activeTab, setActiveTab] = useState('posts');
-  const [posts, setPosts]=useState([]);
+  const [posts, setPosts] = useState([]);
   const [visiblePostIndex, setVisiblePostIndex] = useState(null);
   const viewabilityConfig = {itemVisiblePercentThreshold: 50}; // Configure visibility threshold
 
@@ -65,6 +70,8 @@ const PostView = () => {
       setVisiblePostIndex(viewableItems[0].index); // Set index of visible post
     }
   });
+
+  const [loading,setLoading] = useState(false);
 
   const [services, setServices] = useState([]);
 
@@ -79,15 +86,15 @@ const PostView = () => {
           },
         },
       );
-  
+
       // Check if the response is ok (status code 200-299)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log('Services', data);
-  
+
       // Check if data.services exists before setting state
       if (data?.services) {
         setServices(data.services); // Assuming data.services is an array
@@ -100,10 +107,9 @@ const PostView = () => {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     getServices();
-  },[])
-  
+  }, []);
 
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
@@ -115,9 +121,8 @@ const PostView = () => {
   //     navigation.navigate('Login');
   //   };
 
-  
-
   const getuser = async () => {
+    setLoading(true);
     try {
       const storedProfileData = await AsyncStorage.getItem('user');
       if (storedProfileData) {
@@ -151,6 +156,7 @@ const PostView = () => {
     // setReels(jsonresponse.reels || []);
     // console.log("hah",response);
     // console.log('jsj',user.userid);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -203,7 +209,7 @@ const PostView = () => {
 
   const followUser = async () => {
     const userObjectString = await AsyncStorage.getItem('user');
-    let  userObject = null;
+    let userObject = null;
 
     if (userObjectString) {
       userObject = JSON.parse(userObjectString); // Parse the JSON string to an object
@@ -237,9 +243,9 @@ const PostView = () => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              deviceToken:details?.device_token,
-              title:'Following Update',
-              body:`${userObject?.name} started following you!!`
+              deviceToken: details?.device_token,
+              title: 'Following Update',
+              body: `${userObject?.name} started following you!!`,
             }),
           },
         );
@@ -305,7 +311,11 @@ const PostView = () => {
     <TouchableOpacity
       style={styles.reelItem}
       onPress={() =>
-        navigation.navigate('multipleReel', {video: item, creator: details, advsid: advsid})
+        navigation.navigate('multipleReel', {
+          video: item,
+          creator: details,
+          advsid: advsid,
+        })
       }>
       <Video
         source={{uri: item.data.post_file}} // Use video source
@@ -393,7 +403,7 @@ const PostView = () => {
         },
       );
       const jsonResponse = await response.json();
-      console.log("SJisis", jsonResponse);
+      console.log('SJisis', jsonResponse);
       setPosts(jsonResponse);
     } catch (error) {
       console.error('Error fetching video list:', error);
@@ -404,7 +414,13 @@ const PostView = () => {
     getPostList();
   }, []);
 
-  return (
+  const [numColumns, setNumColumns] = useState(3);
+
+  return (<>
+  {loading ? (
+    <SkeletonLoading/>
+  ):(
+
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <StatusBar barStyle="light-content" backgroundColor="#17191A" />
       {/* Header Image */}
@@ -424,7 +440,7 @@ const PostView = () => {
           }
           style={styles.headerImage}
         />
-
+  
         {/* <TouchableOpacity onPress={()}>
           <Icon1
             name="share"
@@ -442,7 +458,7 @@ const PostView = () => {
           />
         </TouchableOpacity>
       </View>
-
+  
       {/* Profile Information */}
       <View style={styles.profileContainer}>
         <Image
@@ -487,55 +503,72 @@ const PostView = () => {
           paddingHorizontal: 16,
           marginTop: 15,
         }}>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 19,
-            fontFamily: 'Poppins-Medium',
-            color: 'white',
-          }}>
-          {details?.professional_title}
-        </Text>
-        <Pressable onPress={toggleDescription}>
+        {details?.professional_title && (
           <Text
             style={{
-              fontSize: 12,
-              fontFamily: 'Poppins-Regular',
-              color: '#9C9C9C',
-              lineHeight: 16,
-              marginTop: 4,
-            }}
-            numberOfLines={isExpanded ? 0 : 2}>
-            {details?.professional_bio}
+              fontSize: 14,
+              lineHeight: 19,
+              fontFamily: 'Poppins-Medium',
+              color: 'white',
+            }}>
+            {details.professional_title}
           </Text>
-        </Pressable>
-
+        )}
+        {details?.professional_bio && (
+          <Pressable onPress={toggleDescription}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: 'Poppins-Regular',
+                color: '#9C9C9C',
+                lineHeight: 16,
+                marginTop: 4,
+              }}
+              numberOfLines={isExpanded ? 0 : 2}>
+              {details?.professional_bio}
+            </Text>
+          </Pressable>
+        )}
+  
         <View
           style={{
-            marginVertical: 20,
+            // marginVertical: 20,
             flexDirection: 'row',
             gap: 10,
           }}>
+          {/* Check if Instagram link exists and render it */}
           {details?.social_links?.instagram && (
-            <TouchableOpacity
-              onPress={() => handleLinkPress(details?.social_links?.instagram)}>
-              <Image
-                source={require('../../../assets/images/instagram.png')}
-                style={{width: 32, height: 32}}
-              />
-            </TouchableOpacity>
+            <View
+              style={{
+                marginTop: 10,
+              }}>
+              <TouchableOpacity
+                onPress={() => handleLinkPress(details.social_links.instagram)}>
+                <Image
+                  source={require('../../../assets/images/instagram.png')}
+                  style={{width: 32, height: 32}}
+                />
+              </TouchableOpacity>
+            </View>
           )}
+  
+          {/* Check if Spotify link exists and render it */}
           {details?.social_links?.spotify && (
-            <TouchableOpacity
-              onPress={() => handleLinkPress(details?.social_links?.spotify)}>
-              <Image
-                source={require('../../../assets/images/spotify.png')}
-                style={{width: 32, height: 32}}
-              />
-            </TouchableOpacity>
+            <View
+              style={{
+                marginTop: 10,
+              }}>
+              <TouchableOpacity
+                onPress={() => handleLinkPress(details.social_links.spotify)}>
+                <Image
+                  source={require('../../../assets/images/spotify.png')}
+                  style={{width: 32, height: 32}}
+                />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
-
+  
         <View
           style={{
             flexDirection: 'row',
@@ -543,6 +576,7 @@ const PostView = () => {
             alignItems: 'center',
             width: '100%',
             borderRadius: 15,
+            marginTop:10,
           }}>
           <View style={{alignItems: 'center'}}>
             <Text
@@ -628,24 +662,36 @@ const PostView = () => {
             </Text>
           </View>
         </View>
-
-        {/* <TouchableOpacity onPress={logout}>
-          <Text>Logout</Text>
-        </TouchableOpacity> */}
       </View>
-
+  
       <View style={styles.navbar}>
         <TouchableOpacity
-          style={[styles.navButton, activeTab === 'posts' && styles.activeNavButton]}
-          onPress={() => setActiveTab('posts')}
-        >
-          <Text style={[styles.navText, activeTab === 'posts' && styles.activeNavText]}>POSTS</Text>
+          style={[
+            styles.navButton,
+            activeTab === 'posts' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('posts')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'posts' && styles.activeNavText,
+            ]}>
+            POSTS
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.navButton, activeTab === 'reels' && styles.activeNavButton]}
-          onPress={() => setActiveTab('reels')}
-        >
-          <Text style={[styles.navText, activeTab === 'reels' && styles.activeNavText]}>REELS</Text>
+          style={[
+            styles.navButton,
+            activeTab === 'reels' && styles.activeNavButton,
+          ]}
+          onPress={() => setActiveTab('reels')}>
+          <Text
+            style={[
+              styles.navText,
+              activeTab === 'reels' && styles.activeNavText,
+            ]}>
+            REELS
+          </Text>
           {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
         </TouchableOpacity>
         <TouchableOpacity
@@ -664,19 +710,29 @@ const PostView = () => {
           {/* <Icon name="play" size={24} color={activeTab === 'reels' ? '#407BFF' : '#ccc'} /> */}
         </TouchableOpacity>
       </View>
-
+  
       {activeTab === 'reels' ? (
         reels.length === 0 ? (
           <View style={styles.noReelsContainer}>
             <Text style={styles.noReelsText}>No reels uploaded</Text>
           </View>
         ) : (
+          // <FlatList
+          //   data={reels}
+          //   renderItem={renderReelItem}
+          //   keyExtractor={item => item.id}
+          //   numColumns={3}
+          //   showsVerticalScrollIndicator={false}
+          //   contentContainerStyle={styles.reelsList}
+          //   columnWrapperStyle={styles.reelColumnWrapper}
+          // />
           <FlatList
-            data={reels}
-            renderItem={renderReelItem}
-            keyExtractor={item => item.id}
+            key={3}
             numColumns={3}
-            showsVerticalScrollIndicator={false}
+            data={reels}
+            showsHorizontalScrollIndicator={false}
+            renderItem={renderReelItem}
+            keyExtractor={item => item.id.toString()}
             contentContainerStyle={styles.reelsList}
             columnWrapperStyle={styles.reelColumnWrapper}
           />
@@ -700,7 +756,7 @@ const PostView = () => {
             keyExtractor={item => item.id}
             onViewableItemsChanged={onViewableItemsChanged.current}
             viewabilityConfig={viewabilityConfig}
-            ListFooterComponent={<View style={{ height: 50 }} />}
+            ListFooterComponent={<View style={{height: 50}} />}
           />
         )
       ) : activeTab === 'services' ? (
@@ -712,7 +768,11 @@ const PostView = () => {
           <FlatList
             data={services}
             renderItem={({item}) => (
-              <CreatroServices service={item}/>
+              <CreatroServices
+                service={item}
+                adviser={details}
+                serviceId={item?.serviceid}
+              />
             )}
             keyExtractor={item => item.serviceid}
             showsVerticalScrollIndicator={false}
@@ -720,7 +780,7 @@ const PostView = () => {
           />
         )
       ) : null}
-
+  
       {/* <View style={styles.reelsSection}>
         {reels.length === 0 ? (
           <View style={styles.noReelsContainer}>
@@ -741,6 +801,8 @@ const PostView = () => {
         )}
       </View> */}
     </ScrollView>
+  )}
+  </>
   );
 };
 
@@ -795,10 +857,10 @@ const styles = StyleSheet.create({
     marginTop: 70,
   },
   profileTextContainer: {
-    maxWidth: 130,
+    maxWidth: 135,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: RFValue(16),
     color: 'white',
     fontFamily: 'Poppins-Medium',
     lineHeight: 21,
@@ -901,7 +963,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 10,
-    paddingHorizontal:20,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
@@ -913,14 +975,14 @@ const styles = StyleSheet.create({
   activeNavButton: {
     borderBottomColor: '#0069B4',
     borderBottomWidth: 2,
-    borderRadius:2
+    borderRadius: 2,
   },
   activeNavText: {
     color: '#0069B4', // Text color for active tab
   },
-  navText:{
-    color:'#fff'
-  }
+  navText: {
+    color: '#fff',
+  },
 });
 
 export default PostView;

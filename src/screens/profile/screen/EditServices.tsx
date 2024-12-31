@@ -1,233 +1,5 @@
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Icon2 from 'react-native-vector-icons/MaterialIcons';
-import React, {useEffect, useState} from 'react';
-// import {TouchableOpacity} from 'react-native-gesture-handler';
-import {useSelector} from 'react-redux';
-import Icon from 'react-native-vector-icons/Octicons';
-import Icon1 from 'react-native-vector-icons/Ionicons';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import RNPickerSelect from 'react-native-picker-select';
-
-const EditServices = () => {
-  const route = useRoute();
-  const {service, servicelist} = route.params;
-
-  const navigation = useNavigation();
-  console.log('SJjsn', service?.serviceid);
-
-  const [servicename, setServiceName] = useState('');
-  const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState('');
-  const [price, setPrice] = useState('');
-  const [descriptionHeight, setDescriptionHeight] = useState(44);
-  const user = useSelector((state: any) => state.user);
-  const [loading, setLoading] = useState(false);
-
-  const [isServiceFocused, setIsServiceFocused] = useState(false);
-  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
-  const [isDurationFocused, setIsDurationFocused] = useState(false);
-  const [isPriceFocused, setIsPriceFocused] = useState(false);
-
-  useEffect(() => {
-    // Populate the form fields with the service data
-    if (service) {
-      setServiceName(service.service_name || '');
-      setDescription(service.about_service || '');
-      setDuration(service.duration || '');
-      setPrice(service.price || '');
-    }
-  }, [service]);
-  const serviceId = service?.serviceid;
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const [deleteModal, setDeleteModal] = useState(false);
-
-  const deleteService = async serviceId => {
-    // setDeleteModal(true);
-
-    try {
-      console.log('Deleting Services with ID:', serviceId);
-      const response = await fetch(
-        'https://adviserxiis-backend-three.vercel.app/service/deleteservice',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            serviceid: serviceId,
-            adviserid: user.userid,
-            // postid: postid,
-          }),
-        },
-      );
-
-      // getPostlist();
-      servicelist;
-      // Fetch updated reels list after deletion
-      const jsonResponse = await response.json();
-      console.log('Services deleted:', jsonResponse);
-      navigation.goBack();
-
-      // Optional: You can show another alert for success
-      // Alert.alert('Success', 'The reel has been deleted.');
-    } catch (error) {
-      console.error('Error deleting reel:', error);
-      Alert.alert('Error', 'Failed to delete the Service. Please try again.');
-    } finally {
-      setDeleteModal(false);
-    }
-  };
-
-  // const deletePost = postid => {
-  //   Alert.alert(
-  //     'Delete Post',
-  //     'Are you sure you want to delete this Post?',
-  //     [
-  //       {
-  //         text: 'Cancel',
-  //         onPress: () => console.log('Delete canceled'),
-  //         style: 'cancel',
-  //       },
-  //       {
-  //         text: 'Delete',
-  //         onPress: async () => {
-  //           try {
-  //             console.log('Deleting reel with ID:', postid);
-  //             const response = await fetch(
-  //               'https://adviserxiis-backend-three.vercel.app/post/deletepost',
-  //               {
-  //                 method: 'POST',
-  //                 headers: {
-  //                   'Content-Type': 'application/json',
-  //                 },
-  //                 body: JSON.stringify({
-  //                   adviserid: user.userid,
-  //                   postid: postid,
-  //                 }),
-  //               },
-  //             );
-
-  //             getPostlist();
-  //             // Fetch updated reels list after deletion
-  //             const jsonResponse = await response.json();
-  //             console.log('Post deleted:', jsonResponse);
-
-  //             // Optional: You can show another alert for success
-  //             // Alert.alert('Success', 'The reel has been deleted.');
-  //           } catch (error) {
-  //             console.error('Error deleting reel:', error);
-  //             Alert.alert(
-  //               'Error',
-  //               'Failed to delete the reel. Please try again.',
-  //             );
-  //           }
-  //         },
-  //         style: 'destructive', // Optional: Makes the delete button red on iOS
-  //       },
-  //     ],
-  //     {cancelable: false},
-  //   );
-  // };
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      title: 'Edit Service',
-      headerTitleStyle: {
-        fontFamily: 'Poppins-Medium',
-      },
-      headerStyle: {
-        backgroundColor: '#17191A',
-      },
-      headerShadowVisible: false,
-      headerTintColor: 'white',
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => setDeleteModal(true)}
-          style={{
-            marginRight: 16,
-          }}>
-          <Icon name="trash" size={20} color="#FF2C2C" />
-        </TouchableOpacity>
-      ),
-    });
-  });
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    if (!servicename || !description || !duration || !price) {
-      setLoading(false);
-      Alert.alert('Error', 'Please fill all the fields');
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://adviserxiis-backend-three.vercel.app/service/editservice`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            adviserid: user.userid,
-            serviceid: service?.serviceid,
-            service_name: servicename,
-            about_service: description,
-            duration: duration,
-            price: price,
-            // isPublished:false,
-          }),
-        },
-      );
-
-      const text = await response.text(); // Get response as text
-
-      if (response.ok) {
-        const data = JSON.parse(text); // Parse if it's valid JSON
-        console.log('Saved Data:', data);
-        navigation.goBack();
-      } else {
-        console.error('Error response:', text);
-        Alert.alert('Error', 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Network error, please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      {loading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-          }}>
-          <ActivityIndicator size={'large'} color={'white'} />
-        </View>
-      )}
-      <View
+{
+  /* <View
         style={{
           flexDirection: 'column',
           gap: 20,
@@ -367,7 +139,7 @@ const EditServices = () => {
               marginBottom: 10,
               borderRadius: 10,
             }}
-          /> */}
+          /> *
           <View style={styles.pickerContainer}>
             <RNPickerSelect
               onValueChange={value => setDuration(value)}
@@ -445,11 +217,381 @@ const EditServices = () => {
             }}
           />
         </View>
-      </View>
+      </View> */
+}
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Icon2 from 'react-native-vector-icons/MaterialIcons';
+import React, {useEffect, useState} from 'react';
+// import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useSelector} from 'react-redux';
+import Icon from 'react-native-vector-icons/Octicons';
+import Icon1 from 'react-native-vector-icons/Ionicons';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import RNPickerSelect from 'react-native-picker-select';
+import InputField from '../../add/ServiceCreate/components/InputField';
+import TagSelector from '../../add/ServiceCreate/components/TagSelector';
+import DateTextInput from '../../add/ServiceCreate/components/DateTextInput';
+import LinearGradient from 'react-native-linear-gradient';
+import { duration } from 'moment';
+
+const EditServices = () => {
+  const route = useRoute();
+  const {service, servicelist} = route.params;
+
+  const navigation = useNavigation();
+  // console.log('SJjsn', service?.serviceid);
+
+  const [servicename, setServiceName] = useState('');
+  const [description, setDescription] = useState('');
+  const [duration, setDuration] = useState('');
+  const [price, setPrice] = useState('');
+  const [descriptionHeight, setDescriptionHeight] = useState(44);
+  const user = useSelector((state: any) => state.user);
+  const [loading, setLoading] = useState(false);
+  const [selectedTags, setSelectedTags] = useState('');
+  const [errors, setErrors] = useState({
+    servicename: '',
+    description: '',
+    selectedTags: '',
+    duration: '',
+    price: '',
+  });
+
+  // const [isServiceFocused, setIsServiceFocused] = useState(false);
+  // const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
+  // const [isDurationFocused, setIsDurationFocused] = useState(false);
+  // const [isPriceFocused, setIsPriceFocused] = useState(false);
+
+  
+
+  useEffect(() => {
+    // Populate the form fields with the service data
+    if (service) {
+      setServiceName(service.service_name || '');
+      setDescription(service.about_service || '');
+      // console.log(service.duration == 60 ? '60' : service.duration);
+      setDuration(service.duration);
+      setPrice(service.price);
+      setSelectedTags(service.tags.join(', '));
+    }
+  }, [service]);
+  const serviceId = service?.serviceid;
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const [deleteModal, setDeleteModal] = useState(false);
+
+  const deleteService = async serviceId => {
+    // setDeleteModal(true);
+
+    try {
+      console.log('Deleting Services with ID:', serviceId);
+      const response = await fetch(
+        'https://adviserxiis-backend-three.vercel.app/service/deleteservice',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            serviceid: serviceId,
+            adviserid: user.userid,
+            // postid: postid,
+          }),
+        },
+      );
+
+      // getPostlist();
+      servicelist;
+      // Fetch updated reels list after deletion
+      const jsonResponse = await response.json();
+      console.log('Services deleted:', jsonResponse);
+      navigation.goBack();
+
+      // Optional: You can show another alert for success
+      // Alert.alert('Success', 'The reel has been deleted.');
+    } catch (error) {
+      console.error('Error deleting reel:', error);
+      Alert.alert('Error', 'Failed to delete the Service. Please try again.');
+    } finally {
+      setDeleteModal(false);
+    }
+  };
+
+  // const deletePost = postid => {
+  //   Alert.alert(
+  //     'Delete Post',
+  //     'Are you sure you want to delete this Post?',
+  //     [
+  //       {
+  //         text: 'Cancel',
+  //         onPress: () => console.log('Delete canceled'),
+  //         style: 'cancel',
+  //       },
+  //       {
+  //         text: 'Delete',
+  //         onPress: async () => {
+  //           try {
+  //             console.log('Deleting reel with ID:', postid);
+  //             const response = await fetch(
+  //               'https://adviserxiis-backend-three.vercel.app/post/deletepost',
+  //               {
+  //                 method: 'POST',
+  //                 headers: {
+  //                   'Content-Type': 'application/json',
+  //                 },
+  //                 body: JSON.stringify({
+  //                   adviserid: user.userid,
+  //                   postid: postid,
+  //                 }),
+  //               },
+  //             );
+
+  //             getPostlist();
+  //             // Fetch updated reels list after deletion
+  //             const jsonResponse = await response.json();
+  //             console.log('Post deleted:', jsonResponse);
+
+  //             // Optional: You can show another alert for success
+  //             // Alert.alert('Success', 'The reel has been deleted.');
+  //           } catch (error) {
+  //             console.error('Error deleting reel:', error);
+  //             Alert.alert(
+  //               'Error',
+  //               'Failed to delete the reel. Please try again.',
+  //             );
+  //           }
+  //         },
+  //         style: 'destructive', // Optional: Makes the delete button red on iOS
+  //       },
+  //     ],
+  //     {cancelable: false},
+  //   );
+  // };
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      title: 'Edit Service',
+      headerTitleStyle: {
+        fontFamily: 'Poppins-Medium',
+      },
+      headerStyle: {
+        backgroundColor: '#17191A',
+      },
+      headerShadowVisible: false,
+      headerTintColor: 'white',
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => setDeleteModal(true)}
+          style={{
+            marginRight: 16,
+          }}>
+          <Icon name="trash" size={20} color="#FF2C2C" />
+        </TouchableOpacity>
+      ),
+    });
+  });
+
+  
+
+  const tagsArray = selectedTags
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(tag => tag !== '');
+
+  const validateInputs = () => {
+    const newErrors = {};
+
+    if (!servicename || servicename.trim().length === 0) {
+      newErrors.servicename = 'Service name is required.';
+    }
+
+    if (!description || description.trim().length < 10) {
+      newErrors.description = 'Description must be at least 10 characters.';
+    }
+
+    if (
+      !selectedTags ||
+      selectedTags.split(',').filter(tag => tag.trim() !== '').length === 0
+    ) {
+      newErrors.selectedTags = 'Please add at least one tag.';
+    } else if (
+      selectedTags.split(',').filter(tag => tag.trim() !== '').length > 5
+    ) {
+      newErrors.selectedTags = 'You can add up to 5 tags.';
+    }
+
+    if (!duration) {
+      newErrors.duration = 'Duration is required.';
+    }
+
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      newErrors.price = 'Price must be a valid number greater than 0.';
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    // if (!servicename || !description || !duration || !price) {
+    //   setLoading(false);
+    //   Alert.alert('Error', 'Please fill all the fields');
+    //   return;
+    // }
+
+    if (!validateInputs()) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://adviserxiis-backend-three.vercel.app/service/editservice`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            adviserid: user.userid,
+            serviceid: service?.serviceid,
+            service_name: servicename,
+            about_service: description,
+            duration: duration,
+            price: price,
+            tags: tagsArray,
+            // isPublished:false,
+          }),
+        },
+      );
+
+      const text = await response.text(); // Get response as text
+
+      if (response.ok) {
+        const data = JSON.parse(text); // Parse if it's valid JSON
+        console.log('Saved Data:', data);
+        navigation.goBack();
+      } else {
+        console.error('Error response:', text);
+        Alert.alert('Error', 'Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error, please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {loading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}>
+          <ActivityIndicator size={'large'} color={'white'} />
+        </View>
+      )}
+      <ScrollView
+        contentContainerStyle={{flexGrow: 1, marginTop: 20}}
+        keyboardShouldPersistTaps="handled">
+        <InputField
+          label="Service Name"
+          placeholder="Give a name to your service"
+          maxLength={40}
+          value={servicename}
+          onChangeText={text => {
+            setServiceName(text);
+            if (errors.servicename)
+              setErrors(prev => ({...prev, servicename: ''})); // Clear error
+          }}
+          helperText={`${servicename.length}/10`}
+          error={errors.servicename}
+        />
+        <InputField
+          label="Description"
+          placeholder="Describe what will you provide"
+          maxLength={500}
+          multiline={true}
+          value={description}
+          onChangeText={text => {
+            setDescription(text);
+            if (errors.description)
+              setErrors(prev => ({...prev, description: ''})); // Clear error
+          }}
+          helperText={`${description.length}/1000`}
+          error={errors.description}
+        />
+        <TagSelector
+          label="Tag Topics"
+          placeholder="Add topics according to your niche"
+          value={selectedTags}
+          maxLength={50}
+          onChangeText={text => {
+            setSelectedTags(text);
+            if (errors.selectedTags)
+              setErrors(prev => ({...prev, selectedTags: ''})); // Clear error
+          }}
+          helperText={`${
+            selectedTags
+              ? selectedTags.split(',').filter(tag => tag.trim() !== '').length
+              : 0
+          }/5`} // Count non-empty tags
+          error={errors.selectedTags}
+          navigateTo="TagSelectionScreen" // Optional navigation
+        />
+        <DateTextInput
+          label="Duration"
+          value={duration}
+          setDuration={value => {
+            setDuration(value);
+            if (errors.duration) setErrors(prev => ({...prev, duration: ''})); // Clear error
+          }}
+          error={errors.duration}
+        />
+        <InputField
+          label="Price"
+          placeholder="Enter your price"
+          maxLength={10}
+          value={price}
+          onChangeText={text => {
+            setPrice(text);
+            if (errors.price) setErrors(prev => ({...prev, price: ''})); // Clear error
+          }}
+          error={errors.price}
+        />
+      </ScrollView>
 
       {/* </View> */}
       <TouchableOpacity style={styles.createButton} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Done</Text>
+        <LinearGradient
+          colors={['#3184FE', '#003582']} // Gradient colors
+          style={[styles.createButton, { padding: 15, borderRadius: 10 }]} // Ensure styling fits your button style
+        >
+          <Text style={styles.buttonText}>Done</Text>
+        </LinearGradient>
       </TouchableOpacity>
 
       {deleteModal && (
@@ -581,9 +723,9 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   createButton: {
-    backgroundColor: '#0069B4',
+    // backgroundColor: '#0069B4',
     borderRadius: 10,
-    marginTop: 30,
+    // marginTop: 30,
     paddingVertical: 12,
     // paddingHorizontal: 55,
     alignItems: 'center',
@@ -650,7 +792,7 @@ const styles = StyleSheet.create({
   checkboxText: {
     color: '#fff',
     fontSize: 12,
-    marginTop:3,
+    marginTop: 3,
     fontFamily: 'Poppins-Regular',
   },
 });

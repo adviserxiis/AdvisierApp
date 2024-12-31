@@ -12,6 +12,7 @@ import CreatePassword from '../screens/auth/createPassword';
 import OTPVerification from '../screens/auth/OTPVerification';
 import Verify from '../screens/auth/Verify';
 import Confirm from '../screens/auth/Confirm';
+import WelcomeScreen from '../screens/auth/WelcomeScreen';
 const Stack = createStackNavigator();
 const Auth = () => {
   const navigation = useNavigation();
@@ -32,6 +33,13 @@ const Auth = () => {
         component={SplashScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name='WelcomeScreen'
+        component={WelcomeScreen}
+        options={{
+          headerShown:false,
         }}
       />
       <Stack.Screen

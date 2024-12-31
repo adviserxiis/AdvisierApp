@@ -1,7 +1,7 @@
 import React from 'react';
-import {Text, View, StyleSheet, TouchableOpacity} from 'react-native';
+import {Text, View, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-
+const {width} = Dimensions.get('window');
 // Function to format duration in minutes and seconds
 const formatDuration = durationSec => {
   const minutes = Math.floor(durationSec / 60);
@@ -84,8 +84,9 @@ const styles = StyleSheet.create({
   rupeeSymbol: {
     fontSize: 140,
     position: 'absolute',
+    // width:width,
     transform: [
-      {translateX: 105}, // Move horizontally
+      {translateX: 115}, // Move horizontally
       {translateY: 0}, // Move vertically
       {rotate: '-15deg'}, // Rotate by 15 degrees
       {scale: 1}, // Scale the text size

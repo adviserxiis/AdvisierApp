@@ -75,7 +75,7 @@ const SearchText = () => {
     <TouchableOpacity
       activeOpacity={0.5}
       style={styles.userContainer}
-      onPress={() => navigation.navigate('ViewProfile', item.id)}>
+      onPress={() => navigation.navigate('PostView', item.id)}>
       {item.profilePhoto ? (
         <Image source={{uri: item.profilePhoto}} style={styles.profilePhoto} />
       ) : (
@@ -93,10 +93,12 @@ const SearchText = () => {
         </View>
       )}
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
+        {item.name && <Text style={styles.userName}>{item.name}</Text>}
+        {item.description && (
+          <Text style={styles.userDescription} numberOfLines={1}>
+            {item.description}
+          </Text>
+        )}
       </View>
       {/* <TouchableOpacity style={styles.closeButton} onPress={() => handleClose(item.id)}>
         <Icon name="x" size={20} color="#B0B3B8" />
