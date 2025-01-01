@@ -218,6 +218,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'black',
     width: screenWidth,
+    // flex:1,
     height: screenHeight,
     position: 'relative',
   },

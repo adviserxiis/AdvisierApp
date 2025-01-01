@@ -208,6 +208,20 @@ const VideoRecorder = () => {
             enableZoomGesture={true}
             preset="high"
           />
+          <View style={{
+            position: 'absolute',
+            top:20,
+            left: 20,
+            zIndex: 1,  
+          }}>
+            <TouchableOpacity onPress={()=>navigation.goBack()}>
+            <Icon
+                  name={'close'}
+                  size={24}
+                  color="#fff"
+                />
+            </TouchableOpacity>
+          </View>
           <View style={styles.topRightControls}>
             {cameraPosition === 'back' && (
               <TouchableOpacity
@@ -251,7 +265,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
   controlButton: {
     marginLeft: 10,

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Animated, View, Pressable, StyleSheet } from 'react-native';
+import { Animated, View, Pressable, StyleSheet, Text } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const RecordButton = ({ onStartRecording = () => {}, onStopRecording = () => {}, maxDuration = 10000 }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -58,8 +59,32 @@ const RecordButton = ({ onStartRecording = () => {}, onStopRecording = () => {},
     outputRange: ['0deg', '360deg'],
   });
 
+  const [videoUri, setVideoUri] = useState(null);
+
+  const pickVideo = () => {
+    launchImageLibrary(
+      {
+        mediaType: 'video', // Only allow videos
+        videoQuality: 'high',
+        maxWidth: 1280,
+        maxHeight: 720,
+        durationLimit: maxDuration / 1000, // Convert max duration to seconds
+      },
+      (response) => {
+        if (response.assets && response.assets[0]) {
+          const videoUri = response.assets[0].uri;
+          setVideoUri(videoUri); // Store the URI of the selected video
+          console.log('Video URI:', videoUri);
+        }
+      }
+    );
+  };
+
   return (
     <View style={styles.container}>
+      <Pressable onPress={pickVideo}>
+        <Text style={styles.pickVideoText}>Pick Video</Text>
+      </Pressable>
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -88,6 +113,9 @@ const RecordButton = ({ onStartRecording = () => {}, onStopRecording = () => {},
           ]}
         />
       </Pressable>
+      <View>
+        <Text>shdh</Text>
+      </View>
     </View>
   );
 };
@@ -95,7 +123,11 @@ const RecordButton = ({ onStartRecording = () => {}, onStopRecording = () => {},
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection:'row',
+    flex:1,
+    marginHorizontal:20,
+    justifyContent: 'space-between',
+
   },
   pressable: {
     position: 'relative',

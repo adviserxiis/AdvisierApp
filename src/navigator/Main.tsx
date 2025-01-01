@@ -242,12 +242,13 @@ function MyTabs() {
         tabBarLabel: '',
         tabBarStyle: {
           height: 74,
-          paddingTop: 10,
+          // paddingTop: 10,
           borderColor: '#17191A',
           backgroundColor: '#17191A',
         },
         tabBarInactiveTintColor: 'white',
         tabBarHideOnKeyboard: true,
+        animation: 'fade',
         tabBarIcon: ({color, size, focused}) => {
           let iconName;
           let iconColor = color;
@@ -345,7 +346,7 @@ function MyStack() {
           headerShown: false,
         }}
       />
-      <Stack.Screen name='VideoRecorder' component={VideoRecorder}/>
+      <Stack.Screen name='VideoRecorder' component={VideoRecorder} options={{headerShown: false, presentation:'modal',}}/>
       <Stack.Screen
         name="PostScreen"
         component={PostScreen}

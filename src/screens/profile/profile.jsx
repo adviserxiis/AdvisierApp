@@ -591,8 +591,6 @@ const Profile = ({route}) => {
     }, []),
   );
 
-  
-
   // const [isExpandeds, setIsExpandeds] = useState(false);
   // const animationValue = useRef(new Animated.Value(0)).current;
   // const rotateValue = useRef(new Animated.Value(0)).current;
@@ -658,6 +656,9 @@ const Profile = ({route}) => {
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 200,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import React from 'react';
 import {useNavigation} from '@react-navigation/native';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const ServicesCard = ({service,servicelist}) => {
   const navigation = useNavigation();
@@ -43,13 +44,16 @@ const ServicesCard = ({service,servicelist}) => {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            width: '100%',
           }}>
           <Text
             style={{
-              fontSize: 16,
+              fontSize: RFValue(16),
               fontFamily: 'Poppins-Medium',
               color: 'white',
-            }}>
+              // maxWidth:270
+              flexShrink:1,
+            }} numberOfLines={1}   ellipsizeMode="tail" >
             {service?.service_name}
           </Text>
           <Text
